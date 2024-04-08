@@ -51,6 +51,35 @@ public class NetHandShake : IMessage<(long, int)>
     }
 }
 
+public class NetConsole : IMessage<string>
+{
+    string data;
+    public string Deserialize(byte[] message)
+    {
+        string outData;
+
+        outData = BitConverter.ToString(message, 12);
+
+        return outData;
+    }
+
+    public MessageType GetMessageType()
+    {
+        return MessageType.Console;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new List<byte>();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+
+        outData.AddRange(Encoding.ASCII.GetBytes(data));
+
+        return outData.ToArray();
+    }
+}
+
 public class NetVector3 : IMessage<UnityEngine.Vector3>
 {
     private static ulong lastMsgID = 0;

@@ -58,7 +58,7 @@ public class NetConsole : IMessage<string>
     {
         string outData;
 
-        outData = BitConverter.ToString(message, 12);
+        outData = BitConverter.ToString(message, 4);
 
         return outData;
     }

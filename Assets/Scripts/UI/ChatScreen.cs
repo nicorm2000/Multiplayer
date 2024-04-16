@@ -31,6 +31,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     {
         NetConsole netConsole = new();
         string message;
+
         if (inputMessage.text != "")
         {
             if (NetworkManager.Instance.isServer)
@@ -48,7 +49,5 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
             inputMessage.Select();
             inputMessage.text = "";
         }
-
     }
-
 }

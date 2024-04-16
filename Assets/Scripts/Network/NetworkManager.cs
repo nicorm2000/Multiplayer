@@ -77,8 +77,24 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
             clients.Add(clientId, new Client(ip, id, Time.realtimeSinceStartup));
 
+            SendHandshake();
+
             clientId++;
         }
+    }
+
+    void SendHandshake()
+    {
+        NetHandShake netHandshake = new();
+
+        netHandshake.data = -1;
+
+        SendToServer(netHandshake.Serialize());
+    }
+
+    void ReceiveHandshake()
+    {
+
     }
 
     void RemoveClient(IPEndPoint ip)
@@ -103,7 +119,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         connection.Send(data);
     }
 
-    public void Broadcast(byte[] data)
+    public void Broadcast(byte[] data)//Dar rt a los mensajes
     {
         using (var iterator = clients.GetEnumerator())
         {

@@ -40,8 +40,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     private UdpConnection connection;
 
-    private NetConsole netConsole;
-
     private readonly Dictionary<int, Client> clients = new Dictionary<int, Client>();
     private readonly Dictionary<IPEndPoint, int> ipToId = new Dictionary<IPEndPoint, int>();
 

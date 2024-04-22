@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using System.Text;
 using System.Net;
+using UnityEditor.VersionControl;
+using UnityEngine.UI;
 
 public enum MessageType
 {
@@ -40,13 +42,13 @@ public class NetHandShake : IMessage<(long, int)>
 
         outData.Item1 = BitConverter.ToInt64(message, sizeof(int));
         outData.Item2 = BitConverter.ToInt32(message, sizeof(int) + sizeof(long));
-        
+
         return outData;
     }
 
     public MessageType GetMessageType()
     {
-       return MessageType.HandShake;
+        return MessageType.HandShake;
     }
 
     public byte[] Serialize()
@@ -58,35 +60,6 @@ public class NetHandShake : IMessage<(long, int)>
         outData.AddRange(BitConverter.GetBytes(data.Item1));
         outData.AddRange(BitConverter.GetBytes(data.Item2));
 
-
-        return outData.ToArray();
-    }
-}
-
-public class NetConsole : IMessage<string>
-{
-    string data;
-    public string Deserialize(byte[] message)
-    {
-        string outData;
-
-        outData = BitConverter.ToString(message, sizeof(int));
-
-        return outData;
-    }
-
-    public MessageType GetMessageType()
-    {
-        return MessageType.Console;
-    }
-
-    public byte[] Serialize()
-    {
-        List<byte> outData = new();
-
-        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
-
-        outData.AddRange(Encoding.ASCII.GetBytes(data));
 
         return outData.ToArray();
     }
@@ -138,7 +111,7 @@ public class NetSetClientID : IMessage<int>
 {
     int data;
 
-    public NetSetClientID (int data)
+    public NetSetClientID(int data)
     {
         this.data = data;
     }
@@ -173,6 +146,79 @@ public class NetSetClientID : IMessage<int>
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
         outData.AddRange(BitConverter.GetBytes(data));
+
+        return outData.ToArray();
+    }
+}
+
+[Serializable]
+public class NetConsole
+{
+    char[] data;
+
+    public NetConsole(char[] data)
+    {
+        this.data = data;
+    }
+
+    public NetConsole(byte[] data)
+    {
+        this.data = Deserialize(data);
+    }
+
+    public char[] GetData()
+    {
+        return data;
+    }
+
+    private char[] Deserialize(byte[] message)
+    {
+        int dataSize = message.Length - sizeof(int) / sizeof(char);
+
+        char[] outdata = new char[dataSize];
+
+        for (int i = 0; i < dataSize; i++)
+        {
+            outdata[i] = BitConverter.ToChar(message, sizeof(int) + i * sizeof(char));
+        }
+
+        return outdata;
+    }
+
+    public static void Deserialize(byte[] message, out char[] outdata, out int sum)
+    {
+        int dataSize = message.Length - sizeof(int) / sizeof(char);
+
+        outdata = new char[dataSize];
+
+        for (int i = 0; i < dataSize; i++)
+        {
+            outdata[i] = BitConverter.ToChar(message, sizeof(int) + i * sizeof(char));
+        }
+
+        sum = BitConverter.ToInt32(message, message.Length - sizeof(int));
+    }
+
+    public MessageType GetMessageType()
+    {
+        return MessageType.Console;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+
+        int sum = 0;
+
+        for (int i = 0; i < data.Length; i++)
+        {
+            outData.AddRange(BitConverter.GetBytes(data[i]));
+            sum += data[i];
+        }
+
+        outData.AddRange(BitConverter.GetBytes(sum));
 
         return outData.ToArray();
     }

@@ -63,6 +63,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
         connection = new UdpConnection(ip, port, this);
 
+        SendHandshake();
         AddClient(new IPEndPoint(ip, port));
     }
 
@@ -77,8 +78,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
             clients.Add(clientId, new Client(ip, id, Time.realtimeSinceStartup));
 
-            SendHandshake();
-
             clientId++;
         }
     }
@@ -90,11 +89,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         netHandshake.data = -1;
 
         SendToServer(netHandshake.Serialize());
-    }
-
-    void ReceiveHandshake()
-    {
-
     }
 
     void RemoveClient(IPEndPoint ip)

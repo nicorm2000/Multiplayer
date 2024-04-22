@@ -38,8 +38,8 @@ public class NetHandShake : IMessage<(long, int)>
     {
         (long, int) outData;
 
-        outData.Item1 = BitConverter.ToInt64(message, 4);
-        outData.Item2 = BitConverter.ToInt32(message, 12);
+        outData.Item1 = BitConverter.ToInt64(message, sizeof(int));
+        outData.Item2 = BitConverter.ToInt32(message, sizeof(int) + sizeof(long));
         
         return outData;
     }
@@ -70,7 +70,7 @@ public class NetConsole : IMessage<string>
     {
         string outData;
 
-        outData = BitConverter.ToString(message, 4);
+        outData = BitConverter.ToString(message, sizeof(int));
 
         return outData;
     }
@@ -82,7 +82,7 @@ public class NetConsole : IMessage<string>
 
     public byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
 
@@ -106,9 +106,9 @@ public class NetVector3 : IMessage<UnityEngine.Vector3>
     {
         Vector3 outData;
 
-        outData.x = BitConverter.ToSingle(message, 8);
-        outData.y = BitConverter.ToSingle(message, 12);
-        outData.z = BitConverter.ToSingle(message, 16);
+        outData.x = BitConverter.ToSingle(message, sizeof(int));
+        outData.y = BitConverter.ToSingle(message, sizeof(long) + sizeof(int));
+        outData.z = BitConverter.ToSingle(message, sizeof(long) * sizeof(char));
 
         return outData;
     }
@@ -157,7 +157,7 @@ public class NetSetClientID : IMessage<int>
     {
         int outdata;
 
-        outdata = BitConverter.ToInt32(message, 4);
+        outdata = BitConverter.ToInt32(message, sizeof(int));
 
         return outdata;
     }

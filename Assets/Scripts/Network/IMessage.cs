@@ -7,6 +7,7 @@ using System.Net;
 
 public enum MessageType
 {
+    SetClientID = -2,
     HandShake = -1,
     Console = 0,
     Position = 1
@@ -19,15 +20,27 @@ public interface IMessage<T>
     public T Deserialize(byte[] message);
 }
 
-public class NetHandShake : IMessage<int>
+public class NetHandShake : IMessage<(long, int)>
 {
-    public int data;
-    public int Deserialize(byte[] message)
+    (long, int) data;
+
+    public NetHandShake((long, int) data)
     {
-        int outData;
+        this.data = data;
+    }
 
-        outData = BitConverter.ToInt32(message, 12);
+    public NetHandShake(byte[] data)
+    {
+        this.data = Deserialize(data);
+    }
 
+    public (long, int) Deserialize(byte[] message)
+    {
+        (long, int) outData;
+
+        outData.Item1 = BitConverter.ToInt64(message, 4);
+        outData.Item2 = BitConverter.ToInt32(message, 12);
+        
         return outData;
     }
 
@@ -38,11 +51,12 @@ public class NetHandShake : IMessage<int>
 
     public byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
 
-        outData.AddRange(BitConverter.GetBytes(data));
+        outData.AddRange(BitConverter.GetBytes(data.Item1));
+        outData.AddRange(BitConverter.GetBytes(data.Item2));
 
 
         return outData.ToArray();
@@ -118,4 +132,48 @@ public class NetVector3 : IMessage<UnityEngine.Vector3>
     }
 
     //Dictionary<Client,Dictionary<msgType,int>>
+}
+
+public class NetSetClientID : IMessage<int>
+{
+    int data;
+
+    public NetSetClientID (int data)
+    {
+        this.data = data;
+    }
+
+    public NetSetClientID(byte[] data)
+    {
+        this.data = Deserialize(data);
+    }
+
+    public int GetData()
+    {
+        return data;
+    }
+
+    public int Deserialize(byte[] message)
+    {
+        int outdata;
+
+        outdata = BitConverter.ToInt32(message, 4);
+
+        return outdata;
+    }
+
+    public MessageType GetMessageType()
+    {
+        return MessageType.SetClientID;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+        outData.AddRange(BitConverter.GetBytes(data));
+
+        return outData.ToArray();
+    }
 }

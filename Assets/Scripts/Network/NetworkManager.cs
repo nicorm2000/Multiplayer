@@ -43,8 +43,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     private readonly Dictionary<int, Client> clients = new Dictionary<int, Client>();
     private readonly Dictionary<IPEndPoint, int> ipToId = new Dictionary<IPEndPoint, int>();
 
-    public int serverClientID = 0;
-    int actualClientID = 0;
+    public int serverClientID = 0; // ID that the server assigns to the clients that enter
+    int actualClientID = 0; // The ID of the current client, NOT server
 
     int clientId = 0; // This id should be generated during first handshake
 
@@ -71,32 +71,30 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
         connection = new UdpConnection(ip, port, this);
 
-        SendHandshake();
-        AddClient(new IPEndPoint(ip, port));
+        NetHandShake netHandShake = new NetHandShake((UdpConnection.IPToLong(ip), port));
+        SendToServer(netHandShake.Serialize());
+        //AddClient(new IPEndPoint(ip, port));
     }
 
-    void AddClient(IPEndPoint ip)
+    void AddClient(IPEndPoint ip, int newClientID)
     {
-        if (!ipToId.ContainsKey(ip))
+        if (!ipToId.ContainsKey(ip) && !clients.ContainsKey(newClientID))
         {
             Debug.Log("Adding client: " + ip.Address);
 
-            int id = clientId;
-            ipToId[ip] = clientId;
+            ipToId[ip] = newClientID;
 
-            clients.Add(clientId, new Client(ip, id, Time.realtimeSinceStartup));
+            clients.Add(serverClientID, new Client(ip, newClientID, Time.realtimeSinceStartup));
 
-            clientId++;
+            if (isServer)
+            {
+                //Send message to notify the other players that a new has joined
+            }
         }
-    }
-
-    void SendHandshake()
-    {
-        //NetHandShake netHandshake = new();
-
-        //netHandshake.data = -1;
-
-        //SendToServer(netHandshake.Serialize());
+        else
+        {
+            Debug.Log("This client already exists!");
+        }
     }
 
     void RemoveClient(IPEndPoint ip)

@@ -84,4 +84,16 @@ public class UdpConnection
     {
         connection.Send(data, data.Length, ipEndpoint);
     }
+
+    public static long IPToLong(IPAddress ipAdress)
+    {
+        byte[] bytes = ipAdress.GetAddressBytes();
+
+        if (BitConverter.IsLittleEndian)
+        {
+            Array.Reverse(bytes);
+        }
+
+        return BitConverter.ToUInt32(bytes, 0);
+    }
 }

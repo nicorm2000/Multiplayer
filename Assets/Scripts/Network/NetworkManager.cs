@@ -84,11 +84,11 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     void SendHandshake()
     {
-        NetHandShake netHandshake = new();
+        //NetHandShake netHandshake = new();
 
-        netHandshake.data = -1;
+        //netHandshake.data = -1;
 
-        SendToServer(netHandshake.Serialize());
+        //SendToServer(netHandshake.Serialize());
     }
 
     void RemoveClient(IPEndPoint ip)

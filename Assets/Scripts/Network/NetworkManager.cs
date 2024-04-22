@@ -43,7 +43,17 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     private readonly Dictionary<int, Client> clients = new Dictionary<int, Client>();
     private readonly Dictionary<IPEndPoint, int> ipToId = new Dictionary<IPEndPoint, int>();
 
+    public int serverClientID = 0;
+    int actualClientID = 0;
+
     int clientId = 0; // This id should be generated during first handshake
+
+    private MessageChecker messageChecker;
+
+    private void Start()
+    {
+        messageChecker = new MessageChecker();
+    }
 
     public void StartServer(int port)
     {

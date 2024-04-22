@@ -151,8 +151,7 @@ public class NetSetClientID : IMessage<int>
     }
 }
 
-[Serializable]
-public class NetConsole
+public class NetConsole : IMessage<char[]>
 {
     char[] data;
 
@@ -171,7 +170,7 @@ public class NetConsole
         return data;
     }
 
-    private char[] Deserialize(byte[] message)
+    public char[] Deserialize(byte[] message)
     {
         int dataSize = message.Length - sizeof(int) / sizeof(char);
 

@@ -1,6 +1,6 @@
 using System;
 
-public class MessageChecker : MonoBehaviourSingleton<MessageChecker>
+public class MessageChecker
 {
     public MessageType CheckMessageType(byte[] message)
     {

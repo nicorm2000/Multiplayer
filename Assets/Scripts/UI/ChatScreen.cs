@@ -29,11 +29,13 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
         {
             if (NetworkManager.Instance.isServer)
             {
-                NetworkManager.Instance.Broadcast(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
-                messages.text += inputMessage.text + System.Environment.NewLine;
+                NetConsole netConsole = new NetConsole(str.ToCharArray());
+                NetworkManager.Instance.Broadcast(netConsole.Serialize());
+                messages.text += str + System.Environment.NewLine;
             }
             else
             {
+                NetConsole netConsole = new NetConsole(str.ToCharArray());
                 NetworkManager.Instance.SendToServer(System.Text.ASCIIEncoding.UTF8.GetBytes(inputMessage.text));
             }
 

@@ -15,7 +15,7 @@ public class MessageChecker
     {
         int clientID = 0;
 
-        clientID = BitConverter.ToInt32(message, 0);
+        clientID = BitConverter.ToInt32(message, 4);
 
         return clientID;
     }

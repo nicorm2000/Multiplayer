@@ -46,8 +46,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     public int serverClientID = 0; // ID that the server assigns to the clients that enter
     int actualClientID = 0; // The ID of the current client, NOT server
 
-    int clientId = 0; // This id should be generated during first handshake
-
     private MessageChecker messageChecker;
 
     private void Start()
@@ -88,7 +86,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
             if (isServer)
             {
-                //Send message to notify the other players that a new has joined
+                //Send message to notify the other players that a new one has joined
             }
         }
         else
@@ -108,7 +106,25 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     public void OnReceiveData(byte[] data, IPEndPoint ip)
     {
-        AddClient(ip);
+        switch (messageChecker.CheckMessageType(data))
+        {
+            case MessageType.SetClientID:
+                NetSetClientID netGetClientID = new NetSetClientID(data);
+                actualClientID = netGetClientID.GetData();
+                AddClient(ip, actualClientID);
+                Debug.Log("Client's number: " + actualClientID);
+                break;
+            case MessageType.HandShake:
+                ConnectToServer(data, ip);
+                break;
+            case MessageType.Console:
+                UpdateChatText(data);
+                break;
+            case MessageType.Position:
+                break;
+            default:
+                break;
+        }
 
         if (OnReceiveEvent != null)
             OnReceiveEvent.Invoke(data, ip);
@@ -117,6 +133,11 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     public void SendToServer(byte[] data)
     {
         connection.Send(data);
+    }
+
+    public void Broadcast(byte[] data, IPEndPoint ip)
+    {
+        connection.Send(data, ip);
     }
 
     public void Broadcast(byte[] data)//Dar rt a los mensajes
@@ -135,5 +156,58 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         // Flush the data in main thread
         if (connection != null)
             connection.FlushReceiveData();
+    }
+
+    void ConnectToServer(byte[]data, IPEndPoint ip)
+    {
+        NetHandShake netHandShake = new NetHandShake(data);
+
+        if (!clients.ContainsKey(serverClientID))
+        {
+            //Assigns an ID to a client and then broadcasts it
+            NetSetClientID netSetClientID = new NetSetClientID(data);
+            Broadcast(netSetClientID.Serialize(), ip);
+
+            AddClient(ip, serverClientID);
+            serverClientID++;
+        }
+    }
+
+    private void UpdateChatText(byte[] data)
+    {
+        int netMessageSum = 0;
+        int sum = 0;
+        char[] aux;
+        string text = "";
+
+        NetConsole.Deserialize(data, out aux, out netMessageSum);
+
+        for (int i = 0; i < aux.Length; i++)
+        {
+            sum += aux[i];
+        }
+
+        Debug.Log(sum);
+
+        if (sum != netMessageSum)
+        {
+            //Ask the message again
+            Debug.Log("The message got corrupt");
+            return;
+        }
+
+        if (isServer)
+        {
+            Broadcast(data);
+        }
+
+        for (int i = 0; i < aux.Length; i++)
+        {
+            text += aux[i];
+        }
+
+        Debug.Log("Message is:" + text);
+
+        ChatScreen.Instance.messages.text += text + System.Environment.NewLine;
     }
 }

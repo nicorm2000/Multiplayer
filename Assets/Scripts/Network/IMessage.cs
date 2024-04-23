@@ -219,6 +219,9 @@ public class NetConsole : IMessage<char[]>
 
         outData.AddRange(BitConverter.GetBytes(sum));
 
+        Debug.Log(data.ToString());
+        Debug.Log(sum);
+
         return outData.ToArray();
     }
 }

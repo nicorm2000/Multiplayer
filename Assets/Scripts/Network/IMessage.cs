@@ -186,7 +186,7 @@ public class NetConsole : IMessage<char[]>
 
     public static void Deserialize(byte[] message, out char[] outdata, out int sum)
     {
-        int dataSize = message.Length - sizeof(int) / sizeof(char);
+        int dataSize = (message.Length - sizeof(int) * 2) / sizeof(char);
 
         outdata = new char[dataSize];
 

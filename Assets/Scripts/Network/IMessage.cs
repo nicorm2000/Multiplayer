@@ -9,10 +9,12 @@ using UnityEngine.UI;
 
 public enum MessageType
 {
+    CheckActivity = -3,
     SetClientID = -2,
     HandShake = -1,
     Console = 0,
-    Position = 1
+    Position = 1,
+    Disconnection = 3
 }
 
 public interface IMessage<T>
@@ -20,6 +22,50 @@ public interface IMessage<T>
     public MessageType GetMessageType();
     public byte[] Serialize();
     public T Deserialize(byte[] message);
+}
+
+public class NetCheckActivity : IMessage<int>
+{
+    int data;
+
+    public NetCheckActivity(int data)
+    {
+        this.data = data;
+    }
+
+    public NetCheckActivity(byte[] data)
+    {
+        this.data = Deserialize(data);
+    }
+
+    public int GetData()
+    {
+        return data;
+    }
+
+    public int Deserialize(byte[] message)
+    {
+        int outdata;
+
+        outdata = BitConverter.ToInt32(message, sizeof(int));
+
+        return outdata;
+    }
+
+    public MessageType GetMessageType()
+    {
+        return MessageType.SetClientID;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+        outData.AddRange(BitConverter.GetBytes(data));
+
+        return outData.ToArray();
+    }
 }
 
 public class NetHandShake : IMessage<(long, int)>

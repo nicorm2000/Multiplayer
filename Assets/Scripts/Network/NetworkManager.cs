@@ -108,6 +108,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         switch (messageChecker.CheckMessageType(data))
         {
+            case MessageType.CheckActivity:
+                break;
             case MessageType.SetClientID:
                 NetSetClientID netGetClientID = new NetSetClientID(data);
                 actualClientID = netGetClientID.GetData();
@@ -121,6 +123,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 UpdateChatText(data);
                 break;
             case MessageType.Position:
+                break;
+            case MessageType.Disconnection:
                 break;
             default:
                 break;

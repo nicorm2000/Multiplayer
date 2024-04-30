@@ -24,47 +24,17 @@ public interface IMessage<T>
     public T Deserialize(byte[] message);
 }
 
-public class NetCheckActivity : IMessage<int>
+public class NetCheckActivity
 {
-    int data;
-
-    public NetCheckActivity(int data)
+    public void Ping()
     {
-        this.data = data;
+        Debug.Log("Ping to Server");
+        //Update of Special messages
     }
 
-    public NetCheckActivity(byte[] data)
+    public void Pong()
     {
-        this.data = Deserialize(data);
-    }
-
-    public int GetData()
-    {
-        return data;
-    }
-
-    public int Deserialize(byte[] message)
-    {
-        int outdata;
-
-        outdata = BitConverter.ToInt32(message, sizeof(int));
-
-        return outdata;
-    }
-
-    public MessageType GetMessageType()
-    {
-        return MessageType.SetClientID;
-    }
-
-    public byte[] Serialize()
-    {
-        List<byte> outData = new();
-
-        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
-        outData.AddRange(BitConverter.GetBytes(data));
-
-        return outData.ToArray();
+        Debug.Log("Pong to Client");
     }
 }
 
@@ -269,5 +239,15 @@ public class NetConsole : IMessage<char[]>
         Debug.Log(sum);
 
         return outData.ToArray();
+    }
+}
+
+public class NetDisconnection
+{
+    public void Disconnect(UdpConnection udpConnection)
+    {
+        udpConnection.Close();
+        Debug.Log("Disconnected");
+        Application.Quit();
     }
 }

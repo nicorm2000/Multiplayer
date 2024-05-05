@@ -1,81 +1,76 @@
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using System;
-using System.Text;
-using System.Net;
-using UnityEditor.VersionControl;
-using UnityEngine.UI;
 
 public enum MessageType
 {
-    CheckActivity = -3,
-    SetClientID = -2,
-    HandShake = -1,
+    Error = -4,
+    Ping = -3,
+    ServerToClientHandShake = -2,
+    ClientToServerHandShake = -1,
     Console = 0,
     Position = 1,
-    Disconnection = 3
-}
+    NewCustomerNotice = 2,
+    Disconnection = 3,
+    ThereIsNoPlace = 4,
+    RepeatMessage = 5
+};
 
 public interface IMessage<T>
 {
+    public const int _INT = sizeof(int);
+
     public MessageType GetMessageType();
     public byte[] Serialize();
     public T Deserialize(byte[] message);
 }
 
-public class NetCheckActivity
+public class ClientToServerNetHandShake : IMessage<(long, int, string)>
 {
-    public void Ping()
-    {
-        Debug.Log("Ping to Server");
-        //Update of Special messages
-    }
+    (long ip, int port, string name) data;
 
-    public void Pong()
-    {
-        Debug.Log("Pong to Client");
-    }
-}
-
-public class NetHandShake : IMessage<(long, int)>
-{
-    (long, int) data;
-
-    public NetHandShake((long, int) data)
+    public ClientToServerNetHandShake((long, int, string) data)
     {
         this.data = data;
     }
 
-    public NetHandShake(byte[] data)
+    public ClientToServerNetHandShake(byte[] data)
     {
         this.data = Deserialize(data);
     }
 
-    public (long, int) Deserialize(byte[] message)
+    public (long, int, string) Deserialize(byte[] message)
     {
-        (long, int) outData;
+        (long, int, string) outData = (0, 0, "");
 
-        outData.Item1 = BitConverter.ToInt64(message, sizeof(int));
-        outData.Item2 = BitConverter.ToInt32(message, sizeof(int) + sizeof(long));
+        outData.Item1 = BitConverter.ToInt64(message, 4);
+        outData.Item2 = BitConverter.ToInt32(message, 12);
+
+        outData.Item3 = MessageChecker.DeserializeString(message, sizeof(long) + sizeof(int) * 2);
 
         return outData;
     }
 
     public MessageType GetMessageType()
     {
-        return MessageType.HandShake;
+        return MessageType.ClientToServerHandShake;
+    }
+
+    public (long, int, string) GetData()
+    {
+        return data;
     }
 
     public byte[] Serialize()
     {
-        List<byte> outData = new();
+        List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
 
         outData.AddRange(BitConverter.GetBytes(data.Item1));
         outData.AddRange(BitConverter.GetBytes(data.Item2));
 
+        outData.AddRange(MessageChecker.SerializeString(data.name.ToCharArray()));
 
         return outData.ToArray();
     }
@@ -95,9 +90,9 @@ public class NetVector3 : IMessage<UnityEngine.Vector3>
     {
         Vector3 outData;
 
-        outData.x = BitConverter.ToSingle(message, sizeof(int));
-        outData.y = BitConverter.ToSingle(message, sizeof(long) + sizeof(int));
-        outData.z = BitConverter.ToSingle(message, sizeof(long) * sizeof(char));
+        outData.x = BitConverter.ToSingle(message, 8);
+        outData.y = BitConverter.ToSingle(message, 12);
+        outData.z = BitConverter.ToSingle(message, 16);
 
         return outData;
     }
@@ -123,60 +118,83 @@ public class NetVector3 : IMessage<UnityEngine.Vector3>
     //Dictionary<Client,Dictionary<msgType,int>>
 }
 
-public class NetSetClientID : IMessage<int>
+public class ServerToClientHandShake : IMessage<List<(int clientID, string clientName)>>
 {
-    int data;
+    private List<(int clientID, string clientName)> data;
 
-    public NetSetClientID(int data)
+    public ServerToClientHandShake(List<(int clientID, string clientName)> data)
     {
         this.data = data;
     }
 
-    public NetSetClientID(byte[] data)
+    public ServerToClientHandShake(byte[] data)
     {
         this.data = Deserialize(data);
     }
 
-    public int GetData()
+    public List<(int clientID, string clientName)> GetData()
     {
         return data;
     }
 
-    public int Deserialize(byte[] message)
+    public List<(int clientID, string clientName)> Deserialize(byte[] message)
     {
-        int outdata;
+        List<(int clientID, string clientName)> outData = new List<(int, string)>();
 
-        outdata = BitConverter.ToInt32(message, sizeof(int));
+        int listCount = BitConverter.ToInt32(message, sizeof(int));
 
-        return outdata;
+        int offSet = sizeof(int) * 2;
+
+        for (int i = 0; i < listCount; i++)
+        {
+            int clientID = BitConverter.ToInt32(message, offSet);
+            offSet += sizeof(int);
+            int clientNameLength = BitConverter.ToInt32(message, offSet);
+            string name = MessageChecker.DeserializeString(message, offSet);
+            offSet += sizeof(char) * clientNameLength + sizeof(int);
+
+            outData.Add((clientID, name));
+        }
+
+        return outData;
     }
+
 
     public MessageType GetMessageType()
     {
-        return MessageType.SetClientID;
+        return MessageType.ServerToClientHandShake;
     }
 
     public byte[] Serialize()
     {
-        List<byte> outData = new();
+        List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
-        outData.AddRange(BitConverter.GetBytes(data));
+
+        outData.AddRange(BitConverter.GetBytes(data.Count));
+
+        foreach ((int clientID, string clientName) clientInfo in data)
+        {
+            outData.AddRange(BitConverter.GetBytes(clientInfo.clientID)); // ID del client
+            outData.AddRange(MessageChecker.SerializeString(clientInfo.clientName.ToCharArray())); //Nombre
+        }
 
         return outData.ToArray();
     }
 }
 
-public class NetConsole : IMessage<char[]>
+[Serializable]
+public class NetMessage : IMessage<char[]>
 {
     char[] data;
 
-    public NetConsole(char[] data)
+
+    public NetMessage(char[] data)
     {
         this.data = data;
     }
 
-    public NetConsole(byte[] data)
+    public NetMessage(byte[] data)
     {
         this.data = Deserialize(data);
     }
@@ -188,30 +206,19 @@ public class NetConsole : IMessage<char[]>
 
     public char[] Deserialize(byte[] message)
     {
-        int dataSize = message.Length - sizeof(int) / sizeof(char);
+        string text = "";
 
-        char[] outdata = new char[dataSize];
-
-        for (int i = 0; i < dataSize; i++)
+        if (MessageChecker.DeserializeCheckSum(message))
         {
-            outdata[i] = BitConverter.ToChar(message, sizeof(int) + i * sizeof(char));
+            text = MessageChecker.DeserializeString(message, sizeof(int));
+        }
+        else
+        {
+            text = "Message corrupted.";
+            Debug.LogError(text);
         }
 
-        return outdata;
-    }
-
-    public static void Deserialize(byte[] message, out char[] outdata, out int sum)
-    {
-        int dataSize = (message.Length - sizeof(int) * 2) / sizeof(char);
-
-        outdata = new char[dataSize];
-
-        for (int i = 0; i < dataSize; i++)
-        {
-            outdata[i] = BitConverter.ToChar(message, sizeof(int) + i * sizeof(char));
-        }
-
-        sum = BitConverter.ToInt32(message, message.Length - sizeof(int));
+        return text.ToCharArray();
     }
 
     public MessageType GetMessageType()
@@ -221,33 +228,122 @@ public class NetConsole : IMessage<char[]>
 
     public byte[] Serialize()
     {
-        List<byte> outData = new();
+        List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
 
-        int sum = 0;
+        outData.AddRange(MessageChecker.SerializeString(data));
 
-        for (int i = 0; i < data.Length; i++)
-        {
-            outData.AddRange(BitConverter.GetBytes(data[i]));
-            sum += data[i];
-        }
-
-        outData.AddRange(BitConverter.GetBytes(sum));
-
-        Debug.Log(data.ToString());
-        Debug.Log(sum);
+        outData.AddRange(MessageChecker.SerializeCheckSum(outData));
 
         return outData.ToArray();
     }
 }
 
-public class NetDisconnection
+public class NetPing
 {
-    public void Disconnect(UdpConnection udpConnection)
+    public MessageType GetMessageType()
     {
-        udpConnection.Close();
-        Debug.Log("Disconnected");
-        Application.Quit();
+        return MessageType.Ping;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new List<byte>();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+
+        return outData.ToArray();
+    }
+}
+
+public class NetDisconnection : IMessage<int>
+{
+    int clientToDisconect;
+
+    public NetDisconnection(int clientToDisconect)
+    {
+        this.clientToDisconect = clientToDisconect;
+    }
+
+    public NetDisconnection(byte[] data)
+    {
+        this.clientToDisconect = Deserialize(data);
+    }
+
+    public int Deserialize(byte[] message)
+    {
+        return BitConverter.ToInt32(message, sizeof(int));
+    }
+
+    public MessageType GetMessageType()
+    {
+        return MessageType.Disconnection;
+    }
+
+    public int GetData()
+    {
+        return clientToDisconect;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new List<byte>();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+        outData.AddRange(BitConverter.GetBytes(clientToDisconect));
+
+        return outData.ToArray();
+    }
+}
+
+public class NetErrorMessage : IMessage<string>
+{
+    string error;
+
+    public NetErrorMessage(string error)
+    {
+        this.error = error;
+    }
+    public NetErrorMessage(byte[] message)
+    {
+        error = Deserialize(message);
+    }
+
+    public string Deserialize(byte[] message)
+    {
+        if (MessageChecker.DeserializeCheckSum(message))
+        {
+
+            error = MessageChecker.DeserializeString(message, sizeof(int));
+        }
+        else
+        {
+            error = "Corrupted Package";
+            Debug.LogError(error);
+        }
+
+        return error;
+    }
+
+    public MessageType GetMessageType()
+    {
+        return MessageType.Error;
+    }
+
+    public string GetData()
+    {
+        return error;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new List<byte>();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+        outData.AddRange(MessageChecker.SerializeString(error.ToCharArray()));
+        outData.AddRange(MessageChecker.SerializeCheckSum(outData));
+
+        return outData.ToArray();
     }
 }

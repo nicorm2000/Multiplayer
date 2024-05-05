@@ -16,16 +16,19 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     {
         if (inputMessage.text != "")
         {
+            string name = NetworkManager.Instance.userName + ": ";
+            str = name + str;
+
             if (NetworkManager.Instance.isServer)
             {
-                NetConsole netConsole = new NetConsole(str.ToCharArray());
-                NetworkManager.Instance.Broadcast(netConsole.Serialize());
+                NetMessage netMessage = new(str.ToCharArray());
+                NetworkManager.Instance.Broadcast(netMessage.Serialize());
                 messages.text += str + System.Environment.NewLine;
             }
             else
             {
-                NetConsole netConsole = new NetConsole(str.ToCharArray());
-                NetworkManager.Instance.SendToServer(netConsole.Serialize());
+                NetMessage netMessage = new(str.ToCharArray());
+                NetworkManager.Instance.SendToServer(netMessage.Serialize());
             }
 
             inputMessage.ActivateInputField();

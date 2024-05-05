@@ -69,29 +69,29 @@ public class PingPong
 
     private void CheckTimeUntilDisconection()
     {
-    //    if (NetworkManager.Instance.isServer)
-    //    {
-    //        foreach (int clientID in lastMessageReceivedFromClients.Keys)
-    //        {
-    //            if (lastMessageReceivedFromClients[clientID] > timeUntilDisconnection)
-    //            {
-    //                NetworkManager.Instance.RemoveClient(clientID);
-    //
-    //                NetDisconnection netDisconnection = new NetDisconnection(clientID);
-    //                NetworkManager.Instance.Broadcast(netDisconnection.Serialize());
-    //            }
-    //        }
-    //    }
-    //    else
-    //    {
-    //        if (lastMessageReceivedFromServer > timeUntilDisconnection)
-    //        {
-    //            NetDisconnection netDisconnection = new NetDisconnection(NetworkManager.Instance.actualClientId);
-    //            NetworkManager.Instance.SendToServer(netDisconnection.Serialize());
-    //
-    //            NetworkManager.Instance.DisconectPlayer();
-    //        }
-    //    }
+        if (NetworkManager.Instance.isServer)
+        {
+            foreach (int clientID in lastMessageReceivedFromClients.Keys)
+            {
+                if (lastMessageReceivedFromClients[clientID] > timeUntilDisconnection)
+                {
+                    NetworkManager.Instance.RemoveClient(clientID);
+    
+                    NetDisconnection netDisconnection = new(clientID);
+                    NetworkManager.Instance.Broadcast(netDisconnection.Serialize());
+                }
+            }
+        }
+        else
+        {
+            if (lastMessageReceivedFromServer > timeUntilDisconnection)
+            {
+                NetDisconnection netDisconnection = new(NetworkManager.Instance.actualClientId);
+                NetworkManager.Instance.SendToServer(netDisconnection.Serialize());
+    
+                NetworkManager.Instance.DisconectPlayer();
+            }
+        }
     }
     
     private void SendPingMessage()

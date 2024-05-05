@@ -42,12 +42,12 @@ public class PingPong
 
         if (sendMessageCounter > secondsPerCheck) //Every 1 second I send a message
         {
-            //SendPingMessage();
+            SendPingMessage();
             sendMessageCounter = 0;
         }
 
         CheckActivityCounter();
-        //CheckTimeUntilDisconection();
+        CheckTimeUntilDisconection();
     }
 
     private void CheckActivityCounter()
@@ -67,8 +67,8 @@ public class PingPong
         }
     }
 
-    //private void CheckTimeUntilDisconection()
-    //{
+    private void CheckTimeUntilDisconection()
+    {
     //    if (NetworkManager.Instance.isServer)
     //    {
     //        foreach (int clientID in lastMessageReceivedFromClients.Keys)
@@ -92,19 +92,19 @@ public class PingPong
     //            NetworkManager.Instance.DisconectPlayer();
     //        }
     //    }
-    //}
-    //
-    //private void SendPingMessage()
-    //{
-    //    NetPing netPing = new NetPing();
-    //
-    //    if (NetworkManager.Instance.isServer)
-    //    {
-    //        NetworkManager.Instance.Broadcast(netPing.Serialize());
-    //    }
-    //    else
-    //    {
-    //        NetworkManager.Instance.SendToServer(netPing.Serialize());
-    //    }
-    //}
+    }
+    
+    private void SendPingMessage()
+    {
+        NetPing netPing = new();
+    
+        if (NetworkManager.Instance.isServer)
+        {
+            NetworkManager.Instance.Broadcast(netPing.Serialize());
+        }
+        else
+        {
+            NetworkManager.Instance.SendToServer(netPing.Serialize());
+        }
+    }
 }

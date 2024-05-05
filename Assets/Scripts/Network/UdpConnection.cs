@@ -15,8 +15,8 @@ public class UdpConnection
     private IReceiveData receiver = null;
     private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
 
-    object handler = new object();
-    
+    private object handler = new();
+
     public UdpConnection(int port, IReceiveData receiver = null)
     {
         connection = new UdpClient(port);
@@ -48,13 +48,12 @@ public class UdpConnection
             while (dataReceivedQueue.Count > 0)
             {
                 DataReceived dataReceived = dataReceivedQueue.Dequeue();
-                if (receiver != null)
-                    receiver.OnReceiveData(dataReceived.data, dataReceived.ipEndPoint);
+                receiver?.OnReceiveData(dataReceived.data, dataReceived.ipEndPoint);
             }
         }
     }
 
-    void OnReceive(IAsyncResult ar)
+    private void OnReceive(IAsyncResult ar)
     {
         try
         {
@@ -66,7 +65,7 @@ public class UdpConnection
                 dataReceivedQueue.Enqueue(dataReceived);
             }
         }
-        catch(SocketException e)
+        catch (SocketException e)
         {
             // This happens when a client disconnects, as we fail to send to that port.
             UnityEngine.Debug.LogError("[UdpConnection] " + e.Message);
@@ -85,15 +84,13 @@ public class UdpConnection
         connection.Send(data, data.Length, ipEndpoint);
     }
 
-    public static long IPToLong(IPAddress ipAdress)
+    public static long IPToLong(IPAddress ipAddress)
     {
-        byte[] bytes = ipAdress.GetAddressBytes();
-
+        byte[] bytes = ipAddress.GetAddressBytes();
         if (BitConverter.IsLittleEndian)
         {
             Array.Reverse(bytes);
         }
-
         return BitConverter.ToUInt32(bytes, 0);
     }
 }

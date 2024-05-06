@@ -12,7 +12,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
         this.gameObject.SetActive(false);
     }
 
-    void OnEndEdit(string str)
+    private void OnEndEdit(string str)
     {
         if (inputMessage.text != "")
         {

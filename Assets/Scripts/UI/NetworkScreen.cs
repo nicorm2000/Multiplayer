@@ -20,7 +20,7 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
         startServerBtn.onClick.AddListener(OnStartServerBtnClick);
     }
 
-    void OnConnectBtnClick()
+    private void OnConnectBtnClick()
     {
         IPAddress ipAddress = IPAddress.Parse(addressInputField.text);
         int port = System.Convert.ToInt32(portInputField.text);
@@ -30,14 +30,14 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
         SwitchToChatScreen();
     }
 
-    void OnStartServerBtnClick()
+    private void OnStartServerBtnClick()
     {
         int port = System.Convert.ToInt32(portInputField.text);
         NetworkManager.Instance.StartServer(port);
         SwitchToChatScreen();
     }
 
-    void SwitchToChatScreen()
+    private void SwitchToChatScreen()
     {
         ChatScreen.Instance.gameObject.SetActive(true);
         this.gameObject.SetActive(false);
@@ -57,7 +57,7 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
         Invoke(nameof(TurnOffErrorPanel), 3.0f);
     }
 
-    void TurnOffErrorPanel()
+    private void TurnOffErrorPanel()
     {
         panelError.SetActive(false);
     }

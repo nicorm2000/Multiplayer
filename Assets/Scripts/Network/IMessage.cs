@@ -10,10 +10,10 @@ public enum MessageType
     ClientToServerHandShake = -1,
     Console = 0,
     Position = 1,
-    NewCustomerNotice = 2,
+    BulletInstatiate = 2,
     Disconnection = 3,
-    ThereIsNoPlace = 4,
-    RepeatMessage = 5
+    UpdateLobbyTimer = 4,
+    UpdateGameplayTimer = 5
 };
 
 public interface IMessage<T>
@@ -45,7 +45,6 @@ public class ClientToServerNetHandShake : IMessage<(long, int, string)>
 
         outData.Item1 = BitConverter.ToInt64(message, 4);
         outData.Item2 = BitConverter.ToInt32(message, 12);
-
         outData.Item3 = MessageChecker.DeserializeString(message, sizeof(long) + sizeof(int) * 2);
 
         return outData;
@@ -66,40 +65,55 @@ public class ClientToServerNetHandShake : IMessage<(long, int, string)>
         List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
-
         outData.AddRange(BitConverter.GetBytes(data.Item1));
         outData.AddRange(BitConverter.GetBytes(data.Item2));
-
         outData.AddRange(MessageChecker.SerializeString(data.name.ToCharArray()));
 
         return outData.ToArray();
     }
 }
 
-public class NetVector3 : IMessage<UnityEngine.Vector3>
+public class NetVector3 : IMessage<(int, Vector3)>
 {
-    private static ulong lastMsgID = 0;
-    private Vector3 data;
+    private (int id, Vector3 position) data;
 
-    public NetVector3(Vector3 data)
+    MessageType currentMessageType = MessageType.Position;
+
+    public NetVector3((int, Vector3) data)
     {
         this.data = data;
     }
 
-    public Vector3 Deserialize(byte[] message)
+    public NetVector3(byte[] data)
     {
-        Vector3 outData;
+        this.data = Deserialize(data);
+    }
 
-        outData.x = BitConverter.ToSingle(message, 8);
-        outData.y = BitConverter.ToSingle(message, 12);
-        outData.z = BitConverter.ToSingle(message, 16);
+    public (int id, Vector3 position) GetData()
+    {
+        return data;
+    }
+
+    public (int, Vector3) Deserialize(byte[] message)
+    {
+        (int id, Vector3 position) outData;
+
+        outData.id = BitConverter.ToInt32(message, 4);
+        outData.position.x = BitConverter.ToSingle(message, 8);
+        outData.position.y = BitConverter.ToSingle(message, 12);
+        outData.position.z = BitConverter.ToSingle(message, 16);
 
         return outData;
     }
 
+    public void SetMessageType(MessageType type)
+    {
+        currentMessageType = type;
+    }
+
     public MessageType GetMessageType()
     {
-        return MessageType.Position;
+        return currentMessageType;
     }
 
     public byte[] Serialize()
@@ -107,10 +121,10 @@ public class NetVector3 : IMessage<UnityEngine.Vector3>
         List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
-        outData.AddRange(BitConverter.GetBytes(lastMsgID++));
-        outData.AddRange(BitConverter.GetBytes(data.x));
-        outData.AddRange(BitConverter.GetBytes(data.y));
-        outData.AddRange(BitConverter.GetBytes(data.z));
+        outData.AddRange(BitConverter.GetBytes(data.id));
+        outData.AddRange(BitConverter.GetBytes(data.position.x));
+        outData.AddRange(BitConverter.GetBytes(data.position.y));
+        outData.AddRange(BitConverter.GetBytes(data.position.z));
 
         return outData.ToArray();
     }
@@ -142,7 +156,6 @@ public class ServerToClientHandShake : IMessage<List<(int clientID, string clien
         List<(int clientID, string clientName)> outData = new List<(int, string)>();
 
         int listCount = BitConverter.ToInt32(message, sizeof(int));
-
         int offSet = sizeof(int) * 2;
 
         for (int i = 0; i < listCount; i++)
@@ -170,7 +183,6 @@ public class ServerToClientHandShake : IMessage<List<(int clientID, string clien
         List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
-
         outData.AddRange(BitConverter.GetBytes(data.Count));
 
         foreach ((int clientID, string clientName) clientInfo in data)
@@ -187,7 +199,6 @@ public class ServerToClientHandShake : IMessage<List<(int clientID, string clien
 public class NetMessage : IMessage<char[]>
 {
     char[] data;
-
 
     public NetMessage(char[] data)
     {
@@ -212,11 +223,6 @@ public class NetMessage : IMessage<char[]>
         {
             text = MessageChecker.DeserializeString(message, sizeof(int));
         }
-        else
-        {
-            text = "Message corrupted.";
-            Debug.LogError(text);
-        }
 
         return text.ToCharArray();
     }
@@ -231,9 +237,7 @@ public class NetMessage : IMessage<char[]>
         List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
-
         outData.AddRange(MessageChecker.SerializeString(data));
-
         outData.AddRange(MessageChecker.SerializeCheckSum(outData));
 
         return outData.ToArray();
@@ -250,7 +254,6 @@ public class NetPing
     public byte[] Serialize()
     {
         List<byte> outData = new List<byte>();
-
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
 
         return outData.ToArray();
@@ -312,15 +315,10 @@ public class NetErrorMessage : IMessage<string>
 
     public string Deserialize(byte[] message)
     {
+
         if (MessageChecker.DeserializeCheckSum(message))
         {
-
             error = MessageChecker.DeserializeString(message, sizeof(int));
-        }
-        else
-        {
-            error = "Corrupted Package";
-            Debug.LogError(error);
         }
 
         return error;
@@ -342,6 +340,55 @@ public class NetErrorMessage : IMessage<string>
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
         outData.AddRange(MessageChecker.SerializeString(error.ToCharArray()));
+        outData.AddRange(MessageChecker.SerializeCheckSum(outData));
+
+        return outData.ToArray();
+    }
+}
+
+public class NetUpdateTimer : IMessage<float>
+{
+    float timer;
+    MessageType currentMessageType = MessageType.UpdateLobbyTimer;
+    public NetUpdateTimer(float timer)
+    {
+        this.timer = timer;
+    }
+
+    public NetUpdateTimer(byte[] data)
+    {
+        this.timer = Deserialize(data);
+    }
+
+    public float Deserialize(byte[] message)
+    {
+        if (MessageChecker.DeserializeCheckSum(message))
+        {
+            return BitConverter.ToSingle(message, sizeof(int));
+        }
+
+        return -1f;
+    }
+    public float GetData()
+    {
+        return timer;
+    }
+
+    public void SetMessageType(MessageType type)
+    {
+        currentMessageType = type;
+    }
+
+    public MessageType GetMessageType()
+    {
+        return currentMessageType;
+    }
+
+    public byte[] Serialize()
+    {
+        List<byte> outData = new List<byte>();
+
+        outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
         outData.AddRange(MessageChecker.SerializeCheckSum(outData));
 
         return outData.ToArray();

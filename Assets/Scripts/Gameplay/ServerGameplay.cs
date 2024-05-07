@@ -15,15 +15,37 @@ public class ServerGameplay : MonoBehaviour
     private NetworkManager nm;
     private States currentState;
 
+    bool initLobby = true;
+    bool initGameplay = true;
+    bool counterInit = false;
+
     private float counter = 0;
+
+    bool clientLobbyTimer = false;
+    bool clientGameplayTimer = false;
 
     private void Start()
     {
         gm = GameManager.Instance;
         nm = NetworkManager.Instance;
+
+        gm.OnInitLobbyTimer += SetLobbyTimer;
+        gm.OnInitGameplayTimer += SetGameplayTimer;
     }
 
     private void Update()
+    {
+        if (nm.isServer)
+        {
+            UpdateServer();
+        }
+        else
+        {
+            UpdateClient();
+        }
+    }
+
+    private void UpdateServer()
     {
         if (nm != null && nm.isServer)
         {
@@ -38,39 +60,60 @@ public class ServerGameplay : MonoBehaviour
 
                     if (nm.clients.Count >= minPlayerToInitCounter)
                     {
-                        counter += Time.deltaTime;
-                        gm.timer.text = counter.ToString("F2") + "s";
+                        counterInit = true;
 
-                        ///NetUpdateTimer netUpdateLobbyTimer = new NetUpdateTimer(counter);
-                        ///netUpdateLobbyTimer.SetMessageType(MessageType.UpdateLobbyTimer);
-                        ///nm.Broadcast(netUpdateLobbyTimer.Serialize());
+                        if (initLobby)
+                        {
+                            NetUpdateTimer netUpdateLobbyTimer = new(true);
+                            netUpdateLobbyTimer.SetMessageType(MessageType.UpdateLobbyTimer);
+                            nm.Broadcast(netUpdateLobbyTimer.Serialize());
+                            initLobby = false;
+                        }
+
+                        counter += Time.deltaTime;
+                        gm.timer.text = counter.ToString("F2");
 
                         if (counter >= minutesInLobby)
                         {
+                            counter = 0;
                             gm.timer.text = "";
-                            ///nm.matchOnGoing = true;
+                            nm.matchOnGoing = true;
                             currentState = States.Game;
                         }
                     }
                     else
                     {
-                        counter = 0;
-                        Debug.Log(gm);
-                        gm.timer.text = "";
-                        currentState = States.Init;
+                        if (counterInit)
+                        {
+                            NetUpdateTimer netUpdateLobbyTimer = new(false);
+                            netUpdateLobbyTimer.SetMessageType(MessageType.UpdateLobbyTimer);
+                            nm.Broadcast(netUpdateLobbyTimer.Serialize());
+
+                            counterInit = false;
+                            initLobby = true;
+
+                            counter = 0;
+                            gm.timer.text = "";
+                            currentState = States.Init;
+                        }
                     }
 
                     break;
                 case States.Game:
 
-                    minutesGameplay -= Time.deltaTime;
-                    gm.timer.text = minutesGameplay.ToString("F2") + "s";
+                    if (initGameplay)
+                    {
+                        NetUpdateTimer netUpdateGameplayTimer = new(true);
+                        netUpdateGameplayTimer.SetMessageType(MessageType.UpdateGameplayTimer);
+                        nm.Broadcast(netUpdateGameplayTimer.Serialize());
 
-                    ///NetUpdateTimer netUpdateGameplayTimer = new NetUpdateTimer(minutesGameplay);
-                    ///netUpdateGameplayTimer.SetMessageType(MessageType.UpdateGameplayTimer);
-                    ///nm.Broadcast(netUpdateGameplayTimer.Serialize());
+                        initGameplay = false;
+                    }
 
-                    if (minutesGameplay <= 0)
+                    counter += Time.deltaTime;
+                    gm.timer.text = counter.ToString("F2");
+
+                    if (counter >= minutesGameplay)
                     {
                         gm.timer.text = "";
                         currentState = States.Finish;
@@ -92,5 +135,33 @@ public class ServerGameplay : MonoBehaviour
                     break;
             }
         }
+    }
+
+    private void UpdateClient()
+    {
+        if (clientLobbyTimer)
+        {
+            counter += Time.deltaTime;
+            gm.timer.text = counter.ToString("F2");
+        }
+
+        if (clientGameplayTimer)
+        {
+            clientLobbyTimer = false;
+
+            counter += Time.deltaTime;
+            gm.timer.text = counter.ToString("F2");
+        }
+    }
+
+    private void SetGameplayTimer()
+    {
+        clientGameplayTimer = true;
+        counter = 0;
+    }
+
+    private void SetLobbyTimer(bool init)
+    {
+        clientLobbyTimer = init;
     }
 }

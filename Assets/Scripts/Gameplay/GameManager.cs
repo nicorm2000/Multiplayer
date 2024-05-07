@@ -9,6 +9,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public Action<int> OnNewPlayer;
     public Action<int> OnRemovePlayer;
+    public Action<bool> OnInitLobbyTimer;
+    public Action OnInitGameplayTimer;
 
     public Action<int, Vector3> OnInstantiateBullet;
 

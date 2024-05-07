@@ -237,14 +237,19 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 break;
             case MessageType.UpdateLobbyTimer:
 
-                NetUpdateTimer netUpdateLobbyTimer = new(data);
-                gm.timer.text = netUpdateLobbyTimer.GetData().ToString("F2") + "s";
+                if (!isServer)
+                {
+                    NetUpdateTimer netUpdateTimer = new(data);
+                    gm.OnInitLobbyTimer?.Invoke(netUpdateTimer.GetData());
+                }
 
                 break;
             case MessageType.UpdateGameplayTimer:
 
-                NetUpdateTimer netUpdateGameplayTimer = new(data);
-                gm.timer.text = netUpdateGameplayTimer.GetData().ToString("F2") + "s";
+                if (!isServer)
+                {
+                    gm.OnInitGameplayTimer?.Invoke();
+                }
 
                 break;
             case MessageType.Error:

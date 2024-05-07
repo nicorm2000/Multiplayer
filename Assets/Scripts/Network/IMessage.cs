@@ -13,7 +13,8 @@ public enum MessageType
     BulletInstatiate = 2,
     Disconnection = 3,
     UpdateLobbyTimer = 4,
-    UpdateGameplayTimer = 5
+    UpdateGameplayTimer = 5,
+    WinCondition = 6
 };
 
 public interface IMessage<T>
@@ -346,11 +347,11 @@ public class NetErrorMessage : IMessage<string>
     }
 }
 
-public class NetUpdateTimer : IMessage<float>
+public class NetUpdateTimer : IMessage<bool>
 {
-    float timer;
+    bool timer;
     MessageType currentMessageType = MessageType.UpdateLobbyTimer;
-    public NetUpdateTimer(float timer)
+    public NetUpdateTimer(bool timer)
     {
         this.timer = timer;
     }
@@ -360,16 +361,17 @@ public class NetUpdateTimer : IMessage<float>
         this.timer = Deserialize(data);
     }
 
-    public float Deserialize(byte[] message)
+    public bool Deserialize(byte[] message)
     {
         if (MessageChecker.DeserializeCheckSum(message))
         {
-            return BitConverter.ToSingle(message, sizeof(int));
+            return BitConverter.ToBoolean(message, sizeof(int));
         }
 
-        return -1f;
+        return false;
     }
-    public float GetData()
+
+    public bool GetData()
     {
         return timer;
     }
@@ -389,6 +391,7 @@ public class NetUpdateTimer : IMessage<float>
         List<byte> outData = new List<byte>();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+        outData.AddRange(BitConverter.GetBytes(timer));
         outData.AddRange(MessageChecker.SerializeCheckSum(outData));
 
         return outData.ToArray();

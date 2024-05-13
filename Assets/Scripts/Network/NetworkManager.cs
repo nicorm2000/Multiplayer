@@ -264,7 +264,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
             case MessageType.Winner:
 
                 NetIDMessage netIDMessage = new(data);
-                string winText = $"Congratulations! \n {players[netIDMessage.GetData()].name} has won the game!";
+                string winText = $"Congratulations! \n {players[netIDMessage.GetData()].name} won the game!";
 
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);

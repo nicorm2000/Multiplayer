@@ -52,9 +52,8 @@ public class PlayerController : MonoBehaviour
         if (Input.GetMouseButtonDown(0) && canShoot)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(ray, out RaycastHit hit))
             {
                 Vector3 mousePosition = hit.point;
                 mousePosition.z = 0f; // Z value is the same for both players due to 3D
@@ -94,11 +93,10 @@ public class PlayerController : MonoBehaviour
     public void OnReciveDamage() // Server is the only one using this method
     {
         health--;
-        Debug.Log(clientID + " - " + health);
 
         if (health <= 0)
         {
-            NetDisconnection netDisconnection = new NetDisconnection(clientID);
+            NetIDMessage netDisconnection = new (clientID);
             nm.Broadcast(netDisconnection.Serialize());
             nm.RemoveClient(clientID);
         }

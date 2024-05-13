@@ -221,7 +221,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 break;
             case MessageType.Disconnection:
 
-                NetDisconnection netDisconnection = new(data);
+                NetIDMessage netDisconnection = new (data);
                 int playerID = netDisconnection.GetData();
                 if (isServer)
                 {
@@ -260,6 +260,17 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 connection.Close();
 
                 break;
+
+            case MessageType.Winner:
+
+                NetIDMessage netIDMessage = new(data);
+                string winText = $"Congratulations! \n {players[netIDMessage.GetData()].name} has won the game!";
+
+                NetworkScreen.Instance.SwitchToMenuScreen();
+                NetworkScreen.Instance.ShowWinPanel(winText);
+
+                break;
+
             default:
                 break;
         }
@@ -361,7 +372,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         if (!isServer)
         {
-            NetDisconnection netDisconnection = new(actualClientId);
+            NetIDMessage netDisconnection = new (actualClientId);
             SendToServer(netDisconnection.Serialize());
         }
         else
@@ -375,9 +386,11 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         if (isServer)
         {
-            foreach (int clientId in clients.Keys)
+            List<int> clientIdsToRemove = new List<int>(clients.Keys);
+
+            foreach (int clientId in clientIdsToRemove)
             {
-                NetDisconnection netDisconnection = new(clientId);
+                NetIDMessage netDisconnection = new (clientId);
                 Broadcast(netDisconnection.Serialize());
                 RemoveClient(clientId);
             }

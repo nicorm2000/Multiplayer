@@ -14,6 +14,9 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     [SerializeField] GameObject panelError;
     [SerializeField] TextMeshProUGUI errorText;
 
+    [SerializeField] GameObject winPanel;
+    [SerializeField] TextMeshProUGUI winText;
+
     protected override void Initialize()
     {
         connectBtn.onClick.AddListener(OnConnectBtnClick);
@@ -60,5 +63,18 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     private void TurnOffErrorPanel()
     {
         panelError.SetActive(false);
+    }
+
+    public void ShowWinPanel(string winnerText)
+    {
+        winPanel.SetActive(true);
+
+        winText.text = winnerText;
+        Invoke(nameof(TurnOffWinPanel), 5.0f);
+    }
+
+    private void TurnOffWinPanel()
+    {
+        winPanel.SetActive(false);
     }
 }

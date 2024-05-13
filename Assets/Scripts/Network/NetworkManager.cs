@@ -156,7 +156,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 {
                     if (ipToId.ContainsKey(ip))
                     {
-                        checkActivity.ReciveClientToServerPingMessage(ipToId[ip]);
+                        checkActivity.RecieveClientToServerPingMessage(ipToId[ip]);
+                        checkActivity.CalculateLatencyFromClients(ipToId[ip]);
                     }
                     else
                     {
@@ -165,7 +166,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 }
                 else
                 {
-                    checkActivity.ReciveServerToClientPingMessage();
+                    checkActivity.RecieveServerToClientPingMessage();
+                    checkActivity.CalculateLatencyFromServer();
                 }
 
                 break;

@@ -6,13 +6,15 @@ public class PingPong
 {
     private int timeUntilDisconnection = 5;
 
-    private Dictionary<int, float> lastMessageReceivedFromClients = new Dictionary<int, float>(); //Server use
+    private Dictionary<int, float> lastMessageReceivedFromClients = new(); //Server use
     float lastMessageReceivedFromServer = 0; //Client use
 
     private float sendMessageCounter = 0;
     private float secondsPerCheck = 1.0f;
 
-    private DateTime currentDateTime = DateTime.UtcNow;
+    private Dictionary<int, float> latencyFromClients = new(); //Server use
+    float latencyFromServer = 0;
+    DateTime currentDateTime;
 
     public PingPong() //Calculate latency/ms
     {
@@ -29,12 +31,12 @@ public class PingPong
         lastMessageReceivedFromClients.Remove(idToRemove);
     }
 
-    public void ReciveServerToClientPingMessage()
+    public void RecieveServerToClientPingMessage()
     {
         lastMessageReceivedFromServer = 0;
     }
 
-    public void ReciveClientToServerPingMessage(int playerID)
+    public void RecieveClientToServerPingMessage(int playerID)
     {
         lastMessageReceivedFromClients[playerID] = 0;
     }
@@ -109,5 +111,21 @@ public class PingPong
         {
             NetworkManager.Instance.SendToServer(netPing.Serialize());
         }
+
+        currentDateTime = DateTime.UtcNow;
+    }
+
+    public void CalculateLatencyFromServer()
+    {
+        TimeSpan newDateTime = DateTime.UtcNow - currentDateTime;
+        latencyFromServer = (float)newDateTime.Milliseconds;
+        //Debug.Log("Latency from Server " + latencyFromServer / 1000);
+    }
+
+    public void CalculateLatencyFromClients(int clientID)
+    {
+        TimeSpan newDateTime = DateTime.UtcNow - currentDateTime;
+        latencyFromClients[clientID] = (float)newDateTime.TotalMilliseconds;
+        //Debug.Log("Latency from client " + clientID + " - " + latencyFromClients[clientID] /1000);
     }
 }

@@ -16,7 +16,7 @@ public class PingPong
     float latencyFromServer = 0;
     DateTime currentDateTime;
 
-    public PingPong() //Calculate latency/ms
+    public PingPong()
     {
         
     }
@@ -45,7 +45,7 @@ public class PingPong
     {
         sendMessageCounter += Time.deltaTime;
 
-        if (sendMessageCounter > secondsPerCheck) //Every 1 second I send a message
+        if (sendMessageCounter > secondsPerCheck) // Every 1 second I send a message
         {
             SendPingMessage();
             sendMessageCounter = 0;
@@ -82,7 +82,7 @@ public class PingPong
                 {
                     NetworkManager.Instance.RemoveClient(clientID);
 
-                    NetIDMessage netDisconnection = new (clientID);
+                    NetIDMessage netDisconnection = new (MessagePriority.Default, clientID);
                     NetworkManager.Instance.Broadcast(netDisconnection.Serialize());
                 }
             }
@@ -91,7 +91,7 @@ public class PingPong
         {
             if (lastMessageReceivedFromServer > timeUntilDisconnection)
             {
-                NetIDMessage netDisconnection = new (NetworkManager.Instance.actualClientId);
+                NetIDMessage netDisconnection = new (MessagePriority.Default, NetworkManager.Instance.actualClientId);
                 NetworkManager.Instance.SendToServer(netDisconnection.Serialize());
     
                 NetworkManager.Instance.DisconectPlayer();
@@ -127,5 +127,19 @@ public class PingPong
         TimeSpan newDateTime = DateTime.UtcNow - currentDateTime;
         latencyFromClients[clientID] = (float)newDateTime.TotalMilliseconds;
         //Debug.Log("Latency from client " + clientID + " - " + latencyFromClients[clientID] /1000);
+    }
+    public float GetLatencyFormClient(int clientId)
+    {
+        if (latencyFromClients.ContainsKey(clientId))
+        {
+            return latencyFromClients[clientId];
+        }
+
+        return -1;
+    }
+
+    public float GetLatencyFormServer()
+    {
+        return latencyFromServer;
     }
 }

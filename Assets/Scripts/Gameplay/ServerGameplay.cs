@@ -5,7 +5,7 @@ enum States { Init, Lobby, Game, Finish };
 public class ServerGameplay : MonoBehaviour
 {
 
-    private int minutesInLobby = 120;
+    private int minutesInLobby = 10;
     private float minutesGameplay = 180;
     private float timeUntilCloseServer = 5;
 
@@ -64,8 +64,8 @@ public class ServerGameplay : MonoBehaviour
 
                         if (initLobby)
                         {
-                            NetUpdateTimer netUpdateLobbyTimer = new(true);
-                            netUpdateLobbyTimer.SetMessageType(MessageType.UpdateLobbyTimer);
+                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, true);
+                            netUpdateLobbyTimer.CurrentMessageType = MessageType.UpdateLobbyTimer;
                             nm.Broadcast(netUpdateLobbyTimer.Serialize());
                             initLobby = false;
                         }
@@ -85,8 +85,8 @@ public class ServerGameplay : MonoBehaviour
                     {
                         if (counterInit)
                         {
-                            NetUpdateTimer netUpdateLobbyTimer = new(false);
-                            netUpdateLobbyTimer.SetMessageType(MessageType.UpdateLobbyTimer);
+                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, false);
+                            netUpdateLobbyTimer.CurrentMessageType = MessageType.UpdateLobbyTimer;
                             nm.Broadcast(netUpdateLobbyTimer.Serialize());
 
                             counterInit = false;
@@ -103,8 +103,8 @@ public class ServerGameplay : MonoBehaviour
 
                     if (initGameplay)
                     {
-                        NetUpdateTimer netUpdateGameplayTimer = new(true);
-                        netUpdateGameplayTimer.SetMessageType(MessageType.UpdateGameplayTimer);
+                        NetUpdateTimer netUpdateGameplayTimer = new (MessagePriority.NonDisposable, true);
+                        netUpdateGameplayTimer.CurrentMessageType = MessageType.UpdateGameplayTimer;
                         nm.Broadcast(netUpdateGameplayTimer.Serialize());
 
                         initGameplay = false;
@@ -164,6 +164,7 @@ public class ServerGameplay : MonoBehaviour
 
     private void SetLobbyTimer(bool init)
     {
+        gm.timer.text = "";
         clientLobbyTimer = init;
     }
 
@@ -184,8 +185,8 @@ public class ServerGameplay : MonoBehaviour
             }
         }
 
-        NetIDMessage netIDMessage = new (playerWithMaxHealth.clientID);
-        netIDMessage.SetMessageType(MessageType.Winner);
+        NetIDMessage netIDMessage = new (MessagePriority.Default, playerWithMaxHealth.clientID);
+        netIDMessage.CurrentMessageType = MessageType.Winner;
         nm.Broadcast(netIDMessage.Serialize());
     }
 }

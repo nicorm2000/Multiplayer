@@ -27,7 +27,6 @@ public class BulletController : MonoBehaviour
         {
             if (collision.transform.TryGetComponent(out PlayerController pc))
             {
-                Debug.Log(pc.clientID + " - " + originPlayerID + " - " + (pc.clientID != originPlayerID));
                 if (pc.clientID != originPlayerID)
                 {
                     GameManager.Instance.OnBulletHit?.Invoke(pc.clientID);

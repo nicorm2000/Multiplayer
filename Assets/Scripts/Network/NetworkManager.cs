@@ -67,6 +67,10 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     int maxPlayersPerServer = 4;
     public bool matchOnGoing = false;
 
+    public Queue<byte[]> clientConsoleMessage = new();
+    public Dictionary<int, Queue<byte[]>> serverConsoleMessage = new();
+    float resendPackageCounter = 0;
+
     private void Start()
     {
         gm = GameManager.Instance;
@@ -78,6 +82,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         isServer = true;
         this.port = port;
         connection = new UdpConnection(port, this);
+
         checkActivity = new PingPong();
     }
 
@@ -92,7 +97,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         connection = new UdpConnection(ip, port, this);
         checkActivity = new PingPong();
 
-        ClientToServerNetHandShake handShakeMesage = new((UdpConnection.IPToLong(ip), port, name));
+        ClientToServerNetHandShake handShakeMesage = new (MessagePriority.NonDisposable, (UdpConnection.IPToLong(ip), port, name));
         SendToServer(handShakeMesage.Serialize());
     }
 
@@ -110,14 +115,14 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
             if (isServer)
             {
-                List<(int, string)> playersInServer = new();
+                List<(int, string)> playersInServer = new ();
 
                 foreach (int id in clients.Keys)
                 {
                     playersInServer.Add((clients[id].id, clients[id].clientName));
                 }
 
-                ServerToClientHandShake serverToClient = new(playersInServer);
+                ServerToClientHandShake serverToClient = new (MessagePriority.NonDisposable, playersInServer);
                 Broadcast(serverToClient.Serialize());
             }
         }
@@ -134,7 +139,9 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         if (clients.ContainsKey(idToRemove))
         {
             Debug.Log("Removing client: " + idToRemove);
+
             checkActivity.RemoveClientForList(idToRemove);
+
             ipToId.Remove(clients[idToRemove].ipEndPoint);
             players.Remove(idToRemove);
             clients.Remove(idToRemove);
@@ -174,9 +181,11 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
             case MessageType.ServerToClientHandShake:
 
-                ServerToClientHandShake netGetClientID = new(data);
+                ServerToClientHandShake netGetClientID = new (data);
+
                 List<(int clientId, string userName)> playerList = netGetClientID.GetData();
-                for (int i = 0; i < playerList.Count; i++)
+
+                for (int i = 0; i < playerList.Count; i++) // First verify which client am i
                 {
                     if (playerList[i].userName == userName)
                     {
@@ -190,6 +199,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                     Debug.Log(playerList[i].clientId + " - " + playerList[i].userName);
                     Player playerToAdd = new Player(playerList[i].clientId, playerList[i].userName);
                     players.Add(playerList[i].clientId, playerToAdd);
+
                     gm.OnNewPlayer?.Invoke(playerToAdd.id);
                 }
 
@@ -214,6 +224,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
                 NetVector3 netBullet = new NetVector3(data);
                 gm.OnInstantiateBullet?.Invoke(netBullet.GetData().id, netBullet.GetData().position);
+
                 if (isServer)
                 {
                     BroadcastPlayerPosition(netBullet.GetData().id, data);
@@ -224,6 +235,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
             case MessageType.Disconnection:
 
                 NetIDMessage netDisconnection = new (data);
+
                 int playerID = netDisconnection.GetData();
                 if (isServer)
                 {
@@ -241,8 +253,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
                 if (!isServer)
                 {
-                    NetUpdateTimer netUpdateTimer = new(data);
-                    gm.OnInitLobbyTimer?.Invoke(netUpdateTimer.GetData());
+                    NetUpdateTimer netUpdate = new(data);
+                    gm.OnInitLobbyTimer?.Invoke(netUpdate.GetData());
                 }
 
                 break;
@@ -256,7 +268,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 break;
             case MessageType.Error:
 
-                NetErrorMessage netErrorMessage = new(data);
+                NetErrorMessage netErrorMessage = new (data);
+
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowErrorPanel(netErrorMessage.GetData());
                 connection.Close();
@@ -271,8 +284,16 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);
 
+                gm.EndMatch();
+
                 break;
 
+            case MessageType.Confirm:
+
+                clientConsoleMessage.Dequeue();
+                resendPackageCounter = 0;
+                Debug.Log("First item was deleted.");
+                break;
             default:
                 break;
         }
@@ -301,16 +322,42 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     void Update()
     {
+        // Flush the data in main thread
         if (connection != null)
         {
             connection.FlushReceiveData();
-            checkActivity?.UpdateCheckActivity();
+
+            if (checkActivity != null)
+            {
+                checkActivity.UpdateCheckActivity();
+            }
+
+            ResendPackage();
+        }
+    }
+
+    void ResendPackage()
+    {
+        if (clientConsoleMessage.Count > 0)
+        {
+            resendPackageCounter += Time.deltaTime;
+
+
+            if (!isServer)
+            {
+                if (resendPackageCounter >= checkActivity.GetLatencyFormServer() * 5)
+                {
+                    Debug.Log("New package sent.");
+                    SendToServer(clientConsoleMessage.Peek());
+                    resendPackageCounter = 0;
+                }
+            }
         }
     }
 
     void ReciveClientToServerHandShake(byte[] data, IPEndPoint ip)
     {
-        ClientToServerNetHandShake handShake = new(data);
+        ClientToServerNetHandShake handShake = new (data);
 
         if (!MatchOnGoing(ip) && CheckValidUserName(handShake.GetData().Item3, ip) && !ServerIsFull(ip))
         {
@@ -323,9 +370,10 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         if (matchOnGoing)
         {
-            NetErrorMessage netServerIsFull = new("Match has already started");
+            NetErrorMessage netServerIsFull = new ("Match has already started");
             Broadcast(netServerIsFull.Serialize(), ip);
         }
+
         return matchOnGoing;
     }
 
@@ -335,9 +383,10 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
         if (serverIsFull)
         {
-            NetErrorMessage netServerIsFull = new("Server is full");
+            NetErrorMessage netServerIsFull = new ("Server is full");
             Broadcast(netServerIsFull.Serialize(), ip);
         }
+
         return serverIsFull;
     }
 
@@ -347,11 +396,13 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         {
             if (userName == clients[clientID].clientName)
             {
-                NetErrorMessage netInvalidUserName = new("Invalid User Name");
+                NetErrorMessage netInvalidUserName = new ("Invalid User Name");
                 Broadcast(netInvalidUserName.Serialize(), ip);
+
                 return false;
             }
         }
+
         return true;
     }
 
@@ -359,7 +410,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         string messageText = "";
 
-        NetMessage netMessage = new(data);
+        NetMessage netMessage = new (data);
         messageText += new string(netMessage.GetData());
 
         if (isServer)
@@ -374,12 +425,13 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         if (!isServer)
         {
-            NetIDMessage netDisconnection = new (actualClientId);
+            NetIDMessage netDisconnection = new (MessagePriority.Default, actualClientId);
             SendToServer(netDisconnection.Serialize());
         }
         else
         {
-            NetErrorMessage netErrorMessage = new("Lost Connection To Server");
+            NetErrorMessage netErrorMessage = new ("Lost Connection To Server");
+            SendToServer(netErrorMessage.Serialize());
             CloseServer();
         }
     }
@@ -389,10 +441,9 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         if (isServer)
         {
             List<int> clientIdsToRemove = new List<int>(clients.Keys);
-
             foreach (int clientId in clientIdsToRemove)
             {
-                NetIDMessage netDisconnection = new (clientId);
+                NetIDMessage netDisconnection = new (MessagePriority.Default, clientId);
                 Broadcast(netDisconnection.Serialize());
                 RemoveClient(clientId);
             }
@@ -410,7 +461,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     private void UpdatePlayerPosition(byte[] data)
     {
-        NetVector3 netPosition = new(data);
+        NetVector3 netPosition = new (data);
         int clientId = netPosition.GetData().id;
 
         gm.UpdatePlayerPosition(netPosition.GetData());
@@ -428,9 +479,11 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
             while (iterator.MoveNext())
             {
                 int receiverClientId = iterator.Current.Key;
+
                 // Stops you from sending your own position
                 if (receiverClientId != senderClientId)
                 {
+                    // Checks both IpEndPoints, and if the sender is the same as the receptor, the loop continues without doing the Broadcast
                     if (clients[receiverClientId].ipEndPoint.Equals(clients[senderClientId].ipEndPoint)) continue;
                     Broadcast(data, clients[receiverClientId].ipEndPoint);
                 }

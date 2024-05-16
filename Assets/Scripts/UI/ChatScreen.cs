@@ -6,9 +6,11 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     public Text messages;
     public InputField inputMessage;
 
+    static int consoleMessageOrder = 0;
     protected override void Initialize()
     {
         inputMessage.onEndEdit.AddListener(OnEndEdit);
+
         this.gameObject.SetActive(false);
     }
 
@@ -19,21 +21,26 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
             string name = NetworkManager.Instance.userName + ": ";
             str = name + str;
 
+            consoleMessageOrder++;
+            NetMessage netMessage = new NetMessage(MessagePriority.Sorteable | MessagePriority.NonDisposable, str.ToCharArray());
+            netMessage.MessageOrder = consoleMessageOrder;
+
             if (NetworkManager.Instance.isServer)
             {
-                NetMessage netMessage = new(str.ToCharArray());
                 NetworkManager.Instance.Broadcast(netMessage.Serialize());
                 messages.text += str + System.Environment.NewLine;
             }
             else
             {
-                NetMessage netMessage = new(str.ToCharArray());
                 NetworkManager.Instance.SendToServer(netMessage.Serialize());
             }
+
+            NetworkManager.Instance.clientConsoleMessage.Enqueue(netMessage.Serialize());
 
             inputMessage.ActivateInputField();
             inputMessage.Select();
             inputMessage.text = "";
         }
+
     }
 }

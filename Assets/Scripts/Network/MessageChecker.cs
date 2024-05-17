@@ -4,15 +4,23 @@ using UnityEngine;
 
 public class MessageChecker
 {
-    public MessageType CheckMessageType(byte[] message)
+    public static MessagePriority CheckMessagePriority(byte[] message)
+    {
+        int messagePriority = BitConverter.ToInt32(message, 4);
+
+        return (MessagePriority)messagePriority;
+    }
+
+    public static MessageType CheckMessageType(byte[] message)
     {
         int messageType = BitConverter.ToInt32(message, 0);
+
         return (MessageType)messageType;
     }
 
     public static byte[] SerializeString(char[] charArray)
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         outData.AddRange(BitConverter.GetBytes(charArray.Length));
 
@@ -31,6 +39,7 @@ public class MessageChecker
         char[] charArray = new char[stringSize];
 
         indexToInit += sizeof(int);
+
         for (int i = 0; i < stringSize; i++)
         {
             charArray[i] = BitConverter.ToChar(message, indexToInit + sizeof(char) * i);
@@ -42,11 +51,12 @@ public class MessageChecker
     public static bool DeserializeCheckSum(byte[] message)
     {
         int messageSum = BitConverter.ToInt32(message, message.Length - sizeof(int));
+
         messageSum >>= 5;
 
         if (messageSum != message.Length)
         {
-            Debug.LogError("Message corrupted.");
+            Debug.LogError("Message is corrupted");
             return false;
         }
 

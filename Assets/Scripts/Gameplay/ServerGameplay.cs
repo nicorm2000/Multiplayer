@@ -1,12 +1,12 @@
+using System.Net;
 using UnityEngine;
 
 enum States { Init, Lobby, Game, Finish };
 
 public class ServerGameplay : MonoBehaviour
 {
-
     private int minutesInLobby = 10;
-    private float minutesGameplay = 180;
+    private float minutesGameplay = 30;
     private float timeUntilCloseServer = 5;
 
     private int minPlayerToInitCounter = 2;
@@ -15,22 +15,49 @@ public class ServerGameplay : MonoBehaviour
     private NetworkManager nm;
     private States currentState;
 
-    bool initLobby = true;
-    bool initGameplay = true;
-    bool counterInit = false;
+    private bool counterInit = false;
+
+    private bool initLobby = true;
+    private bool initGameplay = true;
 
     private float counter = 0;
 
-    bool clientLobbyTimer = false;
-    bool clientGameplayTimer = false;
+    private bool clientLobbyTimer = false;
+    private bool clientGameplayTimer = false;
+
 
     private void Start()
     {
         gm = GameManager.Instance;
         nm = NetworkManager.Instance;
 
+        nm.OnRecievedMessage += OnRecievedData;
+
         gm.OnInitLobbyTimer += SetLobbyTimer;
         gm.OnInitGameplayTimer += SetGameplayTimer;
+
+        gm.OnChangeLobbyPlayers += CheckForAddNewPlayer;
+    }
+
+    void CheckForAddNewPlayer(int clientID)
+    {
+        if (nm.isServer && currentState == States.Lobby && counterInit)
+        {
+            NetUpdateNewPlayersTimer timer = new (MessagePriority.Default, counter);
+            nm.Broadcast(timer.Serialize(), nm.clients[clientID].ipEndPoint);
+        }
+    }
+
+    void OnRecievedData(byte[] data, IPEndPoint ip)
+    {
+        if (MessageChecker.CheckMessageType(data) == MessageType.UpdateLobbyTimerForNewPlayers)
+        {
+            Debug.Log("Timer message recieved");
+            NetUpdateNewPlayersTimer timer = new (data);
+
+            counter = timer.GetData();
+            clientLobbyTimer = true;
+        }
     }
 
     private void Update()
@@ -45,7 +72,7 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
-    private void UpdateServer()
+    void UpdateServer()
     {
         if (nm != null && nm.isServer)
         {
@@ -64,14 +91,16 @@ public class ServerGameplay : MonoBehaviour
 
                         if (initLobby)
                         {
-                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, true);
-                            netUpdateLobbyTimer.CurrentMessageType = MessageType.UpdateLobbyTimer;
+                            NetUpdateTimer netUpdateLobbyTimer = new(MessagePriority.NonDisposable, true)
+                            {
+                                CurrentMessageType = MessageType.UpdateLobbyTimer
+                            };
                             nm.Broadcast(netUpdateLobbyTimer.Serialize());
                             initLobby = false;
                         }
 
                         counter += Time.deltaTime;
-                        gm.timer.text = counter.ToString("F2");
+                        gm.timer.text = counter.ToString("F2") + "s";
 
                         if (counter >= minutesInLobby)
                         {
@@ -85,8 +114,10 @@ public class ServerGameplay : MonoBehaviour
                     {
                         if (counterInit)
                         {
-                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, false);
-                            netUpdateLobbyTimer.CurrentMessageType = MessageType.UpdateLobbyTimer;
+                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, false)
+                            {
+                                CurrentMessageType = MessageType.UpdateLobbyTimer
+                            };
                             nm.Broadcast(netUpdateLobbyTimer.Serialize());
 
                             counterInit = false;
@@ -94,7 +125,9 @@ public class ServerGameplay : MonoBehaviour
 
                             counter = 0;
                             gm.timer.text = "";
+
                             currentState = States.Init;
+
                         }
                     }
 
@@ -103,15 +136,17 @@ public class ServerGameplay : MonoBehaviour
 
                     if (initGameplay)
                     {
-                        NetUpdateTimer netUpdateGameplayTimer = new (MessagePriority.NonDisposable, true);
-                        netUpdateGameplayTimer.CurrentMessageType = MessageType.UpdateGameplayTimer;
+                        NetUpdateTimer netUpdateGameplayTimer = new(MessagePriority.NonDisposable, true)
+                        {
+                            CurrentMessageType = MessageType.UpdateGameplayTimer
+                        };
                         nm.Broadcast(netUpdateGameplayTimer.Serialize());
 
                         initGameplay = false;
                     }
 
                     counter += Time.deltaTime;
-                    gm.timer.text = counter.ToString("F2");
+                    gm.timer.text = counter.ToString("F2") + "s";
 
                     if (counter >= minutesGameplay)
                     {
@@ -139,36 +174,36 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
-    private void UpdateClient()
+    void UpdateClient()
     {
         if (clientLobbyTimer)
         {
             counter += Time.deltaTime;
-            gm.timer.text = counter.ToString("F2");
+            gm.timer.text = counter.ToString("F2") + "s";
         }
 
-        if (clientGameplayTimer)
+        if (clientGameplayTimer && !NetworkScreen.Instance.gameObject.activeInHierarchy)
         {
             clientLobbyTimer = false;
 
             counter += Time.deltaTime;
-            gm.timer.text = counter.ToString("F2");
+            gm.timer.text = counter.ToString("F2") + "s";
         }
     }
 
-    private void SetGameplayTimer()
+    void SetGameplayTimer()
     {
         clientGameplayTimer = true;
         counter = 0;
     }
 
-    private void SetLobbyTimer(bool init)
+    void SetLobbyTimer(bool init)
     {
         gm.timer.text = "";
         clientLobbyTimer = init;
     }
 
-    private void SendMatchWinner()
+    void SendMatchWinner()
     {
         PlayerController playerWithMaxHealth = null;
         int maxHealth = int.MinValue;
@@ -185,8 +220,10 @@ public class ServerGameplay : MonoBehaviour
             }
         }
 
-        NetIDMessage netIDMessage = new (MessagePriority.Default, playerWithMaxHealth.clientID);
-        netIDMessage.CurrentMessageType = MessageType.Winner;
+        NetIDMessage netIDMessage = new(MessagePriority.Default, playerWithMaxHealth.clientID)
+        {
+            CurrentMessageType = MessageType.Winner
+        };
         nm.Broadcast(netIDMessage.Serialize());
     }
 }

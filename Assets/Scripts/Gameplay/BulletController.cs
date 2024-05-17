@@ -1,16 +1,15 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BulletController : MonoBehaviour
 {
-    [SerializeField] float bulletSpeed = 10.0f;
+    [Header("Config")]
+    [SerializeField] private float bulletSpeed = 10.0f;
 
-    int originPlayerID = -1;
+    private int originPlayerID = -1;
 
-    Rigidbody rb;
+    private Rigidbody rb;
 
-    void Awake()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }

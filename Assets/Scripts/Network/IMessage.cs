@@ -12,6 +12,7 @@ public enum MessagePriority
 
 public enum MessageType
 {
+    Default = -100,
     Confirm = -5,
     Error = -4,
     Ping = -3,
@@ -23,18 +24,19 @@ public enum MessageType
     Disconnection = 3,
     UpdateLobbyTimer = 4,
     UpdateGameplayTimer = 5,
-    Winner = 6
+    UpdateLobbyTimerForNewPlayers = 6,
+    Winner = 7
 };
 
 public interface IMessage<T>
 {
-    public byte[] Serialize(); //Hay que poner el Checksum siempre como ultimo parametro
+    public byte[] Serialize();
     public T Deserialize(byte[] message);
 }
 
 public abstract class BaseMessage<T> : IMessage<T>
 {
-    protected int messageHeaderSize = sizeof(int) * 2; //MessageType y MessagePriority
+    protected int messageHeaderSize = sizeof(int) * 2; // MessageType and MessagePriority
 
     protected MessagePriority currentMessagePriority;
     protected MessageType currentMessageType;
@@ -87,11 +89,6 @@ public abstract class BaseMessage<T> : IMessage<T>
             messageOrder = BitConverter.ToInt32(message, sizeof(int) * 2);
             messageHeaderSize += sizeof(int);
         }
-
-        if (IsNondisponsableMessage)
-        {
-            //TODO: Mando mensaje de confirmacion
-        }
     }
 
     public void SerializeHeader(ref List<byte> outData)
@@ -103,11 +100,6 @@ public abstract class BaseMessage<T> : IMessage<T>
         {
             outData.AddRange(BitConverter.GetBytes(messageOrder));
             messageHeaderSize += sizeof(int);
-        }
-
-        if (IsNondisponsableMessage)
-        {
-            //Creo que no hay que serializar nada, lo dejo por las dudas
         }
     }
 
@@ -164,7 +156,7 @@ public class ClientToServerNetHandShake : BaseMessage<(long, int, string)>
 
     public override byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         SerializeHeader(ref outData);
 
@@ -182,7 +174,6 @@ public class ClientToServerNetHandShake : BaseMessage<(long, int, string)>
 public class NetVector3 : BaseMessage<(int, Vector3)>
 {
     private (int id, Vector3 position) data;
-
 
     public NetVector3(MessagePriority messagePriority, (int, Vector3) data) : base(messagePriority)
     {
@@ -224,7 +215,7 @@ public class NetVector3 : BaseMessage<(int, Vector3)>
 
     public override byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         SerializeHeader(ref outData);
 
@@ -265,7 +256,7 @@ public class ServerToClientHandShake : BaseMessage<List<(int clientID, string cl
 
     public override List<(int clientID, string clientName)> Deserialize(byte[] message)
     {
-        List<(int clientID, string clientName)> outData = new List<(int, string)>();
+        List<(int clientID, string clientName)> outData = new ();
 
         if (MessageChecker.DeserializeCheckSum(message))
         {
@@ -290,7 +281,7 @@ public class ServerToClientHandShake : BaseMessage<List<(int clientID, string cl
 
     public override byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         SerializeHeader(ref outData);
 
@@ -298,8 +289,8 @@ public class ServerToClientHandShake : BaseMessage<List<(int clientID, string cl
 
         foreach ((int clientID, string clientName) clientInfo in data)
         {
-            outData.AddRange(BitConverter.GetBytes(clientInfo.clientID)); // ID del client
-            outData.AddRange(MessageChecker.SerializeString(clientInfo.clientName.ToCharArray())); //Nombre
+            outData.AddRange(BitConverter.GetBytes(clientInfo.clientID)); // Client ID
+            outData.AddRange(MessageChecker.SerializeString(clientInfo.clientName.ToCharArray())); // Name
         }
 
         SerializeQueue(ref outData);
@@ -315,14 +306,14 @@ public class NetMessage : BaseMessage<char[]>
 
     public NetMessage(MessagePriority priority, char[] data) : base(priority)
     {
-        this.data = data;
         currentMessageType = MessageType.Console;
+        this.data = data;
     }
 
-    public NetMessage(byte[] data) : base(MessagePriority.Default) //Se actualiza en el Deserialize esto
+    public NetMessage(byte[] data) : base(MessagePriority.Default) // Deserialize updates this
     {
-        this.data = Deserialize(data);
         currentMessageType = MessageType.Console;
+        this.data = Deserialize(data);
     }
 
     public char[] GetData()
@@ -346,7 +337,7 @@ public class NetMessage : BaseMessage<char[]>
 
     public override byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         SerializeHeader(ref outData);
 
@@ -364,10 +355,6 @@ public class NetPing
 {
     MessageType messageType = MessageType.Ping;
 
-    public void SetMessageType(MessageType messageType)
-    {
-        this.messageType = messageType;
-    }
     public MessageType GetMessageType()
     {
         return messageType;
@@ -375,9 +362,10 @@ public class NetPing
 
     public byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         outData.AddRange(BitConverter.GetBytes((int)GetMessageType()));
+        outData.AddRange(BitConverter.GetBytes((int)MessagePriority.Default));
 
         return outData.ToArray();
     }
@@ -403,7 +391,11 @@ public class NetIDMessage : BaseMessage<int>
     {
         DeserializeHeader(message);
 
-        return BitConverter.ToInt32(message, messageHeaderSize);
+        if (MessageChecker.DeserializeCheckSum(message))
+        {
+            clientID = BitConverter.ToInt32(message, messageHeaderSize);
+        }
+        return clientID;
     }
 
     public int GetData()
@@ -413,7 +405,7 @@ public class NetIDMessage : BaseMessage<int>
 
     public override byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         SerializeHeader(ref outData);
 
@@ -429,7 +421,7 @@ public class NetErrorMessage : BaseMessage<string>
 {
     string error;
 
-    public NetErrorMessage(string error) : base(MessagePriority.Default) //Simepre van a ser default, lo dejo implicito aca desde el principio
+    public NetErrorMessage(string error) : base(MessagePriority.Default) // Always set to Default
     {
         currentMessageType = MessageType.Error;
         this.error = error;
@@ -460,7 +452,7 @@ public class NetErrorMessage : BaseMessage<string>
 
     public override byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         SerializeHeader(ref outData);
 
@@ -507,11 +499,105 @@ public class NetUpdateTimer : BaseMessage<bool>
 
     public override byte[] Serialize()
     {
-        List<byte> outData = new List<byte>();
+        List<byte> outData = new ();
 
         SerializeHeader(ref outData);
 
         outData.AddRange(BitConverter.GetBytes(initTimer));
+
+        SerializeQueue(ref outData);
+
+        return outData.ToArray();
+    }
+}
+
+public class NetConfirmMessage : BaseMessage<MessageType>
+{
+    MessageType messageTypeToConfirm = MessageType.Default;
+
+    public NetConfirmMessage(MessagePriority messagePriority, MessageType messageTypeToConfirm) : base(MessagePriority.Default)
+    {
+        currentMessageType = MessageType.Confirm;
+        this.messageTypeToConfirm = messageTypeToConfirm;
+    }
+
+    public NetConfirmMessage(byte[] message) : base(MessagePriority.Default)
+    {
+        currentMessageType = MessageType.Confirm;
+        this.messageTypeToConfirm = Deserialize(message);
+    }
+
+    public MessageType GetData()
+    {
+        return messageTypeToConfirm;
+    }
+
+    public override MessageType Deserialize(byte[] message)
+    {
+        DeserializeHeader(message);
+
+        if (MessageChecker.DeserializeCheckSum(message))
+        {
+            messageTypeToConfirm = (MessageType)BitConverter.ToInt32(message, messageHeaderSize);
+        }
+
+        return messageTypeToConfirm;
+    }
+
+    public override byte[] Serialize()
+    {
+        List<byte> outData = new ();
+
+        SerializeHeader(ref outData);
+
+        outData.AddRange(BitConverter.GetBytes((int)messageTypeToConfirm));
+
+        SerializeQueue(ref outData);
+
+        return outData.ToArray();
+    }
+}
+
+public class NetUpdateNewPlayersTimer : BaseMessage<float>
+{
+    float timer = -1;
+
+    public NetUpdateNewPlayersTimer(MessagePriority messagePriority, float timer) : base(messagePriority)
+    {
+        currentMessageType = MessageType.UpdateLobbyTimerForNewPlayers;
+        this.timer = timer;
+    }
+
+    public NetUpdateNewPlayersTimer(byte[] data) : base(MessagePriority.Default)
+    {
+        currentMessageType = MessageType.UpdateLobbyTimerForNewPlayers;
+        timer = Deserialize(data);
+    }
+
+    public float GetData()
+    {
+        return timer;
+    }
+
+    public override float Deserialize(byte[] message)
+    {
+        DeserializeHeader(message);
+
+        if (MessageChecker.DeserializeCheckSum(message))
+        {
+            timer = BitConverter.ToSingle(message, messageHeaderSize);
+        }
+
+        return timer;
+    }
+
+    public override byte[] Serialize()
+    {
+        List<byte> outData = new ();
+
+        SerializeHeader(ref outData);
+
+        outData.AddRange(BitConverter.GetBytes(timer));
 
         SerializeQueue(ref outData);
 

@@ -52,29 +52,30 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     private UdpConnection connection;
 
-    public readonly Dictionary<int, Client> clients = new Dictionary<int, Client>(); // The server has this list
-    private readonly Dictionary<int, Player> players = new Dictionary<int, Player>(); // The client has this list
-    private readonly Dictionary<IPEndPoint, int> ipToId = new Dictionary<IPEndPoint, int>();
+    public Action<byte[], IPEndPoint> OnRecievedMessage;
+
+    public readonly Dictionary<int, Client> clients = new(); // The server has this list
+    private readonly Dictionary<int, Player> players = new(); // The client has this list
+    public readonly Dictionary<IPEndPoint, int> ipToId = new();
 
     public string userName = "Server";
     public int serverClientId = 0; // The ID that has the server to assign the clients
     public int actualClientId = -1; // The ID of this client
 
-    GameManager gm;
-    MessageChecker messageChecker;
-    PingPong checkActivity;
+    public PingPong checkActivity;
 
-    int maxPlayersPerServer = 4;
+    private GameManager gm;
+    private SorteableMessage sorteableMessages;
+    private NonDisposableMessage nondisponblesMessages;
+
+    private int maxPlayersPerServer = 4;
     public bool matchOnGoing = false;
-
-    public Queue<byte[]> clientConsoleMessage = new();
-    public Dictionary<int, Queue<byte[]>> serverConsoleMessage = new();
-    float resendPackageCounter = 0;
 
     private void Start()
     {
         gm = GameManager.Instance;
-        messageChecker = new MessageChecker();
+        sorteableMessages = new();
+        nondisponblesMessages = new();
     }
 
     public void StartServer(int port)
@@ -105,11 +106,10 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         if (!ipToId.ContainsKey(ip) && !clients.ContainsKey(newClientID))
         {
-            Debug.Log("Adding client: " + ip.Address);
+            Debug.Log("Adding Client: " + ip.Address);
 
             ipToId[ip] = newClientID;
             clients.Add(newClientID, new Client(ip, newClientID, Time.realtimeSinceStartup, clientName));
-
             checkActivity.AddClientForList(newClientID);
             gm.OnNewPlayer?.Invoke(newClientID);
 
@@ -128,7 +128,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         }
         else
         {
-            Debug.Log("Es un cliente repetido");
+            Debug.Log("It's a repeated Client");
         }
     }
 
@@ -139,14 +139,11 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         if (clients.ContainsKey(idToRemove))
         {
             Debug.Log("Removing client: " + idToRemove);
-
             checkActivity.RemoveClientForList(idToRemove);
-
             ipToId.Remove(clients[idToRemove].ipEndPoint);
             players.Remove(idToRemove);
             clients.Remove(idToRemove);
         }
-
         if (!isServer && actualClientId == idToRemove)
         {
             NetworkScreen.Instance.SwitchToMenuScreen();
@@ -155,7 +152,9 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     public void OnReceiveData(byte[] data, IPEndPoint ip)
     {
-        switch (messageChecker.CheckMessageType(data))
+        OnRecievedMessage?.Invoke(data, ip);
+
+        switch (MessageChecker.CheckMessageType(data))
         {
             case MessageType.Ping:
 
@@ -173,7 +172,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 }
                 else
                 {
-                    checkActivity.RecieveServerToClientPingMessage();
+                    checkActivity.ReciveServerToClientPingMessage();
                     checkActivity.CalculateLatencyFromServer();
                 }
 
@@ -182,9 +181,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
             case MessageType.ServerToClientHandShake:
 
                 ServerToClientHandShake netGetClientID = new (data);
-
                 List<(int clientId, string userName)> playerList = netGetClientID.GetData();
-
                 for (int i = 0; i < playerList.Count; i++) // First verify which client am i
                 {
                     if (playerList[i].userName == userName)
@@ -192,14 +189,12 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                         actualClientId = playerList[i].clientId;
                     }
                 }
-
                 players.Clear();
                 for (int i = 0; i < playerList.Count; i++)
                 {
                     Debug.Log(playerList[i].clientId + " - " + playerList[i].userName);
                     Player playerToAdd = new Player(playerList[i].clientId, playerList[i].userName);
                     players.Add(playerList[i].clientId, playerToAdd);
-
                     gm.OnNewPlayer?.Invoke(playerToAdd.id);
                 }
 
@@ -217,25 +212,41 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
             case MessageType.Position:
 
-                UpdatePlayerPosition(data);
+                NetVector3 netVector3 = new(data);
+                if (isServer)
+                {
+                    if (ipToId.ContainsKey(ip))
+                    {
+                        if (sorteableMessages.CheckMessageOrderRecievedFromClients(ipToId[ip], MessageChecker.CheckMessageType(data), netVector3.MessageOrder))
+                        {
+                            UpdatePlayerPosition(data);
+                        }
+                    }
+                }
+                else
+                {
+                    if (sorteableMessages.CheckMessageOrderRecievedFromServer(netVector3.GetData().id, MessageType.Position, netVector3.MessageOrder))
+                    {
+                        UpdatePlayerPosition(data);
+                    }
+                }
 
                 break;
+
             case MessageType.BulletInstatiate:
 
-                NetVector3 netBullet = new NetVector3(data);
+                NetVector3 netBullet = new (data);
                 gm.OnInstantiateBullet?.Invoke(netBullet.GetData().id, netBullet.GetData().position);
-
                 if (isServer)
                 {
                     BroadcastPlayerPosition(netBullet.GetData().id, data);
                 }
 
-
                 break;
+
             case MessageType.Disconnection:
 
                 NetIDMessage netDisconnection = new (data);
-
                 int playerID = netDisconnection.GetData();
                 if (isServer)
                 {
@@ -249,6 +260,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 }
 
                 break;
+
             case MessageType.UpdateLobbyTimer:
 
                 if (!isServer)
@@ -266,10 +278,10 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 }
 
                 break;
+
             case MessageType.Error:
 
                 NetErrorMessage netErrorMessage = new (data);
-
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowErrorPanel(netErrorMessage.GetData());
                 connection.Close();
@@ -280,32 +292,30 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
                 NetIDMessage netIDMessage = new(data);
                 string winText = $"Congratulations! \n {players[netIDMessage.GetData()].name} won the game!";
-
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);
-
                 gm.EndMatch();
 
                 break;
 
-            case MessageType.Confirm:
-
-                clientConsoleMessage.Dequeue();
-                resendPackageCounter = 0;
-                Debug.Log("First item was deleted.");
-                break;
             default:
+
                 break;
         }
     }
 
     public void SendToServer(byte[] data)
     {
+        nondisponblesMessages.AddSentMessagesFromClients(data);
         connection.Send(data);
     }
 
     public void Broadcast(byte[] data, IPEndPoint ip)
     {
+        if (ipToId.ContainsKey(ip))
+        {
+            nondisponblesMessages.AddSentMessagesFromServer(data, ipToId[ip]);
+        }
         connection.Send(data, ip);
     }
 
@@ -315,6 +325,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         {
             while (iterator.MoveNext())
             {
+                nondisponblesMessages.AddSentMessagesFromServer(data, iterator.Current.Value.id);
                 connection.Send(data, iterator.Current.Value.ipEndPoint);
             }
         }
@@ -332,28 +343,14 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 checkActivity.UpdateCheckActivity();
             }
 
-            ResendPackage();
-        }
-    }
-
-    void ResendPackage()
-    {
-        if (clientConsoleMessage.Count > 0)
-        {
-            resendPackageCounter += Time.deltaTime;
-
-
-            if (!isServer)
+            if (nondisponblesMessages != null)
             {
-                if (resendPackageCounter >= checkActivity.GetLatencyFormServer() * 5)
-                {
-                    Debug.Log("New package sent.");
-                    SendToServer(clientConsoleMessage.Peek());
-                    resendPackageCounter = 0;
-                }
+                nondisponblesMessages.ResendPackages();
             }
+
         }
     }
+
 
     void ReciveClientToServerHandShake(byte[] data, IPEndPoint ip)
     {
@@ -410,7 +407,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         string messageText = "";
 
-        NetMessage netMessage = new (data);
+        NetMessage netMessage = new NetMessage(data);
         messageText += new string(netMessage.GetData());
 
         if (isServer)
@@ -431,7 +428,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
         else
         {
             NetErrorMessage netErrorMessage = new ("Lost Connection To Server");
-            SendToServer(netErrorMessage.Serialize());
+            Broadcast(netErrorMessage.Serialize());
             CloseServer();
         }
     }
@@ -440,7 +437,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     {
         if (isServer)
         {
-            List<int> clientIdsToRemove = new List<int>(clients.Keys);
+            List<int> clientIdsToRemove = new (clients.Keys);
             foreach (int clientId in clientIdsToRemove)
             {
                 NetIDMessage netDisconnection = new (MessagePriority.Default, clientId);

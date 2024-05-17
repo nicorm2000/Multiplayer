@@ -9,22 +9,25 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public Action<int> OnNewPlayer;
     public Action<int> OnRemovePlayer;
+
     public Action<bool> OnInitLobbyTimer;
     public Action OnInitGameplayTimer;
+
+    public Action<int> OnChangeLobbyPlayers;
 
     public Action<int, Vector3> OnInstantiateBullet;
 
     public TextMeshProUGUI timer;
 
-    [SerializeField] Transform[] spawnPositions;
+    [SerializeField] private Transform[] spawnPositions;
 
-    [SerializeField] GameObject playerPrefab;
-    public Dictionary<int, GameObject> playerList = new Dictionary<int, GameObject>();
+    [SerializeField] private GameObject playerPrefab;
+    public Dictionary<int, GameObject> playerList = new();
 
-    NetworkManager nm;
+    private NetworkManager nm;
     public bool isGameplay;
 
-    void Start()
+    private void Start()
     {
         nm = NetworkManager.Instance;
 
@@ -32,14 +35,16 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         OnRemovePlayer += RemovePlayer;
         OnInstantiateBullet += InstantiatePlayerBullets;
         OnBulletHit += OnHitRecieved;
+
         OnInitGameplayTimer += ActivePlayerControllers;
     }
 
-    void SpawnPlayerPefab(int index)
+    private void SpawnPlayerPefab(int index)
     {
         if (!playerList.ContainsKey(index))
         {
             playerList.Add(index, Instantiate(playerPrefab, spawnPositions[UnityEngine.Random.Range(0, spawnPositions.Length)].position, Quaternion.identity));
+            OnChangeLobbyPlayers?.Invoke(index);
         }
 
         if (playerList[index].TryGetComponent(out PlayerController pc))
@@ -52,6 +57,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             }
             else
             {
+                Debug.Log(index);
                 pc.currentPlayer = true;
             }
 
@@ -62,15 +68,20 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
-    void RemovePlayer(int index)
+    private void RemovePlayer(int index)
     {
-        Destroy(playerList[index]);
-        playerList.Remove(index);
+        if (playerList.ContainsKey(index))
+        {
+            Destroy(playerList[index]);
+            playerList.Remove(index);
+        }
     }
 
-    void InstantiatePlayerBullets(int id, Vector3 bulletDir)
+    private void InstantiatePlayerBullets(int id, Vector3 bulletDir)
     {
         playerList[id].GetComponent<PlayerController>().ServerShoot(bulletDir);
+        playerList[id].GetComponent<AudioSource>().Play();
+        playerList[id].GetComponent<Animator>().SetTrigger("Shoot");
     }
 
     public void UpdatePlayerPosition((int index, Vector3 newPosition) playerData)
@@ -78,7 +89,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         playerList[playerData.index].transform.position = playerData.newPosition;
     }
 
-    void OnHitRecieved(int playerReciveDamage)
+    private void OnHitRecieved(int playerReciveDamage)
     {
         if (nm.isServer)
         {

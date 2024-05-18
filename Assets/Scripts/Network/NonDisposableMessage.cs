@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 
-public class NonDisposableMessage : MonoBehaviour
+public class NonDisposableMessage
 {
     private GameManager gm;
     private NetworkManager nm;
@@ -44,7 +44,7 @@ public class NonDisposableMessage : MonoBehaviour
 
         if ((messagePriority & MessagePriority.NonDisposable) != 0)
         {
-            NetConfirmMessage netConfirmMessage = new NetConfirmMessage(MessagePriority.Default, messageType);
+            NetConfirmMessage netConfirmMessage = new (MessagePriority.Default, messageType);
 
             if (nm.isServer)
             {
@@ -62,15 +62,18 @@ public class NonDisposableMessage : MonoBehaviour
 
             if (nm.isServer)
             {
-                if (LastMessageBroadcastToClients.ContainsKey(nm.ipToId[ip]))
+                if (nm.ipToId.ContainsKey(ip))
                 {
-                    if (MessagesHistory.ContainsKey(LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Peek()))
+                    if (LastMessageBroadcastToClients.ContainsKey(nm.ipToId[ip]))
                     {
-                        LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue();
-                    }
-                    else
-                    {
-                        MessagesHistory.Add(LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue(), secondsToDeleteMessageHistory);
+                        if (MessagesHistory.ContainsKey(LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Peek()))
+                        {
+                            LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue();
+                        }
+                        else
+                        {
+                            MessagesHistory.Add(LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue(), secondsToDeleteMessageHistory);
+                        }
                     }
                 }
             }

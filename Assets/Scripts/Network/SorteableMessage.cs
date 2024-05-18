@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 
-public class SorteableMessage : MonoBehaviour
+public class SorteableMessage
 {
     private GameManager gm;
     private NetworkManager nm;
@@ -34,15 +34,18 @@ public class SorteableMessage : MonoBehaviour
 
             if (nm.isServer)
             {
-                if (OrderLastMessageReciveFromClients.ContainsKey(nm.ipToId[ip]))
+                if (nm.ipToId.ContainsKey(ip))
                 {
-                    if (!OrderLastMessageReciveFromClients[nm.ipToId[ip]].ContainsKey(messageType))
+                    if (OrderLastMessageReciveFromClients.ContainsKey(nm.ipToId[ip]))
                     {
-                        OrderLastMessageReciveFromClients[nm.ipToId[ip]].Add(messageType, 0);
-                    }
-                    else
-                    {
-                        OrderLastMessageReciveFromClients[nm.ipToId[ip]][messageType]++;
+                        if (!OrderLastMessageReciveFromClients[nm.ipToId[ip]].ContainsKey(messageType))
+                        {
+                            OrderLastMessageReciveFromClients[nm.ipToId[ip]].Add(messageType, 0);
+                        }
+                        else
+                        {
+                            OrderLastMessageReciveFromClients[nm.ipToId[ip]][messageType]++;
+                        }
                     }
                 }
             }
@@ -51,6 +54,7 @@ public class SorteableMessage : MonoBehaviour
                 if (messageType == MessageType.Position)
                 {
                     int clientId = new NetVector3(data).GetData().id;
+                    Debug.Log(clientId + " - " + new NetVector3(data).MessageOrder);
 
                     if (OrderLastMessageReciveFromServer.ContainsKey(clientId))
                     {

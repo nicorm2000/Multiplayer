@@ -52,7 +52,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     private UdpConnection connection;
 
-    public Action<byte[], IPEndPoint> OnRecievedMessage;
+    public Action<byte[], IPEndPoint> OnReceivedMessage;
 
     public readonly Dictionary<int, Client> clients = new(); // The server has this list
     private readonly Dictionary<int, Player> players = new(); // The client has this list
@@ -152,7 +152,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
     public void OnReceiveData(byte[] data, IPEndPoint ip)
     {
-        OnRecievedMessage?.Invoke(data, ip);
+        OnReceivedMessage?.Invoke(data, ip);
 
         switch (MessageChecker.CheckMessageType(data))
         {

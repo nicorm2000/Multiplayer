@@ -25,7 +25,7 @@ public class NonDisposableMessage
 
         pingPong = nm.checkActivity;
 
-        nm.OnRecievedMessage += OnRecievedData;
+        nm.OnReceivedMessage += OnRecievedData;
 
         gm.OnNewPlayer += AddNewClient;
         gm.OnRemovePlayer += RemoveClient;

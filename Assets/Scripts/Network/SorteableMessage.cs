@@ -15,7 +15,7 @@ public class SorteableMessage
         nm = NetworkManager.Instance;
         gm = GameManager.Instance;
 
-        nm.OnRecievedMessage += OnRecievedData;
+        nm.OnReceivedMessage += OnRecievedData;
 
         gm.OnNewPlayer += AddNewClient;
         gm.OnRemovePlayer += RemoveClient;

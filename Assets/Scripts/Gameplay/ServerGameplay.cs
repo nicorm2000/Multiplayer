@@ -5,8 +5,8 @@ enum States { Init, Lobby, Game, Finish };
 
 public class ServerGameplay : MonoBehaviour
 {
-    private int minutesInLobby = 120;
-    private float minutesGameplay = 180;
+    private int minutesInLobby = 10;
+    private float minutesGameplay = 30;
     private float timeUntilCloseServer = 5;
 
     private int minPlayerToInitCounter = 2;
@@ -31,7 +31,7 @@ public class ServerGameplay : MonoBehaviour
         gm = GameManager.Instance;
         nm = NetworkManager.Instance;
 
-        nm.OnRecievedMessage += OnRecievedData;
+        nm.OnReceivedMessage += OnReceivedData;
 
         gm.OnInitLobbyTimer += SetLobbyTimer;
         gm.OnInitGameplayTimer += SetGameplayTimer;
@@ -48,7 +48,7 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
-    void OnRecievedData(byte[] data, IPEndPoint ip)
+    void OnReceivedData(byte[] data, IPEndPoint ip)
     {
         if (MessageChecker.CheckMessageType(data) == MessageType.UpdateLobbyTimerForNewPlayers)
         {

@@ -81,7 +81,8 @@ public class MessageChecker
     {
         uint messageSum = (uint)BitConverter.ToInt32(message, message.Length - sizeof(int));
 
-        DeserializeSum(ref messageSum);
+        messageSum >>= 5;
+        //DeserializeSum(ref messageSum);
 
         if (messageSum != message.Length)
         {
@@ -101,7 +102,8 @@ public class MessageChecker
     {
         uint sum = (uint)(data.Count + sizeof(int));
 
-        SerializeSum(ref sum);
+        sum <<= 5;
+        //SerializeSum(ref sum);
 
         return BitConverter.GetBytes(sum);
     }

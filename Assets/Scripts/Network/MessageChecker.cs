@@ -79,15 +79,13 @@ public class MessageChecker
     /// <returns>True if the checksum is valid, otherwise false.</returns>
     public static bool DeserializeCheckSum(byte[] message)
     {
-        // Extract the checksum from the end of the message
-        int messageSum = BitConverter.ToInt32(message, message.Length - sizeof(int));
+        uint messageSum = (uint)BitConverter.ToInt32(message, message.Length - sizeof(int));
 
-        messageSum >>= 5;
+        DeserializeSum(ref messageSum);
 
-        // Verify the checksum matches the message lengthv
         if (messageSum != message.Length)
         {
-            Debug.LogError("Message is corrupted");
+            Debug.LogError("Message corrupted.");
             return false;
         }
 
@@ -101,11 +99,46 @@ public class MessageChecker
     /// <returns>A byte array representing the serialized checksum.</returns>
     public static byte[] SerializeCheckSum(List<byte> data)
     {
-        // Calculate the checksum based on the data length
-        int sum = data.Count + sizeof(int);
+        uint sum = (uint)(data.Count + sizeof(int));
 
-        sum <<= 5;
+        SerializeSum(ref sum);
 
         return BitConverter.GetBytes(sum);
+    }
+
+    /// <summary>
+    /// Deserializes the checksum value using a custom encryption algorithm.
+    /// </summary>
+    /// <param name="sum">The checksum value to be decrypted.</param>
+    private static void DeserializeSum(ref uint sum)
+    {
+        sum <<= 2;
+        sum >>= 3;
+        sum <<= 2;
+        sum >>= 1;
+        sum += 556;
+        sum -= 2560;
+        sum += 256;
+        sum -= 1234;
+        sum >>= 2;
+        sum <<= 1;
+    }
+
+    /// <summary>
+    /// Serializes the checksum value using a custom encryption algorithm.
+    /// </summary>
+    /// <param name="sum">The checksum value to be encrypted.</param>
+    private static void SerializeSum(ref uint sum)
+    {
+        sum >>= 1;
+        sum <<= 2;
+        sum += 1234;
+        sum -= 256;
+        sum += 2560;
+        sum -= 556;
+        sum <<= 1;
+        sum >>= 2;
+        sum <<= 3;
+        sum >>= 2;
     }
 }

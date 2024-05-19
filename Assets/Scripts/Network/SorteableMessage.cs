@@ -10,12 +10,15 @@ public class SorteableMessage
     Dictionary<int, Dictionary<MessageType, int>> OrderLastMessageReciveFromServer;
     Dictionary<int, Dictionary<MessageType, int>> OrderLastMessageReciveFromClients;
 
+    /// <summary>
+    /// Initializes the SorteableMessage instance and subscribes to relevant events.
+    /// </summary>
     public SorteableMessage()
     {
         nm = NetworkManager.Instance;
         gm = GameManager.Instance;
 
-        nm.OnReceivedMessage += OnRecievedData;
+        nm.OnReceivedMessage += OnReceivedData;
 
         gm.OnNewPlayer += AddNewClient;
         gm.OnRemovePlayer += RemoveClient;
@@ -24,7 +27,12 @@ public class SorteableMessage
         OrderLastMessageReciveFromServer = new Dictionary<int, Dictionary<MessageType, int>>();
     }
 
-    private void OnRecievedData(byte[] data, IPEndPoint ip)
+    /// <summary>
+    /// Handles incoming data and updates message order information accordingly.
+    /// </summary>
+    /// <param name="data">The received data.</param>
+    /// <param name="ip">The IP address of the sender.</param>
+    private void OnReceivedData(byte[] data, IPEndPoint ip)
     {
         MessagePriority messagePriority = MessageChecker.CheckMessagePriority(data);
 
@@ -73,6 +81,12 @@ public class SorteableMessage
         }
     }
 
+    /// <summary>
+    /// Checks if the received message order from clients is valid.
+    /// </summary>
+    /// <param name="clientID">The received clientID.</param>
+    /// <param name="messageType">The message type.</param>
+    /// <param name="messageOrder">The message order.</param>
     public bool CheckMessageOrderRecievedFromClients(int clientID, MessageType messageType, int messageOrder)
     {
         if (!OrderLastMessageReciveFromClients[clientID].ContainsKey(messageType))
@@ -83,6 +97,12 @@ public class SorteableMessage
         return OrderLastMessageReciveFromClients[clientID][messageType] < messageOrder;
     }
 
+    /// <summary>
+    /// Checks if the received message order from the server is valid.
+    /// </summary>
+    /// <param name="clientID">The received clientID.</param>
+    /// <param name="messageType">The message type.</param>
+    /// <param name="messageOrder">The message order.</param>
     public bool CheckMessageOrderRecievedFromServer(int clientID, MessageType messageType, int messageOrder)
     {
         if (!OrderLastMessageReciveFromServer[clientID].ContainsKey(messageType))
@@ -93,6 +113,10 @@ public class SorteableMessage
         return OrderLastMessageReciveFromServer[clientID][messageType] < messageOrder;
     }
 
+    /// <summary>
+    /// Adds a new client to the message order tracking dictionary.
+    /// </summary>
+    /// <param name="clientID">The received clientID.</param>
     private void AddNewClient(int clientID)
     {
         if (nm.isServer)
@@ -108,6 +132,10 @@ public class SorteableMessage
         }
     }
 
+    /// <summary>
+    /// Removes a client from the message order tracking dictionary.
+    /// </summary>
+    /// <param name="clientID">The received clientID.</param>
     private void RemoveClient(int clientID)
     {
         if (nm.isServer)

@@ -18,6 +18,9 @@ public class NonDisposableMessage
     Dictionary<int, Dictionary<MessageType, float>> resendPackageCounterToClients;
     Dictionary<MessageType, float> resendPackageCounterToServer;
 
+    /// <summary>
+    /// Initializes the NonDisposableMessage instance and subscribes to relevant events.
+    /// </summary>
     public NonDisposableMessage()
     {
         nm = NetworkManager.Instance;
@@ -25,7 +28,7 @@ public class NonDisposableMessage
 
         pingPong = nm.checkActivity;
 
-        nm.OnReceivedMessage += OnRecievedData;
+        nm.OnReceivedMessage += OnReceivedData;
 
         gm.OnNewPlayer += AddNewClient;
         gm.OnRemovePlayer += RemoveClient;
@@ -37,7 +40,12 @@ public class NonDisposableMessage
         resendPackageCounterToServer = new Dictionary<MessageType, float>();
     }
 
-    private void OnRecievedData(byte[] data, IPEndPoint ip)
+    /// <summary>
+    /// Handles incoming data and updates message order information accordingly.
+    /// </summary>
+    /// <param name="data">The received data.</param>
+    /// <param name="ip">The IP address of the sender.</param>
+    private void OnReceivedData(byte[] data, IPEndPoint ip)
     {
         MessagePriority messagePriority = MessageChecker.CheckMessagePriority(data);
         MessageType messageType = MessageChecker.CheckMessageType(data);
@@ -91,7 +99,12 @@ public class NonDisposableMessage
         }
     }
 
-    public void AddSentMessagesFromServer(byte[] data, int clientId)
+    /// <summary>
+    /// Adds messages sent from the server to clients.
+    /// </summary>
+    /// <param name="data">The received data.</param>
+    /// <param name="clientID">The received clientID.</param>
+    public void AddSentMessagesFromServer(byte[] data, int clientID)
     {
         if (nm.isServer)
         {
@@ -99,22 +112,26 @@ public class NonDisposableMessage
 
             if ((messagePriority & MessagePriority.NonDisposable) != 0)
             {
-                if (!LastMessageBroadcastToClients.ContainsKey(clientId))
+                if (!LastMessageBroadcastToClients.ContainsKey(clientID))
                 {
-                    LastMessageBroadcastToClients.Add(clientId, new Dictionary<MessageType, Queue<byte[]>>());
+                    LastMessageBroadcastToClients.Add(clientID, new Dictionary<MessageType, Queue<byte[]>>());
                 }
                 MessageType messageType = MessageChecker.CheckMessageType(data);
 
-                if (!LastMessageBroadcastToClients[clientId].ContainsKey(messageType))
+                if (!LastMessageBroadcastToClients[clientID].ContainsKey(messageType))
                 {
-                    LastMessageBroadcastToClients[clientId].Add(messageType, new Queue<byte[]>());
+                    LastMessageBroadcastToClients[clientID].Add(messageType, new Queue<byte[]>());
                 }
 
-                LastMessageBroadcastToClients[clientId][messageType].Enqueue(data);
+                LastMessageBroadcastToClients[clientID][messageType].Enqueue(data);
             }
         }
     }
 
+    /// <summary>
+    /// Adds messages sent from the client to the server.
+    /// </summary>
+    /// <param name="data">The received data.</param>
     public void AddSentMessagesFromClients(byte[] data)
     {
         if (!nm.isServer)
@@ -135,6 +152,10 @@ public class NonDisposableMessage
         }
     }
 
+    /// <summary>
+    /// Adds client to the server.
+    /// </summary>
+    /// <param name="clientID">The received clientID.</param>
     private void AddNewClient(int clientID)
     {
         if (nm.isServer)
@@ -144,6 +165,10 @@ public class NonDisposableMessage
         }
     }
 
+    /// <summary>
+    /// Removes client from the Server.
+    /// </summary>
+    /// <param name="clientID">The received clientID.</param>
     private void RemoveClient(int clientID)
     {
         if (nm.isServer)
@@ -153,6 +178,9 @@ public class NonDisposableMessage
         }
     }
 
+    /// <summary>
+    /// Resends packages to ensure delivery, managing resending from the server to clients and from clients to the server.
+    /// </summary>
     public void ResendPackages()
     {
         if (nm.isServer)
@@ -165,10 +193,12 @@ public class NonDisposableMessage
                     {
                         resendPackageCounterToClients[id][messageType] += Time.deltaTime;
 
+                        // Reset the resend counter for this package
                         if (resendPackageCounterToClients[id][messageType] >= pingPong.GetLatencyFormServer() * 5)
                         {
                             Debug.Log("Package sent back to Client " + id);
                             nm.Broadcast(LastMessageBroadcastToClients[id][messageType].Peek(), nm.clients[id].ipEndPoint);
+                            // Reset the resend counter for this package
                             resendPackageCounterToClients[id][messageType] = 0;
                         }
                     }
@@ -183,24 +213,30 @@ public class NonDisposableMessage
                 {
                     resendPackageCounterToServer[messageType] += Time.deltaTime;
 
+                    // Check if it's time to resend the package
                     if (resendPackageCounterToServer[messageType] >= pingPong.GetLatencyFormServer() * 5)
                     {
                         Debug.Log("Package sent back to Server");
                         nm.SendToServer(LastMessageSendToServer[messageType].Peek());
+                        // Reset the resend counter for this package
                         resendPackageCounterToServer[messageType] = 0;
                     }
                 }
             }
         }
+
+        // Check and remove old messages from history
         if (MessagesHistory.Count > 0)
         {
             List<byte[]> keysToRemove = new List<byte[]>(MessagesHistory.Count);
 
+            // Find messages that have expired
             foreach (byte[] messageKey in MessagesHistory.Keys)
             {
                 keysToRemove.Add(messageKey);
             }
 
+            // Remove expired messages
             foreach (byte[] messageKey in keysToRemove)
             {
                 MessagesHistory[messageKey] -= Time.deltaTime;

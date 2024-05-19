@@ -25,7 +25,9 @@ public class ServerGameplay : MonoBehaviour
     private bool clientLobbyTimer = false;
     private bool clientGameplayTimer = false;
 
-
+    /// <summary>
+    /// Initializes the GameManager and NetworkManager instances, and subscribes to necessary events.
+    /// </summary>
     private void Start()
     {
         gm = GameManager.Instance;
@@ -39,17 +41,28 @@ public class ServerGameplay : MonoBehaviour
         gm.OnChangeLobbyPlayers += CheckForAddNewPlayer;
     }
 
+    /// <summary>
+    /// Checks if a new player has been added during the lobby state and updates the lobby timer for new players.
+    /// </summary>
+    /// <param name="clientID">The ID of the newly added client.</param>
     void CheckForAddNewPlayer(int clientID)
     {
         if (nm.isServer && currentState == States.Lobby && counterInit)
         {
+            // Create a new timer message with the current counter value and send it to the new player.
             NetUpdateNewPlayersTimer timer = new (MessagePriority.Default, counter);
             nm.Broadcast(timer.Serialize(), nm.clients[clientID].ipEndPoint);
         }
     }
 
+    /// <summary>
+    /// Handles received network data and updates the lobby timer if the message type is UpdateLobbyTimerForNewPlayers.
+    /// </summary>
+    /// <param name="data">The received data as a byte array.</param>
+    /// <param name="ip">The IP endpoint from which the data was received.</param>
     void OnReceivedData(byte[] data, IPEndPoint ip)
     {
+        // Check if the message type is UpdateLobbyTimerForNewPlayers.
         if (MessageChecker.CheckMessageType(data) == MessageType.UpdateLobbyTimerForNewPlayers)
         {
             Debug.Log("Timer message recieved");
@@ -60,6 +73,9 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Updates the server or client state each frame based on whether the instance is a server or client.
+    /// </summary>
     private void Update()
     {
         if (nm.isServer)
@@ -72,6 +88,9 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Manages the state transitions and game logic for the server.
+    /// </summary>
     void UpdateServer()
     {
         if (nm != null && nm.isServer)
@@ -91,7 +110,7 @@ public class ServerGameplay : MonoBehaviour
 
                         if (initLobby)
                         {
-                            NetUpdateTimer netUpdateLobbyTimer = new(MessagePriority.NonDisposable, true)
+                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, true)
                             {
                                 CurrentMessageType = MessageType.UpdateLobbyTimer
                             };
@@ -174,6 +193,9 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Manages the state updates and timer display for the client.
+    /// </summary>
     void UpdateClient()
     {
         if (clientLobbyTimer)
@@ -191,18 +213,29 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Initializes the gameplay timer for the client.
+    /// </summary>
     void SetGameplayTimer()
     {
         clientGameplayTimer = true;
         counter = 0;
     }
 
+    /// <summary>
+    /// Sets the lobby timer for the client based on the given initialization state.
+    /// </summary>
+    /// <param name="init">A boolean indicating whether to initialize the lobby timer.</param>
     void SetLobbyTimer(bool init)
     {
+        counter = 0;
         gm.timer.text = "";
         clientLobbyTimer = init;
     }
 
+    /// <summary>
+    /// Determines the player with the maximum health and sends a message to all clients indicating the match winner.
+    /// </summary>
     void SendMatchWinner()
     {
         PlayerController playerWithMaxHealth = null;
@@ -220,7 +253,7 @@ public class ServerGameplay : MonoBehaviour
             }
         }
 
-        NetIDMessage netIDMessage = new(MessagePriority.Default, playerWithMaxHealth.clientID)
+        NetIDMessage netIDMessage = new (MessagePriority.Default, playerWithMaxHealth.clientID)
         {
             CurrentMessageType = MessageType.Winner
         };

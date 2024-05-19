@@ -27,6 +27,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     private NetworkManager nm;
     public bool isGameplay;
 
+    private int counter = 0;
+
     /// <summary>
     /// Initializes the GameManager and sets up event listeners.
     /// </summary>
@@ -50,8 +52,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (!playerList.ContainsKey(index))
         {
-            playerList.Add(index, Instantiate(playerPrefab, spawnPositions[UnityEngine.Random.Range(0, spawnPositions.Length)].position, Quaternion.identity));
+            playerList.Add(index, Instantiate(playerPrefab, spawnPositions[counter].position, Quaternion.identity));
             OnChangeLobbyPlayers?.Invoke(index);
+            counter++;
         }
 
         if (playerList[index].TryGetComponent(out PlayerController pc))
@@ -64,7 +67,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             }
             else
             {
-                Debug.Log(index);
                 pc.currentPlayer = true;
             }
 
@@ -85,7 +87,25 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             Destroy(playerList[index]);
             playerList.Remove(index);
+
+            if (index == nm.actualClientId)
+            {
+                counter = 0;
+                RemoveAllPlayers();
+            }
         }
+    }
+
+    /// <summary>
+    /// Removes all players from the game.
+    /// </summary>
+    private void RemoveAllPlayers()
+    {
+        foreach (int id in playerList.Keys)
+        {
+            Destroy(playerList[id]);
+        }
+        playerList.Clear();
     }
 
     /// <summary>

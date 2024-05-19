@@ -749,6 +749,7 @@ public class NetUpdateTimer : BaseMessage<bool>
         SerializeHeader(ref outData);
 
         outData.AddRange(BitConverter.GetBytes(initTimer));
+        outData.AddRange(BitConverter.GetBytes(initTimer));
 
         SerializeQueue(ref outData);
 

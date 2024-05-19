@@ -35,7 +35,7 @@ public class MessageChecker
     /// <returns>A byte array representing the serialized character array.</returns>
     public static byte[] SerializeString(char[] charArray)
     {
-        List<byte> outData = new ();
+        List<byte> outData = new();
 
         // Add the length of the character array as the first bytes
         outData.AddRange(BitConverter.GetBytes(charArray.Length));
@@ -81,8 +81,7 @@ public class MessageChecker
     {
         uint messageSum = (uint)BitConverter.ToInt32(message, message.Length - sizeof(int));
 
-        messageSum >>= 5;
-        //DeserializeSum(ref messageSum);
+        DeserializeSum(ref messageSum);
 
         if (messageSum != message.Length)
         {
@@ -102,8 +101,7 @@ public class MessageChecker
     {
         uint sum = (uint)(data.Count + sizeof(int));
 
-        sum <<= 5;
-        //SerializeSum(ref sum);
+        SerializeSum(ref sum);
 
         return BitConverter.GetBytes(sum);
     }

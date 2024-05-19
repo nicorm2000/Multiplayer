@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class MessageChecker
 {
+    /// <summary>
+    /// Checks the priority of a message from the given byte array.
+    /// </summary>
+    /// <param name="message">The byte array containing the message.</param>
+    /// <returns>The message priority as a MessagePriority enum value.</returns>
     public static MessagePriority CheckMessagePriority(byte[] message)
     {
         int messagePriority = BitConverter.ToInt32(message, 4);
@@ -11,6 +16,11 @@ public class MessageChecker
         return (MessagePriority)messagePriority;
     }
 
+    /// <summary>
+    /// Checks the type of a message from the given byte array.
+    /// </summary>
+    /// <param name="message">The byte array containing the message.</param>
+    /// <returns>The message type as a MessageType enum value.</returns>
     public static MessageType CheckMessageType(byte[] message)
     {
         int messageType = BitConverter.ToInt32(message, 0);
@@ -18,12 +28,19 @@ public class MessageChecker
         return (MessageType)messageType;
     }
 
+    /// <summary>
+    /// Serializes a character array into a byte array.
+    /// </summary>
+    /// <param name="charArray">The character array to serialize.</param>
+    /// <returns>A byte array representing the serialized character array.</returns>
     public static byte[] SerializeString(char[] charArray)
     {
         List<byte> outData = new ();
 
+        // Add the length of the character array as the first bytes
         outData.AddRange(BitConverter.GetBytes(charArray.Length));
 
+        // Add each character as a set of bytes
         for (int i = 0; i < charArray.Length; i++)
         {
             outData.AddRange(BitConverter.GetBytes(charArray[i]));
@@ -32,6 +49,12 @@ public class MessageChecker
         return outData.ToArray();
     }
 
+    /// <summary>
+    /// Deserializes a string from a byte array starting at a specified index.
+    /// </summary>
+    /// <param name="message">The byte array containing the serialized string.</param>
+    /// <param name="indexToInit">The starting index for deserialization.</param>
+    /// <returns>The deserialized string.</returns>
     public static string DeserializeString(byte[] message, int indexToInit)
     {
         int stringSize = BitConverter.ToInt32(message, indexToInit);
@@ -40,6 +63,7 @@ public class MessageChecker
 
         indexToInit += sizeof(int);
 
+        // Extract each character from the byte array
         for (int i = 0; i < stringSize; i++)
         {
             charArray[i] = BitConverter.ToChar(message, indexToInit + sizeof(char) * i);
@@ -48,12 +72,19 @@ public class MessageChecker
         return new string(charArray);
     }
 
+    /// <summary>
+    /// Checks if a message's checksum is valid.
+    /// </summary>
+    /// <param name="message">The byte array containing the message.</param>
+    /// <returns>True if the checksum is valid, otherwise false.</returns>
     public static bool DeserializeCheckSum(byte[] message)
     {
+        // Extract the checksum from the end of the message
         int messageSum = BitConverter.ToInt32(message, message.Length - sizeof(int));
 
         messageSum >>= 5;
 
+        // Verify the checksum matches the message lengthv
         if (messageSum != message.Length)
         {
             Debug.LogError("Message is corrupted");
@@ -63,8 +94,14 @@ public class MessageChecker
         return true;
     }
 
+    /// <summary>
+    /// Serializes a checksum for a given list of bytes.
+    /// </summary>
+    /// <param name="data">The list of bytes to create a checksum for.</param>
+    /// <returns>A byte array representing the serialized checksum.</returns>
     public static byte[] SerializeCheckSum(List<byte> data)
     {
+        // Calculate the checksum based on the data length
         int sum = data.Count + sizeof(int);
 
         sum <<= 5;

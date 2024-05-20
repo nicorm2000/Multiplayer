@@ -6,7 +6,6 @@ public class BulletController : MonoBehaviour
     [SerializeField] private float bulletSpeed = 10.0f;
 
     private int originPlayerID = -1;
-
     private Rigidbody rb;
 
     /// <summary>

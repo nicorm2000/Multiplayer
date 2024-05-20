@@ -28,7 +28,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
             string name = NetworkManager.Instance.userName + ": ";
             str = name + str;
 
-            NetMessage netMessage = new (MessagePriority.Sorteable | MessagePriority.NonDisposable, str.ToCharArray())
+            NetMessage netMessage = new (MessagePriority.Sortable | MessagePriority.NonDisposable, str.ToCharArray())
             {
                 MessageOrder = consoleMessageOrder
             };

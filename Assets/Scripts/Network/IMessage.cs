@@ -9,7 +9,7 @@ using System;
 public enum MessagePriority
 {
     Default = 0,
-    Sorteable = 1,
+    Sortable = 1,
     NonDisposable = 2
 }
 
@@ -99,7 +99,7 @@ public abstract class BaseMessage<T> : IMessage<T>
     /// </summary>
     public bool IsSorteableMessage
     {
-        get { return ((currentMessagePriority & MessagePriority.Sorteable) != 0); }
+        get { return ((currentMessagePriority & MessagePriority.Sortable) != 0); }
     }
 
     /// <summary>

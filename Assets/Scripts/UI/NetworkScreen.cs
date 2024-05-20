@@ -23,21 +23,20 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     /// </summary>
     protected override void Initialize()
     {
-        connectBtn.onClick.AddListener(OnConnectBtnClick);
-        startServerBtn.onClick.AddListener(OnStartServerBtnClick);
+        connectBtn.onClick.AddListener(OnConnectButtonnClick);
+        startServerBtn.onClick.AddListener(OnStartServerButtonClick);
     }
 
     /// <summary>
     /// Handles the connect button click event. Connects the client to the specified server.
     /// </summary>
-    private void OnConnectBtnClick()
+    private void OnConnectButtonnClick()
     {
         // Parse the IP address and port from the input fields
         IPAddress ipAddress = IPAddress.Parse(addressInputField.text);
         int port = System.Convert.ToInt32(portInputField.text);
 
         // Start the client with the specified IP, port, and username
-
         NetworkManager.Instance.StartClient(ipAddress, port, nameInputField.text);
 
         SwitchToChatScreen();
@@ -46,7 +45,7 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     /// <summary>
     /// Handles the start server button click event. Starts the server with the specified port.
     /// </summary>
-    private void OnStartServerBtnClick()
+    private void OnStartServerButtonClick()
     {
         // Parse the port from the input field
         int port = System.Convert.ToInt32(portInputField.text);

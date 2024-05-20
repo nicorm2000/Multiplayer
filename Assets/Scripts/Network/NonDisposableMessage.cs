@@ -194,7 +194,7 @@ public class NonDisposableMessage
                         resendPackageCounterToClients[id][messageType] += Time.deltaTime;
 
                         // Reset the resend counter for this package
-                        if (resendPackageCounterToClients[id][messageType] >= pingPong.GetLatencyFormServer() * 5)
+                        if (resendPackageCounterToClients[id][messageType] >= pingPong.GetServerLatency() * 5)
                         {
                             Debug.Log("Package sent back to Client " + id);
                             nm.Broadcast(LastMessageBroadcastToClients[id][messageType].Peek(), nm.clients[id].ipEndPoint);
@@ -214,7 +214,7 @@ public class NonDisposableMessage
                     resendPackageCounterToServer[messageType] += Time.deltaTime;
 
                     // Check if it's time to resend the package
-                    if (resendPackageCounterToServer[messageType] >= pingPong.GetLatencyFormServer() * 5)
+                    if (resendPackageCounterToServer[messageType] >= pingPong.GetServerLatency() * 5)
                     {
                         Debug.Log("Package sent back to Server");
                         nm.SendToServer(LastMessageSendToServer[messageType].Peek());

@@ -92,7 +92,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
     public PingPong checkActivity;
 
     private GameManager gm;
-    private SorteableMessage sorteableMessages;
+    private SortableMessage sorteableMessages;
     private NonDisposableMessage nondisponblesMessages;
 
     private int maxPlayersPerServer = 4;
@@ -216,7 +216,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                     if (ipToId.ContainsKey(ip))
                     {
                         checkActivity.RecieveClientToServerPingMessage(ipToId[ip]);
-                        checkActivity.CalculateLatencyFromClients(ipToId[ip]);
+                        checkActivity.CalculateClientLatency(ipToId[ip]);
                     }
                     else
                     {
@@ -226,7 +226,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
                 else
                 {
                     checkActivity.ReciveServerToClientPingMessage();
-                    checkActivity.CalculateLatencyFromServer();
+                    checkActivity.CalculateServerLatency();
                 }
 
                 break;
@@ -235,7 +235,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>, IReceiveDa
 
                 ServerToClientHandShake netGetClientID = new(data);
                 List<(int clientId, string userName)> playerList = netGetClientID.GetData();
-                for (int i = 0; i < playerList.Count; i++) // First verify which client am i
+                for (int i = 0; i < playerList.Count; i++) // First verify which client am I
                 {
                     if (playerList[i].userName == userName)
                     {

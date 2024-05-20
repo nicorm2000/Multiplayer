@@ -111,7 +111,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void SendPosition()
     {
-        NetVector3 netVector3 = new (MessagePriority.Sorteable, (nm.actualClientId, transform.position))
+        NetVector3 netVector3 = new (MessagePriority.Sortable, (nm.actualClientId, transform.position))
         {
             MessageOrder = positionMessageOrder
         };

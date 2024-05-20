@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 
-public class SorteableMessage
+public class SortableMessage
 {
     private GameManager gm;
     private NetworkManager nm;
@@ -13,7 +13,7 @@ public class SorteableMessage
     /// <summary>
     /// Initializes the SorteableMessage instance and subscribes to relevant events.
     /// </summary>
-    public SorteableMessage()
+    public SortableMessage()
     {
         nm = NetworkManager.Instance;
         gm = GameManager.Instance;
@@ -36,7 +36,7 @@ public class SorteableMessage
     {
         MessagePriority messagePriority = MessageChecker.CheckMessagePriority(data);
 
-        if ((messagePriority & MessagePriority.Sorteable) != 0)
+        if ((messagePriority & MessagePriority.Sortable) != 0)
         {
             MessageType messageType = MessageChecker.CheckMessageType(data);
 
@@ -69,7 +69,6 @@ public class SorteableMessage
                         if (!OrderLastMessageReciveFromServer[clientId].ContainsKey(messageType))
                         {
                             OrderLastMessageReciveFromServer[clientId].Add(messageType, 0);
-
                         }
                         else
                         {

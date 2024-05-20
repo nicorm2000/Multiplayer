@@ -48,7 +48,7 @@ public class ServerGameplay : MonoBehaviour
         if (nm.isServer && currentState == States.Lobby && counterInit)
         {
             // Create a new timer message with the current counter value and send it to the new player.
-            NetUpdateNewPlayersTimer timer = new (MessagePriority.Default, counter);
+            NetUpdateNewPlayersTimer timer = new(MessagePriority.Default, counter);
             nm.Broadcast(timer.Serialize(), nm.clients[clientID].ipEndPoint);
         }
     }
@@ -63,7 +63,7 @@ public class ServerGameplay : MonoBehaviour
         if (MessageChecker.CheckMessageType(data) == MessageType.UpdateLobbyTimerForNewPlayers)
         {
             Debug.Log("Timer message received");
-            NetUpdateNewPlayersTimer timer = new (data);
+            NetUpdateNewPlayersTimer timer = new(data);
 
             counter = timer.GetData();
             clientLobbyTimer = true;
@@ -108,7 +108,7 @@ public class ServerGameplay : MonoBehaviour
 
                         if (initLobby)
                         {
-                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, true)
+                            NetUpdateTimer netUpdateLobbyTimer = new(MessagePriority.NonDisposable, true)
                             {
                                 CurrentMessageType = MessageType.UpdateLobbyTimer
                             };
@@ -131,7 +131,7 @@ public class ServerGameplay : MonoBehaviour
                     {
                         if (counterInit)
                         {
-                            NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, false)
+                            NetUpdateTimer netUpdateLobbyTimer = new(MessagePriority.NonDisposable, false)
                             {
                                 CurrentMessageType = MessageType.UpdateLobbyTimer
                             };
@@ -149,7 +149,7 @@ public class ServerGameplay : MonoBehaviour
 
                     if (initGameplay)
                     {
-                        NetUpdateTimer netUpdateGameplayTimer = new (MessagePriority.NonDisposable, true);
+                        NetUpdateTimer netUpdateGameplayTimer = new(MessagePriority.NonDisposable, true);
                         netUpdateGameplayTimer.CurrentMessageType = MessageType.UpdateGameplayTimer;
                         nm.Broadcast(netUpdateGameplayTimer.Serialize());
                         initGameplay = false;
@@ -239,12 +239,13 @@ public class ServerGameplay : MonoBehaviour
                 if (pc.health > maxHealth)
                 {
                     maxHealth = pc.health;
+                    Debug.Log(pc.enabled);
                     playerWithMaxHealth = pc;
                 }
             }
         }
 
-        NetIDMessage netIDMessage = new (MessagePriority.Default, playerWithMaxHealth.clientID)
+        NetIDMessage netIDMessage = new(MessagePriority.Default, playerWithMaxHealth.clientID)
         {
             CurrentMessageType = MessageType.Winner
         };

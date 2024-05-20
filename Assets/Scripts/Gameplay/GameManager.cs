@@ -40,7 +40,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         OnRemovePlayer += RemovePlayer;
         OnInstantiateBullet += InstantiatePlayerBullets;
         OnBulletHit += OnHitRecieved;
-
         OnInitGameplayTimer += ActivePlayerControllers;
     }
 
@@ -126,7 +125,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     /// <param name="playerData">Tuple containing player ID and new position.</param>
     public void UpdatePlayerPosition((int index, Vector3 newPosition) playerData)
     {
-        playerList[playerData.index].transform.position = playerData.newPosition;
+        if (playerList.ContainsKey(playerData.index))
+        {
+            playerList[playerData.index].transform.position = playerData.newPosition;
+        }
     }
 
     /// <summary>

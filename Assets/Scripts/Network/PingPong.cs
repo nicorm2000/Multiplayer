@@ -5,8 +5,8 @@ using UnityEngine;
 public class PingPong
 {
     private int timeUntilDisconnection = 5;
-    private Dictionary<int, float> lastMessageReceivedClient = new (); // Server use
-    private float lastMessageReceivedServer = 0; // Client use
+    private Dictionary<int, float> clientLastMessageReceived = new (); // Server use
+    private float serverLastMessageReceived = 0; // Client use
     private float sendMessageCounter = 0;
     private float secondsPerCheck = 1.0f;
     private Dictionary<int, float> clientLatency = new (); // Server use
@@ -27,7 +27,7 @@ public class PingPong
     /// <param name="idToAdd">The ID of the client to add.</param>
     public void AddClientForList(int idToAdd)
     {
-        lastMessageReceivedClient.Add(idToAdd, 0.0f);
+        clientLastMessageReceived.Add(idToAdd, 0.0f);
     }
 
     /// <summary>
@@ -36,24 +36,24 @@ public class PingPong
     /// <param name="idToRemove">The ID of the client to remove.</param>
     public void RemoveClientForList(int idToRemove)
     {
-        lastMessageReceivedClient.Remove(idToRemove);
+        clientLastMessageReceived.Remove(idToRemove);
     }
 
     /// <summary>
     /// Handles the reception of a ping message from the server to the client.
     /// </summary>
-    public void ReciveServerToClientPingMessage()
+    public void ReceiveServerToClientPingMessage()
     {
-        lastMessageReceivedServer = 0;
+        serverLastMessageReceived = 0;
     }
 
     /// <summary>
     /// Handles the reception of a ping message from a client to the server.
     /// </summary>
     /// <param name="playerID">The ID of the client sending the ping.</param>
-    public void RecieveClientToServerPingMessage(int playerID)
+    public void ReceiveClientToServerPingMessage(int playerID)
     {
-        lastMessageReceivedClient[playerID] = 0;
+        clientLastMessageReceived[playerID] = 0;
     }
 
     /// <summary>
@@ -81,17 +81,17 @@ public class PingPong
         if (NetworkManager.Instance.isServer)
         {
             // Increment the time since the last message was received for each client
-            var keys = new List<int>(lastMessageReceivedClient.Keys);
+            var keys = new List<int>(clientLastMessageReceived.Keys);
 
             foreach (var key in keys)
             {
-                lastMessageReceivedClient[key] += Time.deltaTime;
+                clientLastMessageReceived[key] += Time.deltaTime;
             }
         }
         else
         {
             // Increment the time since the last message was received from the server
-            lastMessageReceivedServer += Time.deltaTime;
+            serverLastMessageReceived += Time.deltaTime;
         }
     }
 
@@ -103,9 +103,9 @@ public class PingPong
         if (NetworkManager.Instance.isServer)
         {
             // Check if any clients need to be disconnected due to inactivity
-            foreach (int clientID in lastMessageReceivedClient.Keys)
+            foreach (int clientID in clientLastMessageReceived.Keys)
             {
-                if (lastMessageReceivedClient[clientID] > timeUntilDisconnection)
+                if (clientLastMessageReceived[clientID] > timeUntilDisconnection)
                 {
                     NetworkManager.Instance.RemoveClient(clientID);
                     // Notify other clients about the disconnection
@@ -117,7 +117,7 @@ public class PingPong
         else
         {
             // Check if the server needs to be disconnected due to inactivity
-            if (lastMessageReceivedServer > timeUntilDisconnection)
+            if (serverLastMessageReceived > timeUntilDisconnection)
             {
                 NetIDMessage netDisconnection = new (MessagePriority.Default, NetworkManager.Instance.actualClientId);
                 NetworkManager.Instance.SendToServer(netDisconnection.Serialize());

@@ -6,14 +6,13 @@ public class NonDisposableMessage
 {
     private GameManager gm;
     private NetworkManager nm;
-
-    Dictionary<MessageType, Queue<byte[]>> LastMessageSendToServer;
-    Dictionary<int, Dictionary<MessageType, Queue<byte[]>>> LastMessageBroadcastToClients;
-
-    Dictionary<byte[], float> MessagesHistory = new();
-    private int secondsToDeleteMessageHistory = 15;
-
     private PingPong pingPong;
+
+    Dictionary<MessageType, Queue<byte[]>> lastMessageSentToServer;
+    Dictionary<int, Dictionary<MessageType, Queue<byte[]>>> lastMessageBroadcastedToClients;
+
+    private int secondsToDeleteMessageHistory = 15;
+    Dictionary<byte[], float> messagesHistory = new();
 
     Dictionary<int, Dictionary<MessageType, float>> resendPackageCounterToClients;
     Dictionary<MessageType, float> resendPackageCounterToServer;
@@ -33,8 +32,8 @@ public class NonDisposableMessage
         gm.OnNewPlayer += AddNewClient;
         gm.OnRemovePlayer += RemoveClient;
 
-        LastMessageSendToServer = new Dictionary<MessageType, Queue<byte[]>>();
-        LastMessageBroadcastToClients = new Dictionary<int, Dictionary<MessageType, Queue<byte[]>>>();
+        lastMessageSentToServer = new Dictionary<MessageType, Queue<byte[]>>();
+        lastMessageBroadcastedToClients = new Dictionary<int, Dictionary<MessageType, Queue<byte[]>>>();
 
         resendPackageCounterToClients = new Dictionary<int, Dictionary<MessageType, float>>();
         resendPackageCounterToServer = new Dictionary<MessageType, float>();
@@ -72,28 +71,28 @@ public class NonDisposableMessage
             {
                 if (nm.ipToId.ContainsKey(ip))
                 {
-                    if (LastMessageBroadcastToClients.ContainsKey(nm.ipToId[ip]))
+                    if (lastMessageBroadcastedToClients.ContainsKey(nm.ipToId[ip]))
                     {
-                        if (MessagesHistory.ContainsKey(LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Peek()))
+                        if (messagesHistory.ContainsKey(lastMessageBroadcastedToClients[nm.ipToId[ip]][netConfirm.GetData()].Peek()))
                         {
-                            LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue();
+                            lastMessageBroadcastedToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue();
                         }
                         else
                         {
-                            MessagesHistory.Add(LastMessageBroadcastToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue(), secondsToDeleteMessageHistory);
+                            messagesHistory.Add(lastMessageBroadcastedToClients[nm.ipToId[ip]][netConfirm.GetData()].Dequeue(), secondsToDeleteMessageHistory);
                         }
                     }
                 }
             }
             else
             {
-                if (MessagesHistory.ContainsKey(LastMessageSendToServer[netConfirm.GetData()].Peek()))
+                if (messagesHistory.ContainsKey(lastMessageSentToServer[netConfirm.GetData()].Peek()))
                 {
-                    LastMessageSendToServer[netConfirm.GetData()].Dequeue();
+                    lastMessageSentToServer[netConfirm.GetData()].Dequeue();
                 }
                 else
                 {
-                    MessagesHistory.Add(LastMessageSendToServer[netConfirm.GetData()].Dequeue(), secondsToDeleteMessageHistory);
+                    messagesHistory.Add(lastMessageSentToServer[netConfirm.GetData()].Dequeue(), secondsToDeleteMessageHistory);
                 }
             }
         }
@@ -112,18 +111,19 @@ public class NonDisposableMessage
 
             if ((messagePriority & MessagePriority.NonDisposable) != 0)
             {
-                if (!LastMessageBroadcastToClients.ContainsKey(clientID))
+                if (!lastMessageBroadcastedToClients.ContainsKey(clientID))
                 {
-                    LastMessageBroadcastToClients.Add(clientID, new Dictionary<MessageType, Queue<byte[]>>());
+                    lastMessageBroadcastedToClients.Add(clientID, new Dictionary<MessageType, Queue<byte[]>>());
                 }
+
                 MessageType messageType = MessageChecker.CheckMessageType(data);
 
-                if (!LastMessageBroadcastToClients[clientID].ContainsKey(messageType))
+                if (!lastMessageBroadcastedToClients[clientID].ContainsKey(messageType))
                 {
-                    LastMessageBroadcastToClients[clientID].Add(messageType, new Queue<byte[]>());
+                    lastMessageBroadcastedToClients[clientID].Add(messageType, new Queue<byte[]>());
                 }
 
-                LastMessageBroadcastToClients[clientID][messageType].Enqueue(data);
+                lastMessageBroadcastedToClients[clientID][messageType].Enqueue(data);
             }
         }
     }
@@ -142,12 +142,12 @@ public class NonDisposableMessage
             {
                 MessageType messageType = MessageChecker.CheckMessageType(data);
 
-                if (!LastMessageSendToServer.ContainsKey(messageType))
+                if (!lastMessageSentToServer.ContainsKey(messageType))
                 {
-                    LastMessageSendToServer.Add(messageType, new Queue<byte[]>());
+                    lastMessageSentToServer.Add(messageType, new Queue<byte[]>());
                 }
 
-                LastMessageSendToServer[messageType].Enqueue(data);
+                lastMessageSentToServer[messageType].Enqueue(data);
             }
         }
     }
@@ -160,7 +160,7 @@ public class NonDisposableMessage
     {
         if (nm.isServer)
         {
-            LastMessageBroadcastToClients.Add(clientID, new Dictionary<MessageType, Queue<byte[]>>());
+            lastMessageBroadcastedToClients.Add(clientID, new Dictionary<MessageType, Queue<byte[]>>());
             resendPackageCounterToClients.Add(clientID, new Dictionary<MessageType, float>());
         }
     }
@@ -173,7 +173,7 @@ public class NonDisposableMessage
     {
         if (nm.isServer)
         {
-            LastMessageBroadcastToClients.Remove(clientID);
+            lastMessageBroadcastedToClients.Remove(clientID);
             resendPackageCounterToClients.Remove(clientID);
         }
     }
@@ -197,7 +197,7 @@ public class NonDisposableMessage
                         if (resendPackageCounterToClients[id][messageType] >= pingPong.GetServerLatency() * 5)
                         {
                             Debug.Log("Package sent back to Client " + id);
-                            nm.Broadcast(LastMessageBroadcastToClients[id][messageType].Peek(), nm.clients[id].ipEndPoint);
+                            nm.Broadcast(lastMessageBroadcastedToClients[id][messageType].Peek(), nm.clients[id].ipEndPoint);
                             // Reset the resend counter for this package
                             resendPackageCounterToClients[id][messageType] = 0;
                         }
@@ -217,7 +217,7 @@ public class NonDisposableMessage
                     if (resendPackageCounterToServer[messageType] >= pingPong.GetServerLatency() * 5)
                     {
                         Debug.Log("Package sent back to Server");
-                        nm.SendToServer(LastMessageSendToServer[messageType].Peek());
+                        nm.SendToServer(lastMessageSentToServer[messageType].Peek());
                         // Reset the resend counter for this package
                         resendPackageCounterToServer[messageType] = 0;
                     }
@@ -226,12 +226,12 @@ public class NonDisposableMessage
         }
 
         // Check and remove old messages from history
-        if (MessagesHistory.Count > 0)
+        if (messagesHistory.Count > 0)
         {
-            List<byte[]> keysToRemove = new List<byte[]>(MessagesHistory.Count);
+            List<byte[]> keysToRemove = new (messagesHistory.Count);
 
             // Find messages that have expired
-            foreach (byte[] messageKey in MessagesHistory.Keys)
+            foreach (byte[] messageKey in messagesHistory.Keys)
             {
                 keysToRemove.Add(messageKey);
             }
@@ -239,11 +239,11 @@ public class NonDisposableMessage
             // Remove expired messages
             foreach (byte[] messageKey in keysToRemove)
             {
-                MessagesHistory[messageKey] -= Time.deltaTime;
+                messagesHistory[messageKey] -= Time.deltaTime;
 
-                if (MessagesHistory[messageKey] <= 0)
+                if (messagesHistory[messageKey] <= 0)
                 {
-                    MessagesHistory.Remove(messageKey);
+                    messagesHistory.Remove(messageKey);
                 }
             }
         }

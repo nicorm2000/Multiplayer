@@ -5,20 +5,18 @@ enum States { Init, Lobby, Game, Finish };
 
 public class ServerGameplay : MonoBehaviour
 {
-    private int minutesInLobby = 10;
-    private float minutesGameplay = 30;
-    private float timeUntilCloseServer = 5;
-
-    private int minPlayerToInitCounter = 2;
-
     private GameManager gm;
     private NetworkManager nm;
     private States currentState;
 
-    private bool counterInit = false;
+    private int minutesInLobby = 15;
+    private float minutesGameplay = 30;
+    private float timeUntilCloseServer = 5;
+    private int minAmountOfPlayersToInitCounter = 2;
 
     private bool initLobby = true;
     private bool initGameplay = true;
+    private bool counterInit = false;
 
     private float counter = 0;
 
@@ -62,10 +60,9 @@ public class ServerGameplay : MonoBehaviour
     /// <param name="ip">The IP endpoint from which the data was received.</param>
     private void OnReceivedData(byte[] data, IPEndPoint ip)
     {
-        // Check if the message type is UpdateLobbyTimerForNewPlayers.
         if (MessageChecker.CheckMessageType(data) == MessageType.UpdateLobbyTimerForNewPlayers)
         {
-            Debug.Log("Timer message recieved");
+            Debug.Log("Timer message received");
             NetUpdateNewPlayersTimer timer = new (data);
 
             counter = timer.GetData();
@@ -100,13 +97,15 @@ public class ServerGameplay : MonoBehaviour
                 case States.Init:
 
                     currentState = States.Lobby;
+
                     break;
 
                 case States.Lobby:
 
-                    if (nm.clients.Count >= minPlayerToInitCounter)
+                    if (nm.clients.Count >= minAmountOfPlayersToInitCounter)
                     {
                         counterInit = true;
+
                         if (initLobby)
                         {
                             NetUpdateTimer netUpdateLobbyTimer = new (MessagePriority.NonDisposable, true)
@@ -118,7 +117,8 @@ public class ServerGameplay : MonoBehaviour
                         }
 
                         counter += Time.deltaTime;
-                        gm.timer.text = counter.ToString("F2") + "s";
+                        gm.timer.text = counter.ToString("F0");
+
                         if (counter >= minutesInLobby)
                         {
                             counter = 0;
@@ -149,31 +149,34 @@ public class ServerGameplay : MonoBehaviour
 
                     if (initGameplay)
                     {
-                        NetUpdateTimer netUpdateGameplayTimer = new(MessagePriority.NonDisposable, true)
-                        {
-                            CurrentMessageType = MessageType.UpdateGameplayTimer
-                        };
+                        NetUpdateTimer netUpdateGameplayTimer = new (MessagePriority.NonDisposable, true);
+                        netUpdateGameplayTimer.CurrentMessageType = MessageType.UpdateGameplayTimer;
                         nm.Broadcast(netUpdateGameplayTimer.Serialize());
                         initGameplay = false;
                     }
 
                     counter += Time.deltaTime;
-                    gm.timer.text = counter.ToString("F2") + "s";
-                    if (counter >= minutesGameplay)
+                    gm.timer.text = counter.ToString("F0");
+
+                    if (counter >= minutesGameplay || gm.playerList.Count <= 1)
                     {
                         SendMatchWinner();
+                        counter = 0;
                         gm.timer.text = "";
                         currentState = States.Finish;
                     }
+
                     break;
 
                 case States.Finish:
 
                     timeUntilCloseServer -= Time.deltaTime;
+
                     if (timeUntilCloseServer <= 0)
                     {
                         nm.CloseServer();
                     }
+
                     break;
 
                 default:
@@ -190,15 +193,14 @@ public class ServerGameplay : MonoBehaviour
         if (clientLobbyTimer)
         {
             counter += Time.deltaTime;
-            gm.timer.text = counter.ToString("F2") + "s";
+            gm.timer.text = counter.ToString("F0");
         }
 
         if (clientGameplayTimer && !NetworkScreen.Instance.gameObject.activeInHierarchy)
         {
             clientLobbyTimer = false;
-
             counter += Time.deltaTime;
-            gm.timer.text = counter.ToString("F2") + "s";
+            gm.timer.text = counter.ToString("F0");
         }
     }
 

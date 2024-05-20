@@ -97,7 +97,7 @@ public abstract class BaseMessage<T> : IMessage<T>
     /// <summary>
     /// Checks if the message is sortable.
     /// </summary>
-    public bool IsSorteableMessage
+    public bool IsSortableMessage
     {
         get { return ((currentMessagePriority & MessagePriority.Sortable) != 0); }
     }
@@ -130,7 +130,7 @@ public abstract class BaseMessage<T> : IMessage<T>
         currentMessageType = (MessageType)BitConverter.ToInt32(message, 0);
         currentMessagePriority = (MessagePriority)BitConverter.ToInt32(message, sizeof(int));
 
-        if (IsSorteableMessage)
+        if (IsSortableMessage)
         {
             messageOrder = BitConverter.ToInt32(message, sizeof(int) * 2);
             messageHeaderSize += sizeof(int);
@@ -146,7 +146,7 @@ public abstract class BaseMessage<T> : IMessage<T>
         outData.AddRange(BitConverter.GetBytes((int)currentMessageType));
         outData.AddRange(BitConverter.GetBytes((int)currentMessagePriority));
 
-        if (IsSorteableMessage)
+        if (IsSortableMessage)
         {
             outData.AddRange(BitConverter.GetBytes(messageOrder));
             messageHeaderSize += sizeof(int);
@@ -174,7 +174,6 @@ public abstract class BaseMessage<T> : IMessage<T>
     /// <param name="message">The message data to deserialize.</param>
     /// <returns>The deserialized message data.</returns>
     public abstract T Deserialize(byte[] message);
-
 }
 
 /// <summary>
@@ -247,12 +246,9 @@ public class ClientToServerNetHandShake : BaseMessage<(long, int, string)>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(BitConverter.GetBytes(data.Item1));
         outData.AddRange(BitConverter.GetBytes(data.Item2));
-
         outData.AddRange(MessageChecker.SerializeString(data.name.ToCharArray()));
-
         SerializeQueue(ref outData);
 
         return outData.ToArray();
@@ -331,9 +327,7 @@ public class NetVector3 : BaseMessage<(int, Vector3)>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(BitConverter.GetBytes(data.id));
-
         outData.AddRange(BitConverter.GetBytes(data.position.x));
         outData.AddRange(BitConverter.GetBytes(data.position.y));
         outData.AddRange(BitConverter.GetBytes(data.position.z));
@@ -358,7 +352,6 @@ public class ServerToClientHandShake : BaseMessage<List<(int clientID, string cl
     {
         currentMessageType = MessageType.ServerToClientHandShake;
         this.data = data;
-
     }
 
     /// <summary>
@@ -394,8 +387,8 @@ public class ServerToClientHandShake : BaseMessage<List<(int clientID, string cl
             DeserializeHeader(message);
 
             int listCount = BitConverter.ToInt32(message, messageHeaderSize);
-
             int offSet = messageHeaderSize + sizeof(int);
+
             for (int i = 0; i < listCount; i++)
             {
                 int clientID = BitConverter.ToInt32(message, offSet);
@@ -419,7 +412,6 @@ public class ServerToClientHandShake : BaseMessage<List<(int clientID, string cl
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(BitConverter.GetBytes(data.Count));
 
         foreach ((int clientID, string clientName) clientInfo in data)
@@ -500,11 +492,7 @@ public class NetMessage : BaseMessage<char[]>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
-
         outData.AddRange(MessageChecker.SerializeString(data));
-
-
         SerializeQueue(ref outData);
 
         return outData.ToArray();
@@ -604,9 +592,7 @@ public class NetIDMessage : BaseMessage<int>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(BitConverter.GetBytes(clientID));
-
         SerializeQueue(ref outData);
 
         return outData.ToArray();
@@ -675,9 +661,7 @@ public class NetErrorMessage : BaseMessage<string>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(MessageChecker.SerializeString(error.ToCharArray()));
-
         SerializeQueue(ref outData);
 
         return outData.ToArray();
@@ -747,10 +731,8 @@ public class NetUpdateTimer : BaseMessage<bool>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(BitConverter.GetBytes(initTimer));
         outData.AddRange(BitConverter.GetBytes(initTimer));
-
         SerializeQueue(ref outData);
 
         return outData.ToArray();
@@ -820,9 +802,7 @@ public class NetConfirmMessage : BaseMessage<MessageType>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(BitConverter.GetBytes((int)messageTypeToConfirm));
-
         SerializeQueue(ref outData);
 
         return outData.ToArray();
@@ -892,9 +872,7 @@ public class NetUpdateNewPlayersTimer : BaseMessage<float>
         List<byte> outData = new ();
 
         SerializeHeader(ref outData);
-
         outData.AddRange(BitConverter.GetBytes(timer));
-
         SerializeQueue(ref outData);
 
         return outData.ToArray();

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using UnityEngine;
 
-public class ClientNetManager : MonoBehaviourSingleton<NetworkManager>, IReceiveData
+public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IReceiveData
 {
     /// <summary>
     /// Represents a player in the game.
@@ -76,7 +76,6 @@ public class ClientNetManager : MonoBehaviourSingleton<NetworkManager>, IReceive
         this.userName = name;
 
         connection = new UdpConnection(ip, port, this);
-        checkActivity = new PingPong();
 
         ClientToServerNetHandShake handShakeMesage = new(MessagePriority.NonDisposable, (UdpConnection.IPToLong(ip), port, name));
         SendToServer(handShakeMesage.Serialize());
@@ -137,6 +136,8 @@ public class ClientNetManager : MonoBehaviourSingleton<NetworkManager>, IReceive
 
                 ServerToClientHandShake netGetClientID = new(data);
                 List<(int clientId, string userName)> playerList = netGetClientID.GetData();
+
+                checkActivity ??= new PingPong();
 
                 for (int i = 0; i < playerList.Count; i++) // First verify which client am I
                 {

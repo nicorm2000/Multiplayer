@@ -81,23 +81,24 @@ public class UdpConnection
     /// <param name="ar">The result of the asynchronous operation.</param>
     private void OnReceive(IAsyncResult ar)
     {
+            DataReceived dataReceived = new();
         try
         {
-            DataReceived dataReceived = new ();
             // Receive data and store the sender's endpoint
             dataReceived.data = connection.EndReceive(ar, ref dataReceived.ipEndPoint);
-
-            lock (handler)
-            {
-                dataReceivedQueue.Enqueue(dataReceived);
-            }
         }
         catch (SocketException e)
         {
             // Handle socket exceptions (e.g., client disconnects)
             UnityEngine.Debug.LogError("[UdpConnection] " + e.Message);
         }
-
+        finally
+        {
+            lock (handler)
+            {
+                dataReceivedQueue.Enqueue(dataReceived);
+            }
+        }
         connection.BeginReceive(OnReceive, null);
     }
 

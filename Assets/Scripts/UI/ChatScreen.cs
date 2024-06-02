@@ -5,7 +5,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     public Text messages;
     public InputField inputMessage;
 
-    private static int consoleMessageOrder = 0;
+    static int consoleMessageOrder = 1;
 
     /// <summary>
     /// Initializes the ChatScreen by setting up the input message event listener and deactivating the game object.
@@ -25,25 +25,21 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     {
         if (inputMessage.text != "")
         {
-            string name = NetworkManager.Instance.userName + ": ";
+            string name = NetworkManager.Instance.networkEntity.userName + ": ";
             str = name + str;
 
-            NetMessage netMessage = new (MessagePriority.Sortable | MessagePriority.NonDisposable, str.ToCharArray())
-            {
-                MessageOrder = consoleMessageOrder
-            };
+            NetMessage netMessage = new NetMessage(MessagePriority.NonDisposable, str.ToCharArray());
+            netMessage.MessageOrder = consoleMessageOrder;
             consoleMessageOrder++;
 
-            // If this client is the server, broadcast the message to all clients
             if (NetworkManager.Instance.isServer)
             {
-                NetworkManager.Instance.Broadcast(netMessage.Serialize());
+                NetworkManager.Instance.GetNetworkServer().Broadcast(netMessage.Serialize());
                 messages.text += str + System.Environment.NewLine;
             }
             else
             {
-                // Otherwise, send the message to the server
-                NetworkManager.Instance.SendToServer(netMessage.Serialize());
+                NetworkManager.Instance.GetNetworkClient().SendToServer(netMessage.Serialize());
             }
 
             inputMessage.ActivateInputField();

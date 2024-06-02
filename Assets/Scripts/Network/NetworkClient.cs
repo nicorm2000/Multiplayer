@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
-using UnityEngine;
 
-public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IReceiveData
+public class NetworkClient : NetworkEntity
 {
     /// <summary>
     /// Represents a player in the game.
@@ -33,35 +32,9 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
         get; private set;
     }
 
-    /// <summary>
-    /// The port of the network manager.
-    /// </summary>
-    public int port
-    {
-        get; private set;
-    }
 
-    private UdpConnection connection;
-
-    public Action<byte[], IPEndPoint> OnReceivedMessage;
 
     private readonly Dictionary<int, Player> players = new();
-
-    public string userName = "Server";
-    public int actualClientId = -1;
-
-    public PingPong checkActivity;
-
-    private GameManager gm;
-    private SortableMessage sortableMessages;
-    private NonDisposableMessage nonDisposablesMessages;
-
-    private void Start()
-    {
-        gm = GameManager.Instance;
-        sortableMessages = new();
-        nonDisposablesMessages = new();
-    }
 
     /// <summary>
     /// Starts the client with the specified IP address, port, and name.
@@ -69,7 +42,7 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
     /// <param name="ip">The IP address of the server.</param>
     /// <param name="port">The port of the server.</param>
     /// <param name="name">The name of the client.</param>
-    public void StartClient(IPAddress ip, int port, string name)
+    public NetworkClient(IPAddress ip, int port, string name) : base()
     {
         this.port = port;
         this.ipAddress = ip;
@@ -87,9 +60,9 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
     /// <param name="ip">The IP endpoint of the client.</param>
     /// <param name="newClientID">The ID of the new client.</param>
     /// <param name="clientName">The name of the new client.</param>
-    public void AddClient(IPEndPoint ip, int newClientID, string clientName)
+    public override void AddClient(IPEndPoint ip, int newClientID, string clientName)
     {
-        Debug.Log("Adding Client: " + ip.Address);
+        Console.WriteLine("Adding Client: " + ip.Address);
 
         checkActivity.AddClientForList(newClientID);
         gm.OnNewPlayer?.Invoke(newClientID);
@@ -99,16 +72,18 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
     /// Removes a client from the server.
     /// </summary>
     /// <param name="idToRemove">The ID of the client to remove.</param>
-    public void RemoveClient(int idToRemove)
+    public override void RemoveClient(int idToRemove)
     {
         gm.OnRemovePlayer?.Invoke(idToRemove);
 
-        Debug.Log("Removing client: " + idToRemove);
+        Console.WriteLine("Removing client: " + idToRemove);
         checkActivity.RemoveClientForList(idToRemove);
         players.Remove(idToRemove);
 
-        if (actualClientId == idToRemove)
+        if (clientID == idToRemove)
         {
+            gm.RemoveAllPlayers();
+            checkActivity = null;
             NetworkScreen.Instance.SwitchToMenuScreen();
         }
     }
@@ -118,7 +93,7 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
     /// </summary>
     /// <param name="data">The data received.</param>
     /// <param name="ip">The IP address of the sender.</param>
-    public void OnReceiveData(byte[] data, IPEndPoint ip)
+    public override void OnReceiveData(byte[] data, IPEndPoint ip)
     {
         // Invoke the event to notify listeners about the received message
         OnReceivedMessage?.Invoke(data, ip);
@@ -137,13 +112,22 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
                 ServerToClientHandShake netGetClientID = new(data);
                 List<(int clientId, string userName)> playerList = netGetClientID.GetData();
 
-                checkActivity ??= new PingPong();
+                if (checkActivity == null)
+                {
+                    checkActivity = new();
+                    NetworkManager.Instance.onInitPingPong?.Invoke();
+                }
 
                 for (int i = 0; i < playerList.Count; i++) // First verify which client am I
                 {
                     if (playerList[i].userName == userName)
                     {
-                        actualClientId = playerList[i].clientId;
+                        if (NetworkScreen.Instance.isInMenu)
+                        {
+                            NetworkScreen.Instance.SwitchToChatScreen();
+                        }
+
+                        clientID = playerList[i].clientId;
                     }
                 }
 
@@ -151,7 +135,7 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
 
                 for (int i = 0; i < playerList.Count; i++)
                 {
-                    Debug.Log(playerList[i].clientId + " - " + playerList[i].userName);
+                    Console.WriteLine(playerList[i].clientId + " - " + playerList[i].userName);
                     Player playerToAdd = new(playerList[i].clientId, playerList[i].userName);
                     players.Add(playerList[i].clientId, playerToAdd);
                     gm.OnNewPlayer?.Invoke(playerToAdd.id);
@@ -188,7 +172,7 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
                 NetIDMessage netDisconnection = new(data);
                 int playerID = netDisconnection.GetData();
 
-                Debug.Log("Remove player " + playerID);
+                Console.WriteLine("Remove player " + playerID);
                 RemoveClient(playerID);
 
                 break;
@@ -241,25 +225,11 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
     }
 
     /// <summary>
-    /// Updates the network manager.
-    /// </summary>
-    void Update()
-    {
-        // Flush the data in the main thread
-        if (connection != null)
-        {
-            connection.FlushReceiveData();
-            checkActivity?.UpdateCheckActivity();
-            nonDisposablesMessages?.ResendPackages();
-        }
-    }
-
-    /// <summary>
     /// Updates the chat text with received message data.
     /// </summary>
     /// <param name="data">The message data received.</param>
     /// <param name="ip">The IP endpoint of the client.</param>
-    private void UpdateChatText(byte[] data, IPEndPoint ip)
+    protected override void UpdateChatText(byte[] data, IPEndPoint ip)
     {
         string messageText = "";
 
@@ -272,10 +242,10 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
     /// <summary>
     /// Handles the cleanup when the application is about to quit.
     /// </summary>
-    void OnApplicationQuit()
+    public override void OnApplicationQuit()
     {
         // Notify the server about the client's disconnection
-        NetIDMessage netDisconnection = new(MessagePriority.Default, actualClientId);
+        NetIDMessage netDisconnection = new(MessagePriority.Default, clientID);
         SendToServer(netDisconnection.Serialize());
     }
 
@@ -292,7 +262,7 @@ public class ClientNetManager : MonoBehaviourSingleton<ClientNetManager>, IRecei
     /// Updates the position of a player based on received data.
     /// </summary>
     /// <param name="data">The data containing the player's position.</param>
-    private void UpdatePlayerPosition(byte[] data)
+    protected override void UpdatePlayerPosition(byte[] data)
     {
         NetVector3 netPosition = new(data);
         int clientId = netPosition.GetData().id;

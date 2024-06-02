@@ -2,27 +2,26 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Config")]
-    [SerializeField] private float speed = 5f;
-    [SerializeField] private GameObject bulletPrefab;
-
-    private bool canShoot = true;
-    private readonly float cooldownShoot = 0.5f;
-
-    private CharacterController cc;
-
     public int health = 3;
+
+    [SerializeField] float speed = 5f;
+    [SerializeField] GameObject bulletPrefab;
+    float cooldownShoot = 0.5f;
+
+    [SerializeField] bool canShoot = true;
+    CharacterController cc;
+
     public bool currentPlayer = false;
     public int clientID = -1;
 
-    private GameManager gm;
-    private NetworkManager nm;
+    GameManager gm;
+    NetworkManager nm;
 
-    private AudioSource audioSource;
-    private Animator animator;
+    AudioSource audioSource;
+    Animator animator;
 
-    private static int positionMessageOrder = 1;
-    private static int bulletsMessageOrder = 1;
+    static int positionMessageOrder = 1;
+    static int bulletsMessageOrder = 1;
 
     /// <summary>
     /// Initializes references to components on the GameObject.
@@ -55,6 +54,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
     /// <summary>
     /// Handles player movement and shooting if the player is the current player and not the server.
     /// </summary>
@@ -63,7 +63,7 @@ public class PlayerController : MonoBehaviour
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
 
-        Vector3 movement = speed * Time.deltaTime * new Vector3(horizontalInput, verticalInput, 0.0f);
+        Vector3 movement = new Vector3(horizontalInput, verticalInput, 0.0f) * speed * Time.deltaTime;
 
         cc.Move(movement);
 
@@ -78,23 +78,22 @@ public class PlayerController : MonoBehaviour
         if (Input.GetMouseButtonDown(0) && canShoot)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
 
-            if (Physics.Raycast(ray, out RaycastHit hit))
+            if (Physics.Raycast(ray, out hit))
             {
                 Vector3 mousePosition = hit.point;
-                mousePosition.z = 0f; // Ensuring the bullet stays on the same Z plane
+                mousePosition.z = 0f;
                 Vector3 direction = mousePosition - transform.position;
                 direction.Normalize();
 
                 GameObject bullet = Instantiate(bulletPrefab, transform.position + direction, Quaternion.identity);
                 bullet.GetComponent<BulletController>().SetDirection(direction, clientID);
 
-                NetVector3 netBullet = new (MessagePriority.NonDisposable, (nm.actualClientId, direction))
-                {
-                    CurrentMessageType = MessageType.BulletInstatiate,
-                    MessageOrder = bulletsMessageOrder
-                };
-                nm.SendToServer(netBullet.Serialize());
+                NetVector3 netBullet = new NetVector3(MessagePriority.NonDisposable, (nm.ClientID, direction));
+                netBullet.CurrentMessageType = MessageType.BulletInstatiate;
+                netBullet.MessageOrder = bulletsMessageOrder;
+                nm.GetNetworkClient().SendToServer(netBullet.Serialize());
                 bulletsMessageOrder++;
 
                 animator.SetTrigger("Shoot");
@@ -111,11 +110,9 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void SendPosition()
     {
-        NetVector3 netVector3 = new (MessagePriority.Sortable, (nm.actualClientId, transform.position))
-        {
-            MessageOrder = positionMessageOrder
-        };
-        NetworkManager.Instance.SendToServer(netVector3.Serialize());
+        NetVector3 netVector3 = new NetVector3(MessagePriority.Sortable, (nm.ClientID, transform.position));
+        netVector3.MessageOrder = positionMessageOrder;
+        NetworkManager.Instance.GetNetworkClient().SendToServer(netVector3.Serialize());
         positionMessageOrder++;
     }
 
@@ -146,9 +143,9 @@ public class PlayerController : MonoBehaviour
 
         if (health <= 0)
         {
-            NetIDMessage netDisconnection = new (MessagePriority.Default, clientID);
-            nm.Broadcast(netDisconnection.Serialize());
-            nm.RemoveClient(clientID);
+            NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, clientID);
+            nm.GetNetworkServer().Broadcast(netDisconnection.Serialize());
+            nm.GetNetworkServer().RemoveClient(clientID);
         }
     }
 }

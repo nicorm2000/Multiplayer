@@ -19,15 +19,15 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public TextMeshProUGUI timer;
 
-    [Header("Config")]
-    [SerializeField] private Transform[] spawnPositions;
-    [SerializeField] private GameObject playerPrefab;
-    public Dictionary<int, GameObject> playerList = new();
+    [SerializeField] Transform[] spawnPositions;
 
-    private NetworkManager nm;
+    [SerializeField] GameObject playerPrefab;
+    public Dictionary<int, GameObject> playerList = new Dictionary<int, GameObject>();
+
+    int spawnCounter = 0;
+
+    NetworkManager nm;
     public bool isGameplay;
-
-    private int counter = 0;
 
     /// <summary>
     /// Initializes the GameManager and sets up event listeners.
@@ -40,6 +40,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         OnRemovePlayer += RemovePlayer;
         OnInstantiateBullet += InstantiatePlayerBullets;
         OnBulletHit += OnHitRecieved;
+
         OnInitGameplayTimer += ActivePlayerControllers;
     }
 
@@ -51,16 +52,16 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (!playerList.ContainsKey(index))
         {
-            playerList.Add(index, Instantiate(playerPrefab, spawnPositions[counter].position, Quaternion.identity));
+            playerList.Add(index, Instantiate(playerPrefab, spawnPositions[spawnCounter].position, Quaternion.identity));
             OnChangeLobbyPlayers?.Invoke(index);
-            counter++;
+            spawnCounter++;
         }
 
         if (playerList[index].TryGetComponent(out PlayerController pc))
         {
             pc.clientID = index;
 
-            if (index != nm.actualClientId)
+            if (index != nm.ClientID)
             {
                 pc.currentPlayer = false;
             }
@@ -87,9 +88,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             Destroy(playerList[index]);
             playerList.Remove(index);
 
-            if (!nm.isServer && index == nm.actualClientId)
+            if (!nm.isServer && index == nm.ClientID)
             {
-                counter = 0;
+                spawnCounter = 0;
                 RemoveAllPlayers();
             }
         }
@@ -98,12 +99,13 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     /// <summary>
     /// Removes all players from the game.
     /// </summary>
-    private void RemoveAllPlayers()
+    public void RemoveAllPlayers()
     {
         foreach (int id in playerList.Keys)
         {
             Destroy(playerList[id]);
         }
+
         playerList.Clear();
     }
 
@@ -166,5 +168,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     public void EndMatch()
     {
         timer.text = "";
+        RemoveAllPlayers();
     }
 }

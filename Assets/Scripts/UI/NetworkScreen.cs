@@ -11,12 +11,13 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     public InputField portInputField;
     public InputField addressInputField;
 
-    [Header("Config")]
     [SerializeField] GameObject panelError;
     [SerializeField] TextMeshProUGUI errorText;
 
     [SerializeField] GameObject winPanel;
     [SerializeField] TextMeshProUGUI winText;
+
+    public bool isInMenu = true;
 
     /// <summary>
     /// Initializes the NetworkScreen by setting up button listeners.
@@ -32,14 +33,10 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     /// </summary>
     private void OnConnectButtonnClick()
     {
-        // Parse the IP address and port from the input fields
         IPAddress ipAddress = IPAddress.Parse(addressInputField.text);
         int port = System.Convert.ToInt32(portInputField.text);
 
-        // Start the client with the specified IP, port, and username
         NetworkManager.Instance.StartClient(ipAddress, port, nameInputField.text);
-
-        SwitchToChatScreen();
     }
 
     /// <summary>
@@ -47,7 +44,6 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     /// </summary>
     private void OnStartServerButtonClick()
     {
-        // Parse the port from the input field
         int port = System.Convert.ToInt32(portInputField.text);
         NetworkManager.Instance.StartServer(port);
         SwitchToChatScreen();
@@ -56,8 +52,9 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     /// <summary>
     /// Switches to the chat screen and hides the network screen.
     /// </summary>
-    private void SwitchToChatScreen()
+    public void SwitchToChatScreen()
     {
+        isInMenu = false;
         ChatScreen.Instance.gameObject.SetActive(true);
         this.gameObject.SetActive(false);
     }
@@ -67,6 +64,7 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     /// </summary>
     public void SwitchToMenuScreen()
     {
+        isInMenu = true;
         GameManager.Instance.timer.text = "";
         ChatScreen.Instance.gameObject.SetActive(false);
         this.gameObject.SetActive(true);

@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
-using UnityEngine;
 
-public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IReceiveData
+public class NetworkServer : NetworkEntity
 {
     public struct Client
     {
@@ -28,51 +27,27 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
         }
     }
 
-    /// <summary>
-    /// The port of the network manager.
-    /// </summary>
-    public int port
-    {
-        get; private set;
-    }
-
-    private UdpConnection connection;
-
-    public Action<byte[], IPEndPoint> OnReceivedMessage;
-
     public readonly Dictionary<int, Client> clients = new();
 
     public readonly Dictionary<IPEndPoint, int> ipToId = new();
 
-    public string userName = "Server";
-    public int serverClientId = 0;
-
-    public PingPong checkActivity;
-
-    private GameManager gm;
-    private SortableMessage sortableMessages;
-    private NonDisposableMessage nonDisposablesMessages;
+    DateTime appStartTime;
 
     private int maxPlayersPerServer = 4;
     public bool matchOnGoing = false;
 
-    private void Start()
-    {
-        gm = GameManager.Instance;
-        sortableMessages = new();
-        nonDisposablesMessages = new();
-    }
 
     /// <summary>
     /// Starts the server on the specified port.
     /// </summary>
     /// <param name="port">The port to listen on.</param>
-    public void StartServer(int port)
+    public NetworkServer(int port, DateTime appStartTime) : base()
     {
         this.port = port;
         connection = new UdpConnection(port, this);
-
         checkActivity = new PingPong();
+
+        this.appStartTime = appStartTime;
     }
 
     /// <summary>
@@ -81,14 +56,14 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
     /// <param name="ip">The IP endpoint of the client.</param>
     /// <param name="newClientID">The ID of the new client.</param>
     /// <param name="clientName">The name of the new client.</param>
-    public void AddClient(IPEndPoint ip, int newClientID, string clientName)
+    public override void AddClient(IPEndPoint ip, int newClientID, string clientName)
     {
         if (!ipToId.ContainsKey(ip) && !clients.ContainsKey(newClientID))
         {
-            Debug.Log("Adding Client: " + ip.Address);
+            Console.WriteLine("Adding Client: " + ip.Address);
 
             ipToId[ip] = newClientID;
-            clients.Add(newClientID, new Client(ip, newClientID, Time.realtimeSinceStartup, clientName));
+            clients.Add(newClientID, new Client(ip, newClientID, (float)(DateTime.UtcNow - appStartTime).TotalSeconds, clientName));
             checkActivity.AddClientForList(newClientID);
             gm.OnNewPlayer?.Invoke(newClientID);
 
@@ -104,7 +79,7 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
         }
         else
         {
-            Debug.Log("It's a repeated Client");
+            Console.WriteLine("It's a repeated Client");
         }
     }
 
@@ -112,13 +87,13 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
     /// Removes a client from the server.
     /// </summary>
     /// <param name="idToRemove">The ID of the client to remove.</param>
-    public void RemoveClient(int idToRemove)
+    public override void RemoveClient(int idToRemove)
     {
         gm.OnRemovePlayer?.Invoke(idToRemove);
 
         if (clients.ContainsKey(idToRemove))
         {
-            Debug.Log("Removing client: " + idToRemove);
+            Console.WriteLine("Removing client: " + idToRemove);
             checkActivity.RemoveClientForList(idToRemove);
             ipToId.Remove(clients[idToRemove].ipEndPoint);
             clients.Remove(idToRemove);
@@ -130,7 +105,7 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
     /// </summary>
     /// <param name="data">The data received.</param>
     /// <param name="ip">The IP address of the sender.</param>
-    public void OnReceiveData(byte[] data, IPEndPoint ip)
+    public override void OnReceiveData(byte[] data, IPEndPoint ip)
     {
         // Invoke the event to notify listeners about the received message
         OnReceivedMessage?.Invoke(data, ip);
@@ -143,10 +118,6 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
                 {
                     checkActivity.ReceiveClientToServerPingMessage(ipToId[ip]);
                     checkActivity.CalculateClientLatency(ipToId[ip]);
-                }
-                else
-                {
-                    Debug.LogError("Fail Client ID");
                 }
 
                 break;
@@ -241,20 +212,6 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
     }
 
     /// <summary>
-    /// Updates the network manager.
-    /// </summary>
-    void Update()
-    {
-        // Flush the data in the main thread
-        if (connection != null)
-        {
-            connection.FlushReceiveData();
-            checkActivity?.UpdateCheckActivity();
-            nonDisposablesMessages?.ResendPackages();
-        }
-    }
-
-    /// <summary>
     /// Receives a handshake message from a client to the server.
     /// </summary>
     /// <param name="data">The data received.</param>
@@ -265,8 +222,8 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
 
         if (!MatchOnGoing(ip) && CheckValidUserName(handShake.GetData().Item3, ip) && !ServerIsFull(ip))
         {
-            AddClient(ip, serverClientId, handShake.GetData().Item3);
-            serverClientId++;
+            AddClient(ip, clientID, handShake.GetData().Item3);
+            clientID++;
         }
     }
 
@@ -332,7 +289,7 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
     /// </summary>
     /// <param name="data">The message data received.</param>
     /// <param name="ip">The IP endpoint of the client.</param>
-    private void UpdateChatText(byte[] data, IPEndPoint ip)
+    protected override void UpdateChatText(byte[] data, IPEndPoint ip)
     {
         string messageText = "";
 
@@ -347,9 +304,8 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
     /// <summary>
     /// Handles the cleanup when the application is about to quit.
     /// </summary>
-    void OnApplicationQuit()
+    public override void OnApplicationQuit()
     {
-
         // Notify all clients about the server's disconnection and close the server
         NetErrorMessage netErrorMessage = new("Lost Connection To Server");
         Broadcast(netErrorMessage.Serialize());
@@ -370,13 +326,15 @@ public class ServerNetManager : MonoBehaviourSingleton<ServerNetManager>, IRecei
             Broadcast(netDisconnection.Serialize());
             RemoveClient(clientId);
         }
+
+        NetworkScreen.Instance.SwitchToMenuScreen();
     }
 
     /// <summary>
     /// Updates the position of a player based on received data.
     /// </summary>
     /// <param name="data">The data containing the player's position.</param>
-    private void UpdatePlayerPosition(byte[] data)
+    protected override void UpdatePlayerPosition(byte[] data)
     {
         NetVector3 netPosition = new(data);
         int clientId = netPosition.GetData().id;

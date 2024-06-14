@@ -32,9 +32,11 @@ public class NetworkClient : NetworkEntity
         get; private set;
     }
 
-
-
     private readonly Dictionary<int, Player> players = new();
+
+    ClientPingPong pingPong;
+    ClientSortableMessage sortableMessage;
+    ClientNondisponsableMessage nondisposablesMessages;
 
     /// <summary>
     /// Starts the client with the specified IP address, port, and name.
@@ -50,6 +52,9 @@ public class NetworkClient : NetworkEntity
 
         connection = new UdpConnection(ip, port, this);
 
+        onInitPingPong += () => nondisposablesMessages = new(this);
+        onInitPingPong += () => sortableMessage = new(this);
+
         ClientToServerNetHandShake handShakeMesage = new(MessagePriority.NonDisposable, (UdpConnection.IPToLong(ip), port, name));
         SendToServer(handShakeMesage.Serialize());
     }
@@ -64,8 +69,7 @@ public class NetworkClient : NetworkEntity
     {
         Console.WriteLine("Adding Client: " + ip.Address);
 
-        checkActivity.AddClientForList(newClientID);
-        gm.OnNewPlayer?.Invoke(newClientID);
+        OnNewPlayer?.Invoke(newClientID);
     }
 
     /// <summary>
@@ -74,10 +78,9 @@ public class NetworkClient : NetworkEntity
     /// <param name="idToRemove">The ID of the client to remove.</param>
     public override void RemoveClient(int idToRemove)
     {
-        gm.OnRemovePlayer?.Invoke(idToRemove);
+        OnRemovePlayer?.Invoke(idToRemove);
 
         Console.WriteLine("Removing client: " + idToRemove);
-        checkActivity.RemoveClientForList(idToRemove);
         players.Remove(idToRemove);
 
         if (clientID == idToRemove)
@@ -98,12 +101,14 @@ public class NetworkClient : NetworkEntity
         // Invoke the event to notify listeners about the received message
         OnReceivedMessage?.Invoke(data, ip);
 
+        OnReceivedMessagePriority(data);
+
         switch (MessageChecker.CheckMessageType(data))
         {
             case MessageType.Ping:
 
-                checkActivity.ReceiveServerToClientPingMessage();
-                checkActivity.CalculateServerLatency();
+                pingPong.ReciveServerToClientPingMessage();
+                pingPong.CalculateLatencyFromServer();
 
                 break;
 
@@ -114,8 +119,9 @@ public class NetworkClient : NetworkEntity
 
                 if (checkActivity == null)
                 {
-                    checkActivity = new();
-                    NetworkManager.Instance.onInitPingPong?.Invoke();
+                    pingPong = new ClientPingPong(this);
+                    checkActivity = pingPong;
+                    onInitPingPong?.Invoke();
                 }
 
                 for (int i = 0; i < playerList.Count; i++) // First verify which client am I
@@ -138,7 +144,7 @@ public class NetworkClient : NetworkEntity
                     Console.WriteLine(playerList[i].clientId + " - " + playerList[i].userName);
                     Player playerToAdd = new(playerList[i].clientId, playerList[i].userName);
                     players.Add(playerList[i].clientId, playerToAdd);
-                    gm.OnNewPlayer?.Invoke(playerToAdd.id);
+                    OnNewPlayer?.Invoke(playerToAdd.id);
                 }
 
                 break;
@@ -153,7 +159,7 @@ public class NetworkClient : NetworkEntity
 
                 NetVector3 netVector3 = new(data);
 
-                if (sortableMessages.CheckMessageOrderReceivedFromServer(netVector3.GetData().id, MessageType.Position, netVector3.MessageOrder))
+                if (sortableMessage.CheckMessageOrderRecievedFromServer(netVector3.GetData().id, MessageType.Position, netVector3.MessageOrder))
                 {
                     UpdatePlayerPosition(data);
                 }
@@ -163,7 +169,7 @@ public class NetworkClient : NetworkEntity
             case MessageType.BulletInstatiate:
 
                 NetVector3 netBullet = new(data);
-                gm.OnInstantiateBullet?.Invoke(netBullet.GetData().id, netBullet.GetData().position);
+                OnInstantiateBullet?.Invoke(netBullet.GetData().id, netBullet.GetData().position);
 
                 break;
 
@@ -212,6 +218,20 @@ public class NetworkClient : NetworkEntity
             default:
                 break;
         }
+
+    }
+
+    void OnReceivedMessagePriority(byte[] data)
+    {
+
+        if (MessageChecker.IsSorteableMessage(data))
+        {
+            sortableMessage?.OnRecievedData(data, -1);
+        }
+        if (MessageChecker.IsNondisponsableMessage(data))
+        {
+            nondisposablesMessages?.OnReceivedData(data, -1);
+        }
     }
 
     /// <summary>
@@ -220,7 +240,7 @@ public class NetworkClient : NetworkEntity
     /// <param name="data">The data to send.</param>
     public void SendToServer(byte[] data)
     {
-        nonDisposablesMessages.AddSentMessagesFromClients(data);
+        nondisposablesMessages?.AddSentMessages(data);
         connection.Send(data);
     }
 
@@ -252,7 +272,7 @@ public class NetworkClient : NetworkEntity
     /// <summary>
     /// Disconnects the player from the network.
     /// </summary>
-    public void DisconectPlayer()
+    public override void CloseConnection()
     {
         connection.Close();
         NetworkScreen.Instance.SwitchToMenuScreen();
@@ -268,5 +288,25 @@ public class NetworkClient : NetworkEntity
         int clientId = netPosition.GetData().id;
 
         gm.UpdatePlayerPosition(netPosition.GetData());
+    }
+
+    public override void Update()
+    {
+        base.Update();
+
+        if (connection != null)
+        {
+            nondisposablesMessages?.ResendPackages();
+        }
+    }
+
+    public override void SendMessage(byte[] data)
+    {
+        SendToServer(data);
+    }
+
+    public override void SendMessage(byte[] data, int id = -1) //Es una sobrecarga que solo usa el SERVER
+    {
+        SendToServer(data);
     }
 }

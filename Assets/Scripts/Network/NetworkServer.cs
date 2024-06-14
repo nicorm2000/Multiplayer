@@ -36,16 +36,30 @@ public class NetworkServer : NetworkEntity
     private int maxPlayersPerServer = 4;
     public bool matchOnGoing = false;
 
+    ServerPingPong pingPong;
+    ServerSortableMessage sortableMessage;
+    ServerNondisponsableMessage nondisponsableMessage;
+
+    IGameActions gameActions;
 
     /// <summary>
     /// Starts the server on the specified port.
     /// </summary>
     /// <param name="port">The port to listen on.</param>
-    public NetworkServer(int port, DateTime appStartTime) : base()
+    public NetworkServer(IGameActions gameActions, int port, DateTime appStartTime) : base()
     {
+        this.gameActions = gameActions;
         this.port = port;
+
         connection = new UdpConnection(port, this);
-        checkActivity = new PingPong();
+
+        pingPong = new ServerPingPong(this);
+        checkActivity = pingPong;
+
+        onInitPingPong?.Invoke();
+
+        sortableMessage = new ServerSortableMessage(this);
+        nondisponsableMessage = new ServerNondisponsableMessage(this);
 
         this.appStartTime = appStartTime;
     }
@@ -64,8 +78,8 @@ public class NetworkServer : NetworkEntity
 
             ipToId[ip] = newClientID;
             clients.Add(newClientID, new Client(ip, newClientID, (float)(DateTime.UtcNow - appStartTime).TotalSeconds, clientName));
-            checkActivity.AddClientForList(newClientID);
-            gm.OnNewPlayer?.Invoke(newClientID);
+            pingPong.AddClientForList(newClientID);
+            OnNewPlayer?.Invoke(newClientID);
 
             List<(int, string)> playersInServer = new();
 
@@ -89,12 +103,12 @@ public class NetworkServer : NetworkEntity
     /// <param name="idToRemove">The ID of the client to remove.</param>
     public override void RemoveClient(int idToRemove)
     {
-        gm.OnRemovePlayer?.Invoke(idToRemove);
+        OnRemovePlayer?.Invoke(idToRemove);
 
         if (clients.ContainsKey(idToRemove))
         {
             Console.WriteLine("Removing client: " + idToRemove);
-            checkActivity.RemoveClientForList(idToRemove);
+            pingPong.RemoveClientForList(idToRemove);
             ipToId.Remove(clients[idToRemove].ipEndPoint);
             clients.Remove(idToRemove);
         }
@@ -110,14 +124,16 @@ public class NetworkServer : NetworkEntity
         // Invoke the event to notify listeners about the received message
         OnReceivedMessage?.Invoke(data, ip);
 
+        OnReceivedMessagePriority(data, ip);
+
         switch (MessageChecker.CheckMessageType(data))
         {
             case MessageType.Ping:
 
                 if (ipToId.ContainsKey(ip))
                 {
-                    checkActivity.ReceiveClientToServerPingMessage(ipToId[ip]);
-                    checkActivity.CalculateClientLatency(ipToId[ip]);
+                    pingPong.ReciveClientToServerPingMessage(ipToId[ip]);
+                    pingPong.CalculateLatencyFromClients(ipToId[ip]);
                 }
 
                 break;
@@ -140,7 +156,7 @@ public class NetworkServer : NetworkEntity
 
                 if (ipToId.ContainsKey(ip))
                 {
-                    if (sortableMessages.CheckMessageOrderReceivedFromClients(ipToId[ip], MessageChecker.CheckMessageType(data), netVector3.MessageOrder))
+                    if (sortableMessage.CheckMessageOrderRecievedFromClients(ipToId[ip], MessageChecker.CheckMessageType(data), netVector3.MessageOrder))
                     {
                         UpdatePlayerPosition(data);
                     }
@@ -151,7 +167,7 @@ public class NetworkServer : NetworkEntity
             case MessageType.BulletInstatiate:
 
                 NetVector3 netBullet = new(data);
-                gm.OnInstantiateBullet?.Invoke(netBullet.GetData().id, netBullet.GetData().position);
+                OnInstantiateBullet?.Invoke(netBullet.GetData().id, netBullet.GetData().position);
 
                 BroadcastPlayerPosition(netBullet.GetData().id, data);
 
@@ -170,14 +186,30 @@ public class NetworkServer : NetworkEntity
             case MessageType.Error:
 
                 NetErrorMessage netErrorMessage = new(data);
-                NetworkScreen.Instance.SwitchToMenuScreen();
-                NetworkScreen.Instance.ShowErrorPanel(netErrorMessage.GetData());
-                connection.Close();
+                gameActions.SwitchToMenuScreen();                     // SON COSAS VISUALES, se pueden matar
+                gameActions.ShowErrorPanel(netErrorMessage.GetData());// SON COSAS VISUALES, se pueden matar
+                CloseConnection();
 
                 break;
 
             default:
                 break;
+        }
+
+    }
+
+    void OnReceivedMessagePriority(byte[] data, IPEndPoint ip)
+    {
+        if (ipToId.ContainsKey(ip))
+        {
+            if (MessageChecker.IsSorteableMessage(data))
+            {
+                sortableMessage?.OnRecievedData(data, ipToId[ip]);
+            }
+            if (MessageChecker.IsNondisponsableMessage(data))
+            {
+                nondisponsableMessage?.OnReceivedData(data, ipToId[ip]);
+            }
         }
     }
 
@@ -190,7 +222,7 @@ public class NetworkServer : NetworkEntity
     {
         if (ipToId.ContainsKey(ip))
         {
-            nonDisposablesMessages.AddSentMessagesFromServer(data, ipToId[ip]);
+            nondisponsableMessage?.AddSentMessages(data, ipToId[ip]);
         }
         connection.Send(data, ip);
     }
@@ -205,7 +237,7 @@ public class NetworkServer : NetworkEntity
         {
             while (iterator.MoveNext())
             {
-                nonDisposablesMessages.AddSentMessagesFromServer(data, iterator.Current.Value.id);
+                nondisponsableMessage?.AddSentMessages(data, iterator.Current.Value.id);
                 connection.Send(data, iterator.Current.Value.ipEndPoint);
             }
         }
@@ -289,7 +321,7 @@ public class NetworkServer : NetworkEntity
     /// </summary>
     /// <param name="data">The message data received.</param>
     /// <param name="ip">The IP endpoint of the client.</param>
-    protected override void UpdateChatText(byte[] data, IPEndPoint ip)
+    protected override void UpdateChatText(byte[] data, IPEndPoint ip) //TODO: PORQUE PINGO PIDE EL IP?
     {
         string messageText = "";
 
@@ -298,7 +330,7 @@ public class NetworkServer : NetworkEntity
 
         Broadcast(data);
 
-        ChatScreen.Instance.messages.text += messageText + System.Environment.NewLine;
+        gameActions.WriteChat(messageText + System.Environment.NewLine);
     }
 
     /// <summary>
@@ -309,13 +341,13 @@ public class NetworkServer : NetworkEntity
         // Notify all clients about the server's disconnection and close the server
         NetErrorMessage netErrorMessage = new("Lost Connection To Server");
         Broadcast(netErrorMessage.Serialize());
-        CloseServer();
+        CloseConnection();
     }
 
     /// <summary>
     /// Closes the server and removes all connected clients.
     /// </summary>
-    public void CloseServer()
+    public override void CloseConnection()
     {
         // Notify all clients about their disconnection and remove them
         List<int> clientIdsToRemove = new(clients.Keys);
@@ -327,7 +359,9 @@ public class NetworkServer : NetworkEntity
             RemoveClient(clientId);
         }
 
-        NetworkScreen.Instance.SwitchToMenuScreen();
+        connection.Close();
+
+        gameActions.SwitchToMenuScreen();
     }
 
     /// <summary>
@@ -339,7 +373,7 @@ public class NetworkServer : NetworkEntity
         NetVector3 netPosition = new(data);
         int clientId = netPosition.GetData().id;
 
-        gm.UpdatePlayerPosition(netPosition.GetData());
+        gameActions.UpdatePlayerPosition(netPosition.GetData());
 
         // Broadcast the player's position to all clients except the sender
         BroadcastPlayerPosition(clientId, data);
@@ -366,6 +400,30 @@ public class NetworkServer : NetworkEntity
                     Broadcast(data, clients[receiverClientId].ipEndPoint);
                 }
             }
+        }
+    }
+
+
+    public override void Update()
+    {
+        base.Update();
+
+        if (connection != null)
+        {
+            nondisponsableMessage?.ResendPackages();
+        }
+    }
+
+    public override void SendMessage(byte[] data)
+    {
+        Broadcast(data);
+    }
+
+    public override void SendMessage(byte[] data, int id)
+    {
+        if (clients.ContainsKey(id))
+        {
+            Broadcast(data, clients[id].ipEndPoint);
         }
     }
 }

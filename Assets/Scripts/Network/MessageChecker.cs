@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class MessageChecker
 {
@@ -11,9 +10,7 @@ public class MessageChecker
     /// <returns>The message priority as a MessagePriority enum value.</returns>
     public static MessagePriority CheckMessagePriority(byte[] message)
     {
-        int messagePriority = BitConverter.ToInt32(message, 4);
-
-        return (MessagePriority)messagePriority;
+        return (MessagePriority)BitConverter.ToInt32(message, 4);
     }
 
     /// <summary>
@@ -23,9 +20,7 @@ public class MessageChecker
     /// <returns>The message type as a MessageType enum value.</returns>
     public static MessageType CheckMessageType(byte[] message)
     {
-        int messageType = BitConverter.ToInt32(message, 0);
-
-        return (MessageType)messageType;
+        return (MessageType)BitConverter.ToInt32(message, 0);
     }
 
     /// <summary>
@@ -85,7 +80,7 @@ public class MessageChecker
 
         if (messageSum != message.Length)
         {
-            Debug.LogError("Message corrupted.");
+            Console.Error.WriteLine("ERROR: Message Type " + CheckMessageType(message) + " (" + CheckMessagePriority(message) + ") got corrupted.");
             return false;
         }
 
@@ -140,5 +135,15 @@ public class MessageChecker
         sum >>= 2;
         sum <<= 3;
         sum >>= 2;
+    }
+
+    public static bool IsSorteableMessage(byte[] data)
+    {
+        return (CheckMessagePriority(data) & MessagePriority.Sortable) != 0;
+    }
+
+    public static bool IsNondisponsableMessage(byte[] data)
+    {
+        return (CheckMessagePriority(data) & MessagePriority.NonDisposable) != 0;
     }
 }

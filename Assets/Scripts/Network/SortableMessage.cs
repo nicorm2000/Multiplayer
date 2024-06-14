@@ -1,153 +1,72 @@
 using System.Collections.Generic;
-using System.Net;
 
-public class SortableMessage
+public abstract class SortableMessagesBase
 {
-    private GameManager gm;
-    private NetworkManager nm;
+    protected NetworkEntity networkEntity;
 
-    Dictionary<int, Dictionary<MessageType, int>> OrderLastMessageReciveFromServer;
-    Dictionary<int, Dictionary<MessageType, int>> OrderLastMessageReciveFromClients;
+    protected DynamicBitMatrix OrderLastMessageReciveFromServer;
+    protected DynamicBitMatrix OrderLastMessageReciveFromClients;
 
-    /// <summary>
-    /// Initializes the SortableMessage instance and subscribes to relevant events.
-    /// </summary>
-    public SortableMessage()
+    protected Dictionary<int, int> clientToRowMapping;
+    protected int messageTypeCount;
+
+    public SortableMessagesBase(NetworkEntity networkEntity)
     {
-        nm = NetworkManager.Instance;
-        gm = GameManager.Instance;
+        this.networkEntity = networkEntity;
 
-        nm.onInitEntity += () => nm.networkEntity.OnReceivedMessage += OnReceivedData;
+        messageTypeCount = System.Enum.GetValues(typeof(MessageType)).Length;
 
-        gm.OnNewPlayer += AddNewClient;
-        gm.OnRemovePlayer += RemoveClient;
+        OrderLastMessageReciveFromClients = new DynamicBitMatrix(messageTypeCount);
+        OrderLastMessageReciveFromServer = new DynamicBitMatrix(messageTypeCount);
 
-        OrderLastMessageReciveFromClients = new Dictionary<int, Dictionary<MessageType, int>>();
-        OrderLastMessageReciveFromServer = new Dictionary<int, Dictionary<MessageType, int>>();
+        clientToRowMapping = new Dictionary<int, int>();
     }
 
+    public abstract void OnRecievedData(byte[] data, int id);
 
-    /// <summary>
-    /// Handles incoming data and updates message order information accordingly.
-    /// </summary>
-    /// <param name="data">The received data.</param>
-    /// <param name="ip">The IP address of the sender.</param>
-    private void OnReceivedData(byte[] data, IPEndPoint ip)
+    public bool CheckMessageOrderRecievedFromClients(int clientID, MessageType messageType, int messageOrder)
     {
-        MessagePriority messagePriority = MessageChecker.CheckMessagePriority(data);
-
-        if ((messagePriority & MessagePriority.Sortable) != 0)
+        if (clientToRowMapping.ContainsKey(clientID))
         {
-            MessageType messageType = MessageChecker.CheckMessageType(data);
+            int row = clientToRowMapping[clientID];
+            int messageTypeIndex = (int)messageType;
 
-            if (nm.isServer)
-            {
-                NetworkServer server = nm.GetNetworkServer();
+            return OrderLastMessageReciveFromClients.Get(row, messageTypeIndex) == (messageOrder % 2 == 1);
+        }
+        return false;
+    }
 
-                if (server.ipToId.ContainsKey(ip))
-                {
-                    if (OrderLastMessageReciveFromClients.ContainsKey(server.ipToId[ip]))
-                    {
-                        if (!OrderLastMessageReciveFromClients[server.ipToId[ip]].ContainsKey(messageType))
-                        {
-                            OrderLastMessageReciveFromClients[server.ipToId[ip]].Add(messageType, 0);
-                        }
-                        else
-                        {
-                            OrderLastMessageReciveFromClients[server.ipToId[ip]][messageType]++;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (messageType == MessageType.Position)
-                {
-                    int clientId = new NetVector3(data).GetData().id;
+    public bool CheckMessageOrderRecievedFromServer(int clientID, MessageType messageType, int messageOrder)
+    {
+        if (clientToRowMapping.ContainsKey(clientID))
+        {
+            int row = clientToRowMapping[clientID];
+            int messageTypeIndex = (int)messageType;
 
-                    if (OrderLastMessageReciveFromServer.ContainsKey(clientId))
-                    {
-                        if (!OrderLastMessageReciveFromServer[clientId].ContainsKey(messageType))
-                        {
-                            OrderLastMessageReciveFromServer[clientId].Add(messageType, 0);
+            return OrderLastMessageReciveFromServer.Get(row, messageTypeIndex) == (messageOrder % 2 == 1);
+        }
+        return false;
+    }
 
-                        }
-                        else
-                        {
-                            OrderLastMessageReciveFromServer[clientId][messageType]++;
-                        }
-                    }
-                }
-            }
+    protected void AddNewClient(int clientID)
+    {
+        if (!clientToRowMapping.ContainsKey(clientID))
+        {
+            int newRow = OrderLastMessageReciveFromClients.Rows;
+            clientToRowMapping[clientID] = newRow;
+            OrderLastMessageReciveFromClients.Set(newRow, 0, false); // Ensure a new row is added
+            OrderLastMessageReciveFromServer.Set(newRow, 0, false); // Ensure a new row is added
         }
     }
 
-    /// <summary>
-    /// Checks if the received message order from clients is valid.
-    /// </summary>
-    /// <param name="clientID">The received clientID.</param>
-    /// <param name="messageType">The message type.</param>
-    /// <param name="messageOrder">The message order.</param>
-    public bool CheckMessageOrderReceivedFromClients(int clientID, MessageType messageType, int messageOrder)
+    protected void RemoveClient(int clientID)
     {
-        if (!OrderLastMessageReciveFromClients[clientID].ContainsKey(messageType))
+        if (clientToRowMapping.ContainsKey(clientID))
         {
-            OrderLastMessageReciveFromClients[clientID].Add(messageType, 0);
-        }
-
-        // Debug.Log(OrderLastMessageReciveFromClients[clientID][messageType] + " - " + messageOrder + " - " + (OrderLastMessageReciveFromClients[clientID][messageType] < messageOrder));
-        return OrderLastMessageReciveFromClients[clientID][messageType] < messageOrder;
-    }
-
-    /// <summary>
-    /// Checks if the received message order from the server is valid.
-    /// </summary>
-    /// <param name="clientID">The received clientID.</param>
-    /// <param name="messageType">The message type.</param>
-    /// <param name="messageOrder">The message order.</param>
-    public bool CheckMessageOrderReceivedFromServer(int clientID, MessageType messageType, int messageOrder)
-    {
-        if (!OrderLastMessageReciveFromServer[clientID].ContainsKey(messageType))
-        {
-            OrderLastMessageReciveFromServer[clientID].Add(messageType, 0);
-        }
-
-        //  Debug.Log(OrderLastMessageReciveFromServer[clientID][messageType] + " - " + messageOrder + " - " + (OrderLastMessageReciveFromServer[clientID][messageType] < messageOrder));
-        return OrderLastMessageReciveFromServer[clientID][messageType] < messageOrder;
-    }
-
-    /// <summary>
-    /// Adds a new client to the message order tracking dictionary.
-    /// </summary>
-    /// <param name="clientID">The received clientID.</param>
-    private void AddNewClient(int clientID)
-    {
-        if (nm.isServer)
-        {
-            OrderLastMessageReciveFromClients.Add(clientID, new Dictionary<MessageType, int>());
-        }
-        else
-        {
-            if (!OrderLastMessageReciveFromServer.ContainsKey(clientID))
-            {
-                OrderLastMessageReciveFromServer.Add(clientID, new Dictionary<MessageType, int>());
-            }
-        }
-    }
-
-    /// <summary>
-    /// Removes a client from the message order tracking dictionary.
-    /// </summary>
-    /// <param name="clientID">The received clientID.</param>
-    private void RemoveClient(int clientID)
-    {
-        if (nm.isServer)
-        {
-            OrderLastMessageReciveFromClients.Remove(clientID);
-        }
-        else
-        {
-            OrderLastMessageReciveFromServer.Remove(clientID);
+            int row = clientToRowMapping[clientID];
+            clientToRowMapping.Remove(clientID);
+            OrderLastMessageReciveFromClients.ClearRow(row);
+            OrderLastMessageReciveFromServer.ClearRow(row);
         }
     }
 }

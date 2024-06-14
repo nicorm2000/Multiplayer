@@ -5,8 +5,8 @@ enum States { Init, Lobby, Game, Finish };
 
 public class ServerGameplay : MonoBehaviour
 {
-    int minutesInLobby = 15;
-    float minutesGameplay = 30;
+    int minutesInLobby = 15; // 2 minutos
+    float minutesGameplay = 30; //3 minutos
     float timeUntilCloseServer = 5;
 
     int minPlayerToInitCounter = 2;
@@ -27,15 +27,12 @@ public class ServerGameplay : MonoBehaviour
 
     NetworkServer server;
 
-    /// <summary>
-    /// Initializes the GameManager and NetworkManager instances, and subscribes to necessary events.
-    /// </summary>
     private void Start()
     {
         gm = GameManager.Instance;
         nm = NetworkManager.Instance;
 
-        nm.onInitEntity += () => nm.networkEntity.OnReceivedMessage += OnReceivedData;
+        nm.onInitEntity += () => nm.networkEntity.OnReceivedMessage += OnReceievedData;
 
         gm.OnInitLobbyTimer += SetLobbyTimer;
         gm.OnInitGameplayTimer += SetGameplayTimer;
@@ -43,11 +40,7 @@ public class ServerGameplay : MonoBehaviour
         gm.OnChangeLobbyPlayers += CheckForAddNewPlayer;
     }
 
-    /// <summary>
-    /// Checks if a new player has been added during the lobby state and updates the lobby timer for new players.
-    /// </summary>
-    /// <param name="clientID">The ID of the newly added client.</param>
-    private void CheckForAddNewPlayer(int clientID)
+    void CheckForAddNewPlayer(int clientID)
     {
         if (nm.isServer && currentState == States.Lobby && counterInit)
         {
@@ -57,12 +50,7 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Handles received network data and updates the lobby timer if the message type is UpdateLobbyTimerForNewPlayers.
-    /// </summary>
-    /// <param name="data">The received data as a byte array.</param>
-    /// <param name="ip">The IP endpoint from which the data was received.</param>
-    private void OnReceivedData(byte[] data, IPEndPoint ip)
+    void OnReceievedData(byte[] data, IPEndPoint ip)
     {
         if (MessageChecker.CheckMessageType(data) == MessageType.UpdateLobbyTimerForNewPlayers)
         {
@@ -74,9 +62,6 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Updates the server or client state each frame based on whether the instance is a server or client.
-    /// </summary>
     private void Update()
     {
         if (nm.isServer)
@@ -89,10 +74,7 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Manages the state transitions and game logic for the server.
-    /// </summary>
-    private void UpdateServer()
+    void UpdateServer()
     {
         if (nm != null && nm.isServer)
         {
@@ -123,7 +105,7 @@ public class ServerGameplay : MonoBehaviour
                         }
 
                         counter += Time.deltaTime;
-                        gm.timer.text = counter.ToString("F0");
+                        gm.timer.text = counter.ToString("F2") + "s";
 
                         if (counter >= minutesInLobby)
                         {
@@ -165,7 +147,7 @@ public class ServerGameplay : MonoBehaviour
                     }
 
                     counter += Time.deltaTime;
-                    gm.timer.text = counter.ToString("F0");
+                    gm.timer.text = counter.ToString("F2") + "s";
 
                     if (counter >= minutesGameplay || gm.playerList.Count <= 1)
                     {
@@ -183,7 +165,7 @@ public class ServerGameplay : MonoBehaviour
 
                     if (timeUntilCloseServer <= 0)
                     {
-                        server.CloseServer();
+                        server.CloseConnection();
                     }
 
                     break;
@@ -195,15 +177,12 @@ public class ServerGameplay : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Manages the state updates and timer display for the client.
-    /// </summary>
-    private void UpdateClient()
+    void UpdateClient()
     {
         if (clientLobbyTimer)
         {
             counter += Time.deltaTime;
-            gm.timer.text = counter.ToString("F0");
+            gm.timer.text = counter.ToString("F2") + "s";
         }
 
         if (clientGameplayTimer && !NetworkScreen.Instance.gameObject.activeInHierarchy)
@@ -211,34 +190,24 @@ public class ServerGameplay : MonoBehaviour
             clientLobbyTimer = false;
 
             counter += Time.deltaTime;
-            gm.timer.text = counter.ToString("F0");
+            gm.timer.text = counter.ToString("F2") + "s";
         }
     }
 
-    /// <summary>
-    /// Initializes the gameplay timer for the client.
-    /// </summary>
-    private void SetGameplayTimer()
+    void SetGameplayTimer()
     {
         clientGameplayTimer = true;
         counter = 0;
     }
 
-    /// <summary>
-    /// Sets the lobby timer for the client based on the given initialization state.
-    /// </summary>
-    /// <param name="init">A boolean indicating whether to initialize the lobby timer.</param>
-    private void SetLobbyTimer(bool init)
+    void SetLobbyTimer(bool init)
     {
         counter = 0;
         gm.timer.text = "";
         clientLobbyTimer = init;
     }
 
-    /// <summary>
-    /// Determines the player with the maximum health and sends a message to all clients indicating the match winner.
-    /// </summary>
-    private void SendMatchWinner()
+    void SendMatchWinner()
     {
         PlayerController playerWithMaxHealth = null;
         int maxHealth = int.MinValue;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using Net;
 
 public class NetworkClient : NetworkEntity
 {
@@ -37,6 +38,7 @@ public class NetworkClient : NetworkEntity
     ClientPingPong pingPong;
     ClientSortableMessage sortableMessage;
     ClientNondisponsableMessage nondisposablesMessages;
+    GameManager gm;
 
     /// <summary>
     /// Starts the client with the specified IP address, port, and name.
@@ -49,6 +51,8 @@ public class NetworkClient : NetworkEntity
         this.port = port;
         this.ipAddress = ip;
         this.userName = name;
+
+        gm = new ();
 
         connection = new UdpConnection(ip, port, this);
 
@@ -286,8 +290,8 @@ public class NetworkClient : NetworkEntity
     {
         NetVector3 netPosition = new(data);
         int clientId = netPosition.GetData().id;
-
-        gm.UpdatePlayerPosition(netPosition.GetData());
+        Vec3 position = netPosition.GetData().position;
+        gm.UpdatePlayerPosition((clientId, new UnityEngine.Vector3(position.x, position.y, position.z)));
     }
 
     public override void Update()

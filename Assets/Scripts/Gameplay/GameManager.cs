@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Net;
 
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
@@ -100,7 +101,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     void InstantiatePlayerBullets(int id, Vec3 bulletDir)
     {
-        playerList[id].GetComponent<PlayerController>().ServerShoot(bulletDir);
+        playerList[id].GetComponent<PlayerController>().ServerShoot(new Vector3(bulletDir.x, bulletDir.y, bulletDir.z));
         playerList[id].GetComponent<AudioSource>().Play();
         playerList[id].GetComponent<Animator>().SetTrigger("Shoot");
     }

@@ -1,4 +1,5 @@
 ﻿using UnityEngine.UI;
+using Net;
 
 public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 {
@@ -34,7 +35,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 
             if (NetworkManager.Instance.isServer)
             {
-                NetworkManager.Instance.GetNetworkServer().Broadcast(netMessage.Serialize());
+                NetworkManager.Instance.networkEntity.SendMessage(netMessage.Serialize());
                 messages.text += str + System.Environment.NewLine;
             }
             else

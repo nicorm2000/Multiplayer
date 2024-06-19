@@ -2,13 +2,18 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# Ignorar la propia carpeta
+Multiplayer_clone_0/
+Multiplayer_clone_1/
+Multiplayer_clone_2/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data

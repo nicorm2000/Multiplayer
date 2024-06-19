@@ -155,7 +155,7 @@ public class NetworkClient : NetworkEntity
 
             case MessageType.Console:
 
-                UpdateChatText(data, ip);
+                UpdateChatText(data);
 
                 break;
 
@@ -253,7 +253,7 @@ public class NetworkClient : NetworkEntity
     /// </summary>
     /// <param name="data">The message data received.</param>
     /// <param name="ip">The IP endpoint of the client.</param>
-    protected override void UpdateChatText(byte[] data, IPEndPoint ip)
+    protected override void UpdateChatText(byte[] data)
     {
         string messageText = "";
 

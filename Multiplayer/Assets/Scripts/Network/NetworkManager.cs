@@ -4,24 +4,25 @@ using System.Net;
 using UnityEngine;
 
 
-public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
+public class NetworkManager : MonoBehaviourSingleton<NetworkManager>  
 {
 
     public NetworkEntity networkEntity;
 
     public Action onInitEntity;
-
+    public Action<GameObject> onInstanceCreated;
 
     public int ClientID
     {
         get { return networkEntity.clientID; }
     }
+
     public bool isServer
     {
         get { return !(networkEntity is NetworkClient); }
         private set { }
     }
-
+    
     DateTime appStartTime;
 
     private void Start()
@@ -41,8 +42,8 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
 
     public void StartServer(int port)
     {
-        //     networkEntity = new NetworkServer(this, port, appStartTime);
-        //     onInitEntity?.Invoke();
+   //     networkEntity = new NetworkServer(this, port, appStartTime);
+   //     onInitEntity?.Invoke();
 
     }
 
@@ -82,7 +83,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         NetworkScreen.Instance.ShowErrorPanel(errorText);
     }
 
-    public void UpdatePlayerPosition((int index, Vector3 newPosition) data)
+    public void UpdatePlayerPosition((int index, Vector3 newPosition) data )
     {
         GameManager.Instance.UpdatePlayerPosition(data);
     }

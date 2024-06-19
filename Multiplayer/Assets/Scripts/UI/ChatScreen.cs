@@ -1,5 +1,6 @@
-﻿using UnityEngine.UI;
-using Net;
+﻿using Net;
+using System.Net;
+using UnityEngine.UI;
 
 public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 {
@@ -7,10 +8,6 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     public InputField inputMessage;
 
     static int consoleMessageOrder = 1;
-
-    /// <summary>
-    /// Initializes the ChatScreen by setting up the input message event listener and deactivating the game object.
-    /// </summary>
     protected override void Initialize()
     {
         inputMessage.onEndEdit.AddListener(OnEndEdit);
@@ -18,11 +15,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
         this.gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// Handles the event when the input field editing ends. Sends the message to the server or broadcasts it if the client is the server.
-    /// </summary>
-    /// <param name="str">The input message string.</param>
-    private void OnEndEdit(string str)
+    void OnEndEdit(string str)
     {
         if (inputMessage.text != "")
         {
@@ -47,5 +40,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
             inputMessage.Select();
             inputMessage.text = "";
         }
+
     }
+
 }

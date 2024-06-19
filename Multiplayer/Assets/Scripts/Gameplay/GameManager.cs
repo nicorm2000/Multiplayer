@@ -1,15 +1,13 @@
+using Net;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using Net;
 
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
     public Action<int> OnBulletHit;
-
-
-
     public Action<bool> OnInitLobbyTimer;
     public Action OnInitGameplayTimer;
 
@@ -66,11 +64,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             {
                 pc.currentPlayer = true;
             }
-
-            if (!nm.isServer)
-            {
-                pc.enabled = false;
-            }
         }
     }
 
@@ -101,7 +94,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     void InstantiatePlayerBullets(int id, Vec3 bulletDir)
     {
-        playerList[id].GetComponent<PlayerController>().ServerShoot(new Vector3(bulletDir.x, bulletDir.y, bulletDir.z));
+   //     playerList[id].GetComponent<PlayerController>().ServerShoot(new Vector3(bulletDir.x, bulletDir.y, bulletDir.z));
         playerList[id].GetComponent<AudioSource>().Play();
         playerList[id].GetComponent<Animator>().SetTrigger("Shoot");
     }
@@ -120,7 +113,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             if (playerList.ContainsKey(playerReciveDamage))
             {
-                playerList[playerReciveDamage].transform.GetComponent<PlayerController>().OnReceiveDamage();
+                playerList[playerReciveDamage].transform.GetComponent<PlayerController>().OnReciveDamage();
             }
         }
     }

@@ -56,7 +56,12 @@ namespace Net
         T Deserialize(byte[] message);
     }
 
-    public abstract class BaseMessage<T> : IMessage<T>
+    public abstract class ParentBaseMessage
+    {
+        public abstract byte[] Serialize();
+    }
+
+    public abstract class BaseMessage<T> : ParentBaseMessage, IMessage<T>
     {
         protected int messageHeaderSize = sizeof(int) * 2; //MessageType y MessagePriority
 
@@ -140,7 +145,7 @@ namespace Net
             data.AddRange(MessageChecker.SerializeCheckSum(data));
         }
 
-        public abstract byte[] Serialize();
+       // public abstract byte[] Serialize();
 
         public abstract T Deserialize(byte[] message);
 

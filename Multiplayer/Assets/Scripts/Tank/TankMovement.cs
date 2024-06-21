@@ -3,10 +3,8 @@ using UnityEngine;
 
 public class TankMovement : MonoBehaviour
 {
-    [NetVariable(0, Net.MessagePriority.Sorteable)] Vector3 tankPosition;
-   
-    [SerializeField] float velocityY;
-    [SerializeField] float velocityX;
+    [SerializeField, NetVariable(0)] float velocityY;
+    [SerializeField, NetVariable(1)] float velocityX;
 
     PlayerController playerController;
     Rigidbody RB;
@@ -15,8 +13,6 @@ public class TankMovement : MonoBehaviour
     {
         RB = GetComponent<Rigidbody>();
         playerController = GetComponentInParent<PlayerController>();
-
-        tankPosition = transform.position;
     }
 
     void FixedUpdate()

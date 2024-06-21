@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 
 namespace Net
@@ -7,7 +8,14 @@ namespace Net
     public static class NetObjFactory
     {
         static NetworkEntity entity; //Se usa para mandar los mensajes 
-        static Dictionary<int, INetObj> NetObjectsInstances = new Dictionary<int, INetObj>();
+        static readonly Dictionary<int, INetObj> NetObjectsInstances = new Dictionary<int, INetObj>();
+
+        public static List<INetObj> NetObjects => new List<INetObj>(NetObjectsInstances.Values);
+
+        public static int NetObjectsCount
+        {
+            get { return NetObjectsInstances.Count;  }
+        }
 
         public static void SetNetworkEntity(NetworkEntity networkEntity)
         {
@@ -17,6 +25,11 @@ namespace Net
         public static void AddINetObject(int key, INetObj netObj)
         {
             NetObjectsInstances[key] = netObj;
+        }
+
+        public static void RemoveINetObject(int key)
+        {
+            NetObjectsInstances.Remove(key);
         }
 
         public static INetObj GetINetObject(int key)
@@ -30,9 +43,9 @@ namespace Net
         }
 
         public static void NetInstance(int gameObjectToIntanciateID, float positionX, float positionY, float positionZ,
-                                                                      float rotationX, float rotationY, float rotationZ, float rotationW,
-                                                                      float scaleX, float scaleY, float scaleZ,
-                                                                      int parentGameObjectID)
+                                                                     float rotationX, float rotationY, float rotationZ, float rotationW,
+                                                                     float scaleX, float scaleY, float scaleZ,
+                                                                     int parentGameObjectID)
         {
             InstanceRequestPayload instanceRequestPayload = new InstanceRequestPayload(gameObjectToIntanciateID,
                                                                        positionX, positionY, positionZ,

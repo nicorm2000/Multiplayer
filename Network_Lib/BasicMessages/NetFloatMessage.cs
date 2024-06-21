@@ -4,17 +4,20 @@ using System.Text;
 
 namespace Net
 {
-    class NetFloatMessage : BaseMessage<float>
+
+
+    [NetMessageClass(typeof(NetFloatMessage), MessageType.Float)]
+    class NetFloatMessage : BaseReflectionMessage<float>
     {
         float data;
 
-        public NetFloatMessage(MessagePriority messagePriority, float data) : base(messagePriority)
+        public NetFloatMessage(MessagePriority messagePriority, float data, List<int> messageRoute) : base(messagePriority, messageRoute)
         {
             currentMessageType = MessageType.Float;
             this.data = data;
         }
 
-        public NetFloatMessage(byte[] data) : base(MessagePriority.Default)
+        public NetFloatMessage(byte[] data) : base(MessagePriority.Default, null)
         {
             currentMessageType = MessageType.Float;
             this.data = Deserialize(data);
@@ -26,6 +29,15 @@ namespace Net
 
             if (MessageChecker.DeserializeCheckSum(message))
             {
+                int messageRouteLength = BitConverter.ToInt32(message, messageHeaderSize);
+                messageHeaderSize += sizeof(int);
+
+                for (int i = 0; i < messageRouteLength; i++)
+                {
+                    messageRoute.Add(BitConverter.ToInt32(message, messageHeaderSize));
+                    messageHeaderSize += sizeof(int);
+                }
+
                 data = BitConverter.ToSingle(message, messageHeaderSize);
             }
             return data;
@@ -41,6 +53,14 @@ namespace Net
             List<byte> outData = new List<byte>();
 
             SerializeHeader(ref outData);
+
+            outData.AddRange(BitConverter.GetBytes(messageRoute.Count));
+
+            foreach (int id in messageRoute)
+            {
+                outData.AddRange(BitConverter.GetBytes(id));
+            }
+
 
             outData.AddRange(BitConverter.GetBytes(data));
 

@@ -158,20 +158,52 @@ namespace Net
             switch (MessageChecker.CheckMessageType(data))
             {
                 case MessageType.Ulong:
+
+                    NetULongMessage netULongMessage = new NetULongMessage(data);
+                    VariableMapping(netULongMessage.GetMessageRoute(), netULongMessage.GetData());
+
                     break;
                 case MessageType.Uint:
+
+                    NetUIntMessage netUIntMessage = new NetUIntMessage(data);
+                    VariableMapping(netUIntMessage.GetMessageRoute(), netUIntMessage.GetData());
+
                     break;
                 case MessageType.Ushort:
+
+                    NetUShortMessage netUShortMessage = new NetUShortMessage(data);
+                    VariableMapping(netUShortMessage.GetMessageRoute(), netUShortMessage.GetData());
+
                     break;
                 case MessageType.String:
+
+                    NetStringMessage netStringMessage = new NetStringMessage(data);
+                    VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
+
                     break;
                 case MessageType.Short:
+
+                    NetShortMessage netShortMessage = new NetShortMessage(data);
+                    VariableMapping(netShortMessage.GetMessageRoute(), netShortMessage.GetData());
+
                     break;
                 case MessageType.Sbyte:
+
+                    NetSByteMessage netSByteMessage = new NetSByteMessage(data);
+                    VariableMapping(netSByteMessage.GetMessageRoute(), netSByteMessage.GetData());
+
                     break;
                 case MessageType.Long:
+
+                    NetLongMessage netLongMessage = new NetLongMessage(data);
+                    VariableMapping(netLongMessage.GetMessageRoute(), netLongMessage.GetData());
+
                     break;
                 case MessageType.Int:
+
+                    NetIntMessage netIntMessage = new NetIntMessage(data);
+                    VariableMapping(netIntMessage.GetMessageRoute(), netIntMessage.GetData());
+
                     break;
                 case MessageType.Float:
 
@@ -180,12 +212,28 @@ namespace Net
 
                     break;
                 case MessageType.Double:
+
+                    NetDoubleMessage netDoubleMessage = new NetDoubleMessage(data);
+                    VariableMapping(netDoubleMessage.GetMessageRoute(), netDoubleMessage.GetData());
+
                     break;
                 case MessageType.Decimal:
+
+                    NetDecimalMessage netDecimalMessage = new NetDecimalMessage(data);
+                    VariableMapping(netDecimalMessage.GetMessageRoute(), netDecimalMessage.GetData());
+
                     break;
                 case MessageType.Char:
+
+                    NetCharMessage netCharMessage = new NetCharMessage(data);
+                    VariableMapping(netCharMessage.GetMessageRoute(), netCharMessage.GetData());
+
                     break;
                 case MessageType.Byte:
+
+                    NetByteMessage netByteMessage = new NetByteMessage(data);
+                    VariableMapping(netByteMessage.GetMessageRoute(), netByteMessage.GetData());
+
                     break;
                 case MessageType.Bool:
 

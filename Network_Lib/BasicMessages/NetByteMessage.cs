@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Net
 {
-    [NetMessageClass(typeof(NetFloatMessage), MessageType.Byte)]
+    [NetMessageClass(typeof(NetByteMessage), MessageType.Byte)]
     class NetByteMessage : BaseReflectionMessage<byte>
     {
         byte data;

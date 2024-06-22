@@ -39,7 +39,7 @@ namespace Game
                 if (pc.clientID != originPlayerID)
                 {
                     pc.health--;
-                    //  GameManager.Instance.OnBulletHit?.Invoke(pc.clientID);
+                  //  GameManager.Instance.OnBulletHit?.Invoke(pc.clientID);
                 }
             }
 

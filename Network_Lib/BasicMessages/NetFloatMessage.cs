@@ -4,8 +4,6 @@ using System.Text;
 
 namespace Net
 {
-
-
     [NetMessageClass(typeof(NetFloatMessage), MessageType.Float)]
     class NetFloatMessage : BaseReflectionMessage<float>
     {

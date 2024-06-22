@@ -87,7 +87,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
 
                 SendPackage(info, obj, attribute, idRoute);
             }
@@ -143,7 +143,7 @@ namespace Net
                                     debug += item + " - ";
                                 }
 
-                                //consoleDebugger.Invoke(debug);
+                                consoleDebugger.Invoke(debug);
                             }
                         }
                     }

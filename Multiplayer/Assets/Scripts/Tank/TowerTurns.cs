@@ -1,4 +1,3 @@
-
 using Net;
 using System.Collections;
 using UnityEngine;
@@ -44,12 +43,12 @@ public class TowerTurns : MonoBehaviour
         //            parentId = netObj.GetID();
         //        }
 
-        NetObjFactory.NetInstance(prefabID, initialPositionShooting.position.x, initialPositionShooting.position.y, initialPositionShooting.position.z,
-                                     initialPositionShooting.rotation.x, initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
+        NetObjFactory.NetInstance(prefabID, initialPositionShooting.position.x , initialPositionShooting.position.y, initialPositionShooting.position.z,
+                                     initialPositionShooting.rotation.x , initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
                                      bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,
                                      -1);
 
-        //     Instantiate(bulletPrefab, initialPositionShooting.position, initialPositionShooting.rotation);
+   //     Instantiate(bulletPrefab, initialPositionShooting.position, initialPositionShooting.rotation);
     }
 
     IEnumerator TurnTower()

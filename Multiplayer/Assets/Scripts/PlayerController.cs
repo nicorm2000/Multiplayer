@@ -7,13 +7,13 @@ public class PlayerController : MonoBehaviour, INetObj
     [SerializeField, NetVariable(1)] TowerTurns towerTurns;   //Esta clase seria el punto de entrada para reflection de los players
     [SerializeField, NetVariable(2)] TankMovement movement; //Deberia contener todos los scripts que envien informacion por ej TowerTurns o movement si queremos enviar sus datos
 
-
+    
     [SerializeField] Transform cameraPivot;
-
+    
     public bool currentPlayer = false;
     public int clientID = -1;
 
-    NetObj netObj = new(-1, -1);
+    NetObj netObj = new(-1,-1);
 
     NetworkManager nm;
 
@@ -57,3 +57,4 @@ public class PlayerController : MonoBehaviour, INetObj
         return netObj;
     }
 }
+

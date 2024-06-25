@@ -111,7 +111,7 @@ namespace Net
 
             foreach (Type type in executeAssembly.GetTypes())
             {
-                if (type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(BaseMessage<>))
+                if (type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(BaseReflectionMessage<>))
                 {
                     Type[] genericTypes = type.BaseType.GetGenericArguments();
 
@@ -153,7 +153,7 @@ namespace Net
 
         public void OnReceivedReflectionMessage(byte[] data, IPEndPoint ip)
         {
-            // DeserializeReflectionMessage(data);
+            //DeserializeReflectionMessage(data);
 
             switch (MessageChecker.CheckMessageType(data))
             {
@@ -250,7 +250,7 @@ namespace Net
 
             foreach (Type type in executeAssembly.GetTypes())
             {
-                if (type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(BaseMessage<>))
+                if (type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(BaseReflectionMessage<>))
                 {
                     NetMessageClass attribute = type.GetCustomAttribute<NetMessageClass>();
 

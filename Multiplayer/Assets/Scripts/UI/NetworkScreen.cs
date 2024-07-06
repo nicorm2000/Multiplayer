@@ -8,7 +8,7 @@ using TMPro;
 public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
 {
     public Button connectBtn;
-    public Button startServerBtn;
+    //public Button startServerBtn;
     public InputField nameInputField;
     public InputField portInputField;
     public InputField addressInputField;
@@ -24,7 +24,7 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     protected override void Initialize()
     {
         connectBtn.onClick.AddListener(OnConnectBtnClick);
-        startServerBtn.onClick.AddListener(OnStartServerBtnClick);
+        //startServerBtn.onClick.AddListener(OnStartServerBtnClick);
     }
 
     void OnConnectBtnClick()

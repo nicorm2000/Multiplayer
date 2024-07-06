@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
 
 namespace Net
 {
@@ -40,6 +40,7 @@ namespace Net
             return $"Route: {route} - CollectionIndex: {collectionIndex}";
         }
     }
+
 
     public abstract class BaseReflectionMessage<T> : BaseMessage<T>
     {

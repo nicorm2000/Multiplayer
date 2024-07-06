@@ -119,7 +119,7 @@ namespace Net
 
             if (IsNondisponsableMessage)
             {
-
+                //Creo que no hay que serializar nada, lo dejo por las dudas
             }
         }
 
@@ -148,6 +148,5 @@ namespace Net
        // public abstract byte[] Serialize();
 
         public abstract T Deserialize(byte[] message);
-
     }
 }

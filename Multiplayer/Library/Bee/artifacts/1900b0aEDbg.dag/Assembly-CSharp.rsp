@@ -368,7 +368,6 @@
 "Assets/Scripts/Network/NetworkManager.cs"
 "Assets/Scripts/Network/packets/NetworkPacket.cs"
 "Assets/Scripts/PlayerController.cs"
-"Assets/Scripts/Reflection/Reflection.cs"
 "Assets/Scripts/Reflection/ReflectionSystem.cs"
 "Assets/Scripts/Tank/bulletBehaviour.cs"
 "Assets/Scripts/Tank/TankMovement.cs"

@@ -5,9 +5,8 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour, INetObj
 {
     //[NetVariable(0)] List<int> test = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 50 };
-    [NetVariable(0), SerializeField] RouteInfo route = new RouteInfo(0);
-    /*[NetVariable(0)]*/
-    public float health = 3;
+    //[NetVariable(0), SerializeField] RouteInfo route = new RouteInfo(0);
+    [NetVariable(0)]public float health = 3;
     [SerializeField, /*NetVariable(1)*/] TowerTurns towerTurns;
     [SerializeField, /*NetVariable(2)*/] TankMovement movement;
     [SerializeField] Transform cameraPivot;

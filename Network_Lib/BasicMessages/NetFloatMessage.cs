@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
 
 namespace Net
 {
@@ -24,7 +24,6 @@ namespace Net
         public override float Deserialize(byte[] message)
         {
             DeserializeHeader(message);
-
             if (MessageChecker.DeserializeCheckSum(message))
             {
                 data = BitConverter.ToSingle(message, messageHeaderSize);
@@ -35,6 +34,11 @@ namespace Net
         public float GetData()
         {
             return data;
+        }
+
+        public int GetMessageHeaderSize()
+        {
+            return messageHeaderSize;
         }
 
         public override byte[] Serialize()

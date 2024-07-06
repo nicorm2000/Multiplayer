@@ -3,10 +3,8 @@ using System;
 using System.Net;
 using UnityEngine;
 
-
 public class NetworkManager : MonoBehaviourSingleton<NetworkManager>  
 {
-
     public NetworkEntity networkEntity;
 
     public Action onInitEntity;

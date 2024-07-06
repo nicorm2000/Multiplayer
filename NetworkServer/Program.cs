@@ -6,11 +6,10 @@ namespace NetworkServer
     {
         static void Main(string[] args)
         {
-            int port = 51000; // Valor predeterminado
+            int port = 50001;
 
             if (args.Length > 0)
             {
-                // Intenta convertir el primer argumento a un entero
                 if (int.TryParse(args[0], out int parsedPort))
                 {
                     port = parsedPort;

@@ -24,7 +24,6 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     protected override void Initialize()
     {
         connectBtn.onClick.AddListener(OnConnectBtnClick);
-        //startServerBtn.onClick.AddListener(OnStartServerBtnClick);
     }
 
     void OnConnectBtnClick()
@@ -33,13 +32,6 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
         int port = System.Convert.ToInt32(portInputField.text);
 
         NetworkManager.Instance.StartClient(ipAddress, port, nameInputField.text);
-    }
-
-    void OnStartServerBtnClick()
-    {
-        int port = System.Convert.ToInt32(portInputField.text);
-        NetworkManager.Instance.StartServer(port);
-        SwitchToChatScreen();
     }
 
    public void SwitchToChatScreen()

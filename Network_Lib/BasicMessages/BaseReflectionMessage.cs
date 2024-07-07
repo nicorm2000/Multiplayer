@@ -84,14 +84,17 @@ namespace Net
             int messageRouteLength = BitConverter.ToInt32(message, messageHeaderSize);
             messageHeaderSize += sizeof(int);
 
-            for (int i = 0; i < messageRouteLength; i++)
+            if (messageRouteLength > 0)
             {
-                int route = BitConverter.ToInt32(message, messageHeaderSize);
-                messageHeaderSize += sizeof(int);
-                int collectionIndex = BitConverter.ToInt32(message, messageHeaderSize);
-                messageHeaderSize += sizeof(int);
+                for (int i = 0; i < messageRouteLength; i++)
+                {
+                    int route = BitConverter.ToInt32(message, messageHeaderSize);
+                    messageHeaderSize += sizeof(int);
+                    int collectionIndex = BitConverter.ToInt32(message, messageHeaderSize);
+                    messageHeaderSize += sizeof(int);
 
-                messageRoute.Add(new RouteInfo(route, collectionIndex));
+                    messageRoute.Add(new RouteInfo(route, collectionIndex));
+                }
             }
         }
     }

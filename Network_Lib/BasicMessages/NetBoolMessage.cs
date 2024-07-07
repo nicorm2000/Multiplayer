@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetBoolMessage), MessageType.Bool)]
-    class NetBoolMessage : BaseReflectionMessage<bool>
+    public class NetBoolMessage : BaseReflectionMessage<bool>
     {
         bool data;
 

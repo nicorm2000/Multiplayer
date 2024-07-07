@@ -7,9 +7,9 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(0)] List<int> test = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 50 };
     //[NetVariable(0), SerializeField] RouteInfo route = new RouteInfo(0);
     [NetVariable(0)]public float health = 3;
-    [NetVariable(1)] public string myString = "lean";
-    [NetVariable(2)] public char myChar = 'a';
-    [NetVariable(3)] public bool myBool = false;
+    [NetVariable(1)] public string myString = "pepe";
+    [NetVariable(2)] public bool myBool = true;
+    [NetVariable(3)] public char myChar = 'a';
     [NetVariable(4)] public decimal myDecimal = 1;
     [NetVariable(5)] public double myDouble = 1;
     [NetVariable(6)] public short myShort = 1;
@@ -30,9 +30,6 @@ public class PlayerController : MonoBehaviour, INetObj
     NetObj netObj = new(-1, -1);
 
     NetworkManager nm;
-
-    static int positionMessageOrder = 1;
-    static int bulletsMessageOrder = 1;
 
     private void Start()
     {

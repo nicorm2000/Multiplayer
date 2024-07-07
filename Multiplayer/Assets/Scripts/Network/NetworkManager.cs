@@ -38,13 +38,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         return (NetworkClient)networkEntity;
     }
 
-    public void StartServer(int port)
-    {
-   //     networkEntity = new NetworkServer(this, port, appStartTime);
-   //     onInitEntity?.Invoke();
-
-    }
-
     public void StartClient(IPAddress ip, int port, string name)
     {
         networkEntity = new NetworkClient(ip, port, name);
@@ -53,18 +46,13 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
 
     private void Update()
     {
-        if (networkEntity != null)
-        {
-            networkEntity.Update();
-        }
+        networkEntity?.Update();
     }
 
     private void OnApplicationQuit()
     {
         networkEntity.OnApplicationQuit();
     }
-
-
 
     public void SwitchToMenuScreen()
     {
@@ -81,7 +69,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         NetworkScreen.Instance.ShowErrorPanel(errorText);
     }
 
-    public void UpdatePlayerPosition((int index, Vector3 newPosition) data )
+    public void UpdatePlayerPosition((int index, Vector3 newPosition) data, NetVector3 netVector3)
     {
         GameManager.Instance.UpdatePlayerPosition(data);
     }

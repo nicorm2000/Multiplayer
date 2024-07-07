@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetDoubleMessage), MessageType.Double)]
-    class NetDoubleMessage : BaseReflectionMessage<double>
+    public class NetDoubleMessage : BaseReflectionMessage<double>
     {
         double data;
 

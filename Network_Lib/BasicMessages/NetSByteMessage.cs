@@ -3,7 +3,7 @@
 namespace Net
 {
     [NetMessageClass(typeof(NetSByteMessage), MessageType.Sbyte)]
-    class NetSByteMessage : BaseReflectionMessage<sbyte>
+    public class NetSByteMessage : BaseReflectionMessage<sbyte>
     {
         sbyte data;
 

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetLongMessage), MessageType.Long)]
-    class NetLongMessage : BaseReflectionMessage<long>
+    public class NetLongMessage : BaseReflectionMessage<long>
     {
         long data;
 

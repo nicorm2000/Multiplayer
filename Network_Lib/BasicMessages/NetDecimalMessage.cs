@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetDecimalMessage), MessageType.Decimal)]
-    class NetDecimalMessage : BaseReflectionMessage<decimal>
+    public class NetDecimalMessage : BaseReflectionMessage<decimal>
     {
         decimal data;
 

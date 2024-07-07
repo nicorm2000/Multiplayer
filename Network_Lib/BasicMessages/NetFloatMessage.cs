@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace Net
 {
     [NetMessageClass(typeof(NetFloatMessage), MessageType.Float)]
-    class NetFloatMessage : BaseReflectionMessage<float>
+    public class NetFloatMessage : BaseReflectionMessage<float>
     {
         float data;
 

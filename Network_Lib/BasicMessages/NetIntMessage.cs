@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetIntMessage), MessageType.Int)]
-    class NetIntMessage : BaseReflectionMessage<int>
+    public class NetIntMessage : BaseReflectionMessage<int>
     {
         int data;
 

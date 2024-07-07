@@ -3,7 +3,7 @@
 namespace Net
 {
     [NetMessageClass(typeof(NetByteMessage), MessageType.Byte)]
-    class NetByteMessage : BaseReflectionMessage<byte>
+    public class NetByteMessage : BaseReflectionMessage<byte>
     {
         byte data;
 

@@ -86,7 +86,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                consoleDebugger.Invoke(debug);
+                //consoleDebugger.Invoke(debug);
 
                 SendPackage(info, obj, attribute, idRoute);
             }
@@ -187,6 +187,8 @@ namespace Net
                 case MessageType.String:
 
                     NetStringMessage netStringMessage = new NetStringMessage(data);
+                    //debug += "Message deserialize value string:" + netStringMessage.Deserialize(data) + "\n";
+                    //consoleDebugger.Invoke(debug);
                     VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
 
                     break;
@@ -332,7 +334,7 @@ namespace Net
                             debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
                             debug += "Inspect write variable ID: " + ((NetVariable)attribute).VariableId + "\n";
                             debug += "Inspect write value: " + value + "\n";
-                            consoleDebugger.Invoke(debug);
+                            //consoleDebugger.Invoke(debug);
 
                             WriteValue(info, obj, (NetVariable)attribute, idRoute, idToRead, value);
                             break;
@@ -349,7 +351,7 @@ namespace Net
 
         void WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            if (info.FieldType.IsValueType || info.FieldType == typeof(string) || info.FieldType.IsEnum)
+            if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType.IsEnum)
             {
                 string debug = "";
                 debug += "Write values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
@@ -361,7 +363,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                consoleDebugger.Invoke(debug);
+                //consoleDebugger.Invoke(debug);
                 info.SetValue(obj, value);
             }
             else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))

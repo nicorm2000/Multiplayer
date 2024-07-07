@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetULongMessage), MessageType.Ulong)]
-    class NetULongMessage : BaseReflectionMessage<ulong>
+    public class NetULongMessage : BaseReflectionMessage<ulong>
     {
         ulong data;
 

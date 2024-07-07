@@ -3,7 +3,7 @@
 namespace Net
 {
     [NetMessageClass(typeof(NetStringMessage), MessageType.String)]
-    class NetStringMessage : BaseReflectionMessage<string>
+    public class NetStringMessage : BaseReflectionMessage<string>
     {
         string data;
 

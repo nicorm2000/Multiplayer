@@ -106,9 +106,7 @@ public class CameraOrbit : MonoBehaviour
 
     void HandleCameraZoom()
     {
-        //Zoom de la camara segun la rueda del mouse
-
-        if (Input.GetAxis("Mouse ScrollWheel") > 0 && currentDistance > minDistance) //4
+        if (Input.GetAxis("Mouse ScrollWheel") > 0 && currentDistance > minDistance)
         {
             currentDistance -= 1f;
         }
@@ -123,4 +121,3 @@ public class CameraOrbit : MonoBehaviour
         this.follow = follow;
     }
 }
-//  https://www.youtube.com/watch?v=ffs_dI6gzyQ

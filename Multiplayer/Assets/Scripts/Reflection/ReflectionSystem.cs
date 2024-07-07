@@ -21,10 +21,7 @@ public class ReflectionSystem : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (reflection != null)
-        {
-            reflection.UpdateReflection();
-        }
+        reflection?.UpdateReflection();
     }
 
     void PauseConsoleDebugger()

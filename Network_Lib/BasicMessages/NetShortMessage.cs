@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetShortMessage), MessageType.Short)]
-    class NetShortMessage : BaseReflectionMessage<short>
+    public class NetShortMessage : BaseReflectionMessage<short>
     {
         short data;
 

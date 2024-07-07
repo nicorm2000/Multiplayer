@@ -41,6 +41,8 @@ namespace Net
                 charArray[i] = BitConverter.ToChar(message, indexToInit + sizeof(char) * i);
             }
 
+            indexToInit += stringSize * sizeof(char);
+
             return new string(charArray);
         }
 
@@ -79,7 +81,7 @@ namespace Net
             uint sum = (uint)(data.Count + sizeof(int));
 
             SerializeSum(ref sum);
-
+            
             return BitConverter.GetBytes(sum);
         }
 

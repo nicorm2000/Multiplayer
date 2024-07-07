@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection;
 using System.Text;
 
 namespace Net
@@ -11,6 +12,11 @@ namespace Net
         static readonly Dictionary<int, INetObj> NetObjectsInstances = new Dictionary<int, INetObj>();
 
         public static List<INetObj> NetObjects => new List<INetObj>(NetObjectsInstances.Values);
+
+        public static Assembly GetAssembly()//Borrar esto si o si, es para testeo
+        {
+            return Assembly.GetExecutingAssembly();
+        }
 
         public static int NetObjectsCount
         {

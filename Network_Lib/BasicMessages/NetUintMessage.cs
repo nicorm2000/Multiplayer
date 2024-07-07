@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetUIntMessage), MessageType.Uint)]
-    class NetUIntMessage : BaseReflectionMessage<uint>
+    public class NetUIntMessage : BaseReflectionMessage<uint>
     {
         uint data;
 

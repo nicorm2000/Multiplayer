@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Net
 {
     [NetMessageClass(typeof(NetCharMessage), MessageType.Char)]
-    class NetCharMessage : BaseReflectionMessage<char>
+    public class NetCharMessage : BaseReflectionMessage<char>
     {
         char data;
 

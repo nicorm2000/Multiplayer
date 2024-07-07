@@ -28,7 +28,7 @@ namespace NetworkServer
             while (true)
             {
                 server.Update();
-                System.Threading.Thread.Sleep(100);
+                //System.Threading.Thread.Sleep(100);
             }
         }
     }

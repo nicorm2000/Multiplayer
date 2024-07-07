@@ -26,7 +26,7 @@ namespace Net
 
             if (MessageChecker.DeserializeCheckSum(message))
             {
-                data = BitConverter.ToChar(message, messageHeaderSize);
+                data = (char)message[messageHeaderSize];
             }
             return data;
         }
@@ -42,7 +42,7 @@ namespace Net
 
             SerializeHeader(ref outData);
 
-            outData.AddRange(BitConverter.GetBytes(data));
+            outData.Add((byte)data);
 
             SerializeQueue(ref outData);
 

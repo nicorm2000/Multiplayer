@@ -124,12 +124,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     void OnHitRecieved(int playerReciveDamage)
     {
-        if (nm.isServer)
+        if (playerList.ContainsKey(playerReciveDamage))
         {
-            if (playerList.ContainsKey(playerReciveDamage))
-            {
-                playerList[playerReciveDamage].transform.GetComponent<PlayerController>().OnReciveDamage();
-            }
+            playerList[playerReciveDamage].transform.GetComponent<PlayerController>().OnReciveDamage();
         }
     }
 

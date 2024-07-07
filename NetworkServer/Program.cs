@@ -25,10 +25,11 @@ namespace NetworkServer
 
             Console.WriteLine($"Server created in port {port} ({dateTime})");
 
-                while (true)
-                {
-                    server.Update();
-                }
+            while (true)
+            {
+                server.Update();
+                System.Threading.Thread.Sleep(100);
+            }
         }
     }
 }

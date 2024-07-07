@@ -163,7 +163,7 @@ namespace Net
         public void OnReceivedReflectionMessage(byte[] data, IPEndPoint ip)
         {
             //DeserializeReflectionMessage(data);
-
+            string debug = "";
             switch (MessageChecker.CheckMessageType(data))
             {
                 case MessageType.Ulong:
@@ -217,8 +217,7 @@ namespace Net
                 case MessageType.Float:
 
                     NetFloatMessage netFloatMessage = new NetFloatMessage(data);
-                    string debug = "Message header size value:" + netFloatMessage.GetMessageHeaderSize() + "\n";
-                    debug += "Message deserialize value:" + netFloatMessage.Deserialize(data) + "\n";
+                    debug += "Message deserialize value float:" + netFloatMessage.Deserialize(data) + "\n";
                     consoleDebugger.Invoke(debug);
                     VariableMapping(netFloatMessage.GetMessageRoute(), netFloatMessage.GetData());
 

@@ -15,6 +15,7 @@ namespace Match_Maker
             while (true)
             {
                 matchMaker.Update();
+                System.Threading.Thread.Sleep(100);
             }
         }
     }

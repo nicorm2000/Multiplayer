@@ -7,6 +7,19 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(0)] List<int> test = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 50 };
     //[NetVariable(0), SerializeField] RouteInfo route = new RouteInfo(0);
     [NetVariable(0)]public float health = 3;
+    [NetVariable(1)] public string myString = "lean";
+    [NetVariable(2)] public char myChar = 'a';
+    [NetVariable(3)] public bool myBool = false;
+    [NetVariable(4)] public decimal myDecimal = 1;
+    [NetVariable(5)] public double myDouble = 1;
+    [NetVariable(6)] public short myShort = 1;
+    [NetVariable(7)] public ushort myUShort = 1;
+    [NetVariable(8)] public int myInt = 1;
+    [NetVariable(9)] public uint myUInt = 1;
+    [NetVariable(10)] public long myLong = 1;
+    [NetVariable(11)] public ulong myULong = 1;
+    [NetVariable(12)] public byte myByte = 1;
+    [NetVariable(13)] public sbyte mySByte = 1;
     [SerializeField, /*NetVariable(1)*/] TowerTurns towerTurns;
     [SerializeField, /*NetVariable(2)*/] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -31,12 +44,13 @@ public class PlayerController : MonoBehaviour, INetObj
         }
     }
 
-    public void OnReciveDamage() //Solo lo maneja el server esta funcion
+    public void OnReciveDamage()
     {
         health--;
 
         if (health <= 0)
         {
+            Debug.Log(clientID + " died");
             NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, clientID);
             nm.networkEntity.SendMessage(netDisconnection.Serialize());
             nm.networkEntity.RemoveClient(clientID);

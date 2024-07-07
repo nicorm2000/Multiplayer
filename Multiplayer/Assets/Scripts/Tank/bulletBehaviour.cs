@@ -1,6 +1,5 @@
 using UnityEngine;
 using Net;
-
 namespace Game
 {
 
@@ -14,8 +13,12 @@ namespace Game
 
         NetObj netObj = new NetObj(-1, -1);
 
+        NetworkManager nm;
+
         private void Start()
         {
+            nm = NetworkManager.Instance;
+
             Destroy(gameObject, 5.0f);
 
             velocityVector = transform.forward * velocity;
@@ -39,7 +42,12 @@ namespace Game
                 if (pc.clientID != originPlayerID)
                 {
                     pc.health--;
-                  //  GameManager.Instance.OnBulletHit?.Invoke(pc.clientID);
+                    if (pc.health <= 0)
+                    {
+                        NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, pc.clientID);
+                        nm.networkEntity.SendMessage(netDisconnection.Serialize());
+                        nm.networkEntity.RemoveClient(pc.clientID);
+                    }
                 }
             }
 

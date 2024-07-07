@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 
 namespace Net
 {
@@ -86,7 +87,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
 
                 SendPackage(info, obj, attribute, idRoute);
             }
@@ -152,7 +153,7 @@ namespace Net
                                     debug += item + " - ";
                                 }
 
-                                //consoleDebugger.Invoke(debug);
+                                consoleDebugger.Invoke(debug);
                             }
                         }
                     }
@@ -185,9 +186,10 @@ namespace Net
 
                     break;
                 case MessageType.String:
-
+                    //debug += "Data size value string pre: " + data.Length + "\n";
                     NetStringMessage netStringMessage = new NetStringMessage(data);
-                    //debug += "Message deserialize value string:" + netStringMessage.Deserialize(data) + "\n";
+                    //debug += "Message header size value string: " + netStringMessage.messageHeaderSize + "\n";
+                    //debug += "Data size value string: " + data.Length + "\n";
                     //consoleDebugger.Invoke(debug);
                     VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
 
@@ -219,8 +221,6 @@ namespace Net
                 case MessageType.Float:
 
                     NetFloatMessage netFloatMessage = new NetFloatMessage(data);
-                    debug += "Message deserialize value float:" + netFloatMessage.Deserialize(data) + "\n";
-                    consoleDebugger.Invoke(debug);
                     VariableMapping(netFloatMessage.GetMessageRoute(), netFloatMessage.GetData());
 
                     break;
@@ -320,6 +320,8 @@ namespace Net
         public void InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
             string debug = "";
+            debug += "Inspect write value: " + value + "\n";
+            consoleDebugger.Invoke(debug);
             if (obj != null)
             {
                 foreach (FieldInfo info in type.GetFields(bindingFlags))
@@ -334,7 +336,7 @@ namespace Net
                             debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
                             debug += "Inspect write variable ID: " + ((NetVariable)attribute).VariableId + "\n";
                             debug += "Inspect write value: " + value + "\n";
-                            //consoleDebugger.Invoke(debug);
+                            consoleDebugger.Invoke(debug);
 
                             WriteValue(info, obj, (NetVariable)attribute, idRoute, idToRead, value);
                             break;
@@ -363,7 +365,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
                 info.SetValue(obj, value);
             }
             else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))

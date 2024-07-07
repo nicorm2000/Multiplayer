@@ -6,7 +6,7 @@ namespace Match_Maker
     {
         static void Main(string[] args)
         {
-            int initalPort = 51000;
+            int initalPort = 52000;
             DateTime dateTime = DateTime.UtcNow;
             MatchMaker matchMaker = new MatchMaker(initalPort, dateTime);
 

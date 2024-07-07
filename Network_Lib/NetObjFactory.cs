@@ -13,11 +13,6 @@ namespace Net
 
         public static List<INetObj> NetObjects => new List<INetObj>(NetObjectsInstances.Values);
 
-        public static Assembly GetAssembly()//Borrar esto si o si, es para testeo
-        {
-            return Assembly.GetExecutingAssembly();
-        }
-
         public static int NetObjectsCount
         {
             get { return NetObjectsInstances.Count;  }

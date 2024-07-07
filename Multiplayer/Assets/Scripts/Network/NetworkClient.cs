@@ -78,6 +78,7 @@ public class NetworkClient : NetworkEntity
 
         ClientToServerNetHandShake handShakeMesage = new(MessagePriority.NonDisposable, (UdpConnection.IPToLong(ipAddress), port, userName));
         SendToServer(handShakeMesage.Serialize());
+        NetworkScreen.Instance.SwitchToChatScreen();
     }
 
     /// <summary>

@@ -22,11 +22,16 @@ namespace Net
 
         public override char Deserialize(byte[] message)
         {
+            byte[] tmp = new byte[message.Length - messageHeaderSize];
             DeserializeHeader(message);
 
             if (MessageChecker.DeserializeCheckSum(message))
             {
-                data = (char)message[messageHeaderSize];
+                for (int i = messageHeaderSize; i < message.Length; i++)
+                {
+                    tmp[i - messageHeaderSize] = message[i];
+                }
+                data = BitConverter.ToChar(tmp);
             }
             return data;
         }
@@ -42,7 +47,7 @@ namespace Net
 
             SerializeHeader(ref outData);
 
-            outData.Add((byte)data);
+            outData.AddRange(BitConverter.GetBytes(data));
 
             SerializeQueue(ref outData);
 

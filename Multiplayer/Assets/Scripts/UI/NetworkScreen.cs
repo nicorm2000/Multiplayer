@@ -34,7 +34,7 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
         NetworkManager.Instance.StartClient(ipAddress, port, nameInputField.text);
     }
 
-   public void SwitchToChatScreen()
+    public void SwitchToChatScreen()
     {
         isInMenu = false;
         ChatScreen.Instance.gameObject.SetActive(true);

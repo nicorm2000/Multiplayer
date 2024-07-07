@@ -24,10 +24,8 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
-            {
-                data = BitConverter.ToBoolean(message, messageHeaderSize);
-            }
+            data = BitConverter.ToBoolean(message, messageHeaderSize);
+
             return data;
         }
 

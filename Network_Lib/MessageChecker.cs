@@ -78,7 +78,7 @@ namespace Net
 
         public static byte[] SerializeCheckSum(List<byte> data)
         {
-            uint sum = (uint)(data.Count + sizeof(int));
+            uint sum = Convert.ToUInt32(data.Count + sizeof(int));
 
             SerializeSum(ref sum);
             

@@ -6,9 +6,9 @@ public class PlayerController : MonoBehaviour, INetObj
 {
     //[NetVariable(0)] List<int> test = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 50 };
     //[NetVariable(0), SerializeField] RouteInfo route = new RouteInfo(0);
-    [NetVariable(0)]public float health = 3;
-    [NetVariable(1)] public string myString = "pepe";
-    [NetVariable(2)] public bool myBool = true;
+    [NetVariable(0)] public float health = 3;
+    [NetVariable(1)] public bool myBool = false;
+    [NetVariable(2)] public string myString = "pepe";
     [NetVariable(3)] public char myChar = 'a';
     [NetVariable(4)] public decimal myDecimal = 1;
     [NetVariable(5)] public double myDouble = 1;
@@ -23,7 +23,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [SerializeField, /*NetVariable(1)*/] TowerTurns towerTurns;
     [SerializeField, /*NetVariable(2)*/] TankMovement movement;
     [SerializeField] Transform cameraPivot;
-    
+
     public bool currentPlayer = false;
     public int clientID = -1;
 

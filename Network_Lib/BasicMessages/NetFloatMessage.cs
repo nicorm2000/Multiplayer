@@ -24,6 +24,7 @@ namespace Net
         public override float Deserialize(byte[] message)
         {
             DeserializeHeader(message);
+
             if (MessageChecker.DeserializeCheckSum(message))
             {
                 data = BitConverter.ToSingle(message, messageHeaderSize);
@@ -46,8 +47,6 @@ namespace Net
             List<byte> outData = new List<byte>();
 
             SerializeHeader(ref outData);
-
-            SerializeMessageRoute(ref outData);
 
             outData.AddRange(BitConverter.GetBytes(data));
 

@@ -326,12 +326,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ce34e0fd57971b449d3cdd574d6dd69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraPivot: {fileID: 7165238016506140578}
   health: 3
-  currentPlayer: 0
-  clientID: -1
+  myString: pepe
+  myBool: 0
+  myChar: 97
+  myDouble: 1
+  myShort: 1
+  myUShort: 1
+  myInt: 1
+  myUInt: 1
+  myLong: 1
+  myULong: 1
+  myByte: 1
+  mySByte: 1
   towerTurns: {fileID: 888843024134725453}
   movement: {fileID: 4467788783669252480}
+  cameraPivot: {fileID: 7165238016506140578}
+  currentPlayer: 0
+  clientID: -1
 --- !u!114 &4467788783669252480
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -23,10 +23,8 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
-            {
-                data = (sbyte)message[messageHeaderSize];
-            }
+            data = (sbyte)message[messageHeaderSize];
+
             return data;
         }
 

@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Gameplay\GameManager.cs" />
+    <Compile Include="Assets\Scripts\test.cs" />
     <Compile Include="Assets\Scripts\Reflection\ReflectionSystem.cs" />
     <Compile Include="Assets\Scripts\Network\NetworkClient.cs" />
     <Compile Include="Assets\Scripts\Network\packets\NetworkPacket.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Assets\Scripts\Tank\bulletBehaviour.cs" />
     <Compile Include="Assets\Scripts\Tank\TankMovement.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraOrbit.cs" />
+    <Compile Include="Assets\Scripts\Reflection\NetCharMessageTest.cs" />
     <Compile Include="Assets\Scripts\Tank\TowerTurns.cs" />
     <Compile Include="Assets\Scripts\Factory\NetObjectFactory.cs" />
     <Compile Include="Assets\Scripts\Factory\ServiceProvider.cs" />

@@ -63,7 +63,7 @@ namespace Net
 
     public abstract class BaseMessage<T> : ParentBaseMessage, IMessage<T>
     {
-        protected int messageHeaderSize = sizeof(int) * 2; //MessageType y MessagePriority
+        public int messageHeaderSize = 0; //MessageType y MessagePriority
 
         protected MessagePriority currentMessagePriority;
         protected MessageType currentMessageType;
@@ -108,12 +108,15 @@ namespace Net
 
         public virtual void DeserializeHeader(byte[] message)
         {
-            currentMessageType = (MessageType)BitConverter.ToInt32(message, 0);
-            currentMessagePriority = (MessagePriority)BitConverter.ToInt32(message, sizeof(int));
+            messageHeaderSize = 0;
+            currentMessageType = (MessageType)BitConverter.ToInt32(message, messageHeaderSize);
+            messageHeaderSize += sizeof(int);
+            currentMessagePriority = (MessagePriority)BitConverter.ToInt32(message, messageHeaderSize);
+            messageHeaderSize += sizeof(int);
 
             if (IsSorteableMessage)
             {
-                messageOrder = BitConverter.ToInt32(message, sizeof(int) * 2);
+                messageOrder = BitConverter.ToInt32(message, messageHeaderSize);
                 messageHeaderSize += sizeof(int);
             }
 

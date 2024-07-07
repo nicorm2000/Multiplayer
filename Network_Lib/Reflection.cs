@@ -186,7 +186,6 @@ namespace Net
 
                     break;
                 case MessageType.String:
-                    //debug += "Data size value string pre: " + data.Length + "\n";
                     NetStringMessage netStringMessage = new NetStringMessage(data);
                     //debug += "Message header size value string: " + netStringMessage.messageHeaderSize + "\n";
                     //debug += "Data size value string: " + data.Length + "\n";

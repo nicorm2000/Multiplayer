@@ -41,10 +41,8 @@ public class PlayerController : MonoBehaviour, INetObj
         }
     }
 
-    public void OnReciveDamage()
+    private void Update()
     {
-        health--;
-
         if (health <= 0)
         {
             Debug.Log(clientID + " died");
@@ -52,6 +50,11 @@ public class PlayerController : MonoBehaviour, INetObj
             nm.networkEntity.SendMessage(netDisconnection.Serialize());
             nm.networkEntity.RemoveClient(clientID);
         }
+    }
+
+    public void OnReciveDamage()
+    {
+        health--; 
     }
 
     public int GetID()

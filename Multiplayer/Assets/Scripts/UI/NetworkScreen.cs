@@ -44,7 +44,6 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     public void SwitchToMenuScreen()
     {
         isInMenu = true;
-        GameManager.Instance.timer.text = "";
         ChatScreen.Instance.gameObject.SetActive(false);
         this.gameObject.SetActive(true);
     }

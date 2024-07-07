@@ -41,8 +41,6 @@ namespace Net
                 charArray[i] = BitConverter.ToChar(message, indexToInit + sizeof(char) * i);
             }
 
-            indexToInit += stringSize * sizeof(char);
-
             return new string(charArray);
         }
 
@@ -78,7 +76,7 @@ namespace Net
 
         public static byte[] SerializeCheckSum(List<byte> data)
         {
-            uint sum = Convert.ToUInt32(data.Count + sizeof(int));
+            uint sum = (uint)(data.Count + sizeof(int));
 
             SerializeSum(ref sum);
             

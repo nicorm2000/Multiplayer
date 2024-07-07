@@ -13,9 +13,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public Action<int> OnChangeLobbyPlayers;
 
-
-    public TextMeshProUGUI timer;
-
     [SerializeField] Transform[] spawnPositions;
 
     [SerializeField] GameObject playerPrefab;
@@ -143,7 +140,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void EndMatch()
     {
-        timer.text = "";
         RemoveAllPlayers();
     }
 }

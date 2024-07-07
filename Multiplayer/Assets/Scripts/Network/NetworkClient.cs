@@ -198,7 +198,6 @@ public class NetworkClient : NetworkEntity
 
                 for (int i = 0; i < playerList.Count; i++)
                 {
-                    Debug.Log(playerList[i].clientId + " - " + playerList[i].userName);
                     Player playerToAdd = new(playerList[i].clientId, playerList[i].userName);
                     players.Add(playerList[i].clientId, playerToAdd);
                     OnNewPlayer?.Invoke(playerToAdd.id);

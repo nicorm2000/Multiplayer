@@ -8,6 +8,7 @@ using System.Net;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Net
 {
@@ -379,12 +380,36 @@ namespace Net
             {
                 if (info.FieldType.IsArray)
                 {
+                    object objectReference = info.GetValue(obj);
+                    object[] arrayCopyCollection = new object[((ICollection)info.GetValue(obj)).Count];
+                    ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
 
+                    for (int i = 0; i < arrayCopyCollection.Length; i++)
+                    {
+                        if (idRoute[idToRead].collectionIndex != i)
+                        {
+                            continue;
+                        }
+
+                        if ((arrayCopyCollection[i].GetType().IsValueType && arrayCopyCollection[i].GetType().IsPrimitive) || arrayCopyCollection[i].GetType() == typeof(string) || arrayCopyCollection[i].GetType().IsEnum)
+                        {
+                            arrayCopyCollection[i] = value;
+                        }
+                        else
+                        {
+                            object item = InspectWrite(arrayCopyCollection[i].GetType(), arrayCopyCollection[i], idRoute, idToRead + 1, value);
+
+                            arrayCopyCollection[i] = item;
+                        }
+                    }
+
+                    object arrayAsGeneric = typeof(Reflection).GetMethod(nameof(TranslateArray), bindingFlags).MakeGenericMethod(info.FieldType.GetElementType()).Invoke(this, new[] { arrayCopyCollection });
+                    object goNext = Array.CreateInstance(info.FieldType.GetElementType(), ((Array)arrayAsGeneric).Length);
+                    Array.Copy((Array)arrayAsGeneric, (Array)goNext, (arrayAsGeneric as ICollection).Count);
+                    info.SetValue(obj, goNext);
                 }
                 else
                 {
-                    string debug = "";
-
                     object objectReference = info.GetValue(obj);
                     object[] arrayCopyCollection = new object[((ICollection)info.GetValue(obj)).Count];
                     ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
@@ -433,6 +458,18 @@ namespace Net
             }
 
             return toReturn;
+        }
+
+        private object TranslateArray<T>(object[] objectsToCopy)
+        {
+            T[] array = new T[objectsToCopy.Length];
+
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = (T)objectsToCopy[i];
+            }
+
+            return array;
         }
     }
 

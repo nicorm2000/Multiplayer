@@ -374,6 +374,8 @@ namespace Match_Maker
 
             int newServerPort = CreateNewServer();
 
+            System.Threading.Thread.Sleep(1000);
+
             if (upperUserNamesCount >= minPlayerToStartGame)
             {
                 List<Client> toUpperClients = clients.Where(c => IsToUpper(c.Value.clientName)).Take(minPlayerToStartGame).Select(pair => pair.Value).ToList();

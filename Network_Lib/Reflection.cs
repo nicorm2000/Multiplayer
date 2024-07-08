@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Net
@@ -96,18 +99,29 @@ namespace Net
                 int index = 0;
                 
                 foreach (object elementOfCollection in (info.GetValue(obj) as System.Collections.ICollection))
-                {
-                    idRoute.Add(new RouteInfo(attribute.VariableId, index));
-                    consoleDebugger.Invoke("Object: " + elementOfCollection.GetType().GetField("value") + " - " + info + " - " + elementOfCollection + ", " + elementOfCollection.GetType() + ", " + info.GetValue(obj));
-
-                    foreach (FieldInfo item in elementOfCollection.GetType().GetFields())
+                {  
+                    RouteInfo aux = idRoute[^1];
+                    aux.collectionIndex = index++;
+                    idRoute[^1] = aux;
+                    if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType.IsEnum)
                     {
-                        consoleDebugger.Invoke("Item: " + item.Name + "\n");
-                    }
+                        string debug = "";
+                        debug += "Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
+                        debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + "\n";
+                        debug += "La ruta de la variable es: ";
+                        foreach (RouteInfo item in idRoute)
+                        {
+                            debug += item + " - ";
+                        }
 
-                    //Inspect(elementOfCollection.GetType(), elementOfCollection, idRoute); //TODO: ver qe onda las colleciones, tiene qe agregarse a idRoute
-                    //ReadValue(info.GetValue(elementOfCollection), obj, attribute, new List<RouteInfo>(idRoute));
-                    index++;
+                        consoleDebugger.Invoke(debug);
+
+                        SendPackage(info, obj, attribute, idRoute);
+                    }
+                    else
+                    {
+                        Inspect(info.FieldType, info.GetValue(obj), idRoute);
+                    }
                 }
             }
             else
@@ -187,9 +201,6 @@ namespace Net
                     break;
                 case MessageType.String:
                     NetStringMessage netStringMessage = new NetStringMessage(data);
-                    //debug += "Message header size value string: " + netStringMessage.messageHeaderSize + "\n";
-                    //debug += "Data size value string: " + data.Length + "\n";
-                    //consoleDebugger.Invoke(debug);
                     VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
 
                     break;

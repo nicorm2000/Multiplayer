@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour, INetObj
 {
-    //[NetVariable(0)] List<int> test = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 50 };
     //[NetVariable(0), SerializeField] RouteInfo route = new RouteInfo(0);
     [NetVariable(0)] public float health = 3;
     [NetVariable(1)] public bool myBool = false;
@@ -20,6 +19,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [NetVariable(11)] public ulong myULong = 1;
     [NetVariable(12)] public byte myByte = 1;
     [NetVariable(13)] public sbyte mySByte = 1;
+    [NetVariable(14)] List<int> test = new() { 0, 1, 2, 3, 4, 5, 6, 50 };
     [SerializeField, /*NetVariable(1)*/] TowerTurns towerTurns;
     [SerializeField, /*NetVariable(2)*/] TankMovement movement;
     [SerializeField] Transform cameraPivot;

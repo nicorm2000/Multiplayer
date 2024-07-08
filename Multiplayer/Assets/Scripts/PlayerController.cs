@@ -1,9 +1,33 @@
 using Net;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour, INetObj
 {
+    [Serializable]
+    public class TestingClass
+    {
+        [NetVariable(0)] public TestingClass2 testInt = new();
+    }
+    [Serializable]
+    public class TestingClass2
+    {
+        [NetVariable(0)] public TestingClass3 testInt = new();
+    }
+    [Serializable]
+    public class TestingClass3
+    {
+        [NetVariable(0)] public int testInt = 0;
+    }
+
+    [Serializable]
+    public struct TestingStruct
+    {
+        [NetVariable(0)] public int testInt;
+    }
+
+
     //[NetVariable(0), SerializeField] RouteInfo route = new RouteInfo(0);
     [NetVariable(0)] public float health = 3;
     //[NetVariable(1)] public bool myBool = false;
@@ -20,6 +44,11 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(12)] public byte myByte = 1;
     //[NetVariable(13)] public sbyte mySByte = 1;
     [NetVariable(1)] public List<int> test = new() { 0, 1, 2, 3, 4, 5, 6, 50 };
+    [NetVariable(2)] public TestingClass testing = new ();
+    [NetVariable(3)] public TestingStruct testingStruct = new()
+    {
+        testInt = 0
+    };
     [SerializeField, /*NetVariable(1)*/] TowerTurns towerTurns;
     [SerializeField, /*NetVariable(2)*/] TankMovement movement;
     [SerializeField] Transform cameraPivot;

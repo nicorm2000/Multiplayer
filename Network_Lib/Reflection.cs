@@ -413,45 +413,11 @@ namespace Net
                     info.SetValue(obj, reference);
                 }
             }
-
-            //info.SetValue(obj, reference);
-            //consoleDebugger.Invoke(debug);
-            //foreach (object elementOfCollection in (ICollection)info.GetValue(obj))
-            //{
-            //    if (info.FieldType.IsArray)
-            //    {
-            //
-            //    }
-            //    else
-            //    {
-            //        debug += "La ruta de la variable es: ";
-            //        foreach (RouteInfo item in idRoute)
-            //        {
-            //            debug += item + " - collection index: " + item.collectionIndex;
-            //        }
-            //
-            //        consoleDebugger.Invoke(debug);
-            //        object copyOfCollection = Activator.CreateInstance(info.FieldType, info.GetValue(obj));
-            //
-            //
-            //        int iterator = 0;
-            //        foreach (object elementInCopyCollection in (IEnumerable)copyOfCollection)
-            //        {
-            //            if (idRoute[0].collectionIndex == iterator)//check
-            //            {
-            //                info.SetValue(elementInCopyCollection, value);
-            //                info.SetValue(obj, copyOfCollection);
-            //                return;
-            //            }
-            //
-            //            iterator++;
-            //        }
-            //    }
-            //}
             else
             {
                 idToRead++;
-                InspectWrite(info.FieldType, info.GetValue(obj), idRoute, idToRead, value);
+                object objReference = InspectWrite(info.FieldType, info.GetValue(obj), idRoute, idToRead, value);
+                info.SetValue(obj, objReference);
             }
 
             return obj;

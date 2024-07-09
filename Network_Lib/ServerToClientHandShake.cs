@@ -63,7 +63,7 @@ namespace Net
             foreach ((int clientID, string clientName) clientInfo in data)
             {
                 outData.AddRange(BitConverter.GetBytes(clientInfo.clientID)); // ID del client
-                outData.AddRange(MessageChecker.SerializeString(clientInfo.clientName.ToCharArray())); //Nombre
+                outData.AddRange(MessageChecker.SerializeString(clientInfo.clientName)); //Nombre
             }
 
             SerializeQueue(ref outData);

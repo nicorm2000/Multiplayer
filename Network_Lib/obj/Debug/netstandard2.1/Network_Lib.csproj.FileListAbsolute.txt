@@ -8,3 +8,13 @@ C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_L
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.csproj.CoreCompileInputs.cache
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.dll
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.pdb
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\bin\Debug\netstandard2.1\Network_Lib.deps.json
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\bin\Debug\netstandard2.1\Network_Lib.dll
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\bin\Debug\netstandard2.1\Network_Lib.pdb
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.AssemblyInfoInputs.cache
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.AssemblyInfo.cs
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.csproj.CoreCompileInputs.cache
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.sourcelink.json
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.dll
+C:\Users\Aula 2\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.pdb

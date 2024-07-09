@@ -566,7 +566,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72a5dae07c2aed54dbe3d6f7bb5ef964, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timer: {fileID: 0}
   spawnPositions:
   - {fileID: 1168962568}
   - {fileID: 105692493}
@@ -2350,7 +2349,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 52000
+  m_Text: 52100
 --- !u!222 &1286009186
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2871,7 +2870,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 52000
+  m_Text: 52100
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0

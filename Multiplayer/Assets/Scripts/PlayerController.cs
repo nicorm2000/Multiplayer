@@ -27,6 +27,14 @@ public class PlayerController : MonoBehaviour, INetObj
         [NetVariable(0)] public int testInt;
     }
 
+    [Serializable]
+    public enum TestingEnum
+    {
+        A,
+        B,
+        Ñ
+    }
+
     [NetVariable(0)] public float health = 3;
     [NetVariable(1)] public bool myBool = false;
     [NetVariable(2)] public string myString = "pepe";
@@ -42,9 +50,10 @@ public class PlayerController : MonoBehaviour, INetObj
     [NetVariable(12)] public byte myByte = 1;
     [NetVariable(13)] public sbyte mySByte = 1;
     [NetVariable(14)] public List<int> test = new() { 0, 1, 2, 3, 4, 5, 6, 50 };
-    [NetVariable(15)] public TestingClass testing = new ();
+    [NetVariable(15)] public TestingClass testing = new();
     [NetVariable(16)] public TestingStruct testingStruct = new() { testInt = 0 };
     [NetVariable(17)] public int[] myArray = new int[2];
+    [NetVariable(18)] public TestingEnum testingEnum = TestingEnum.A;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -55,6 +64,8 @@ public class PlayerController : MonoBehaviour, INetObj
     NetObj netObj = new(-1, -1);
 
     NetworkManager nm;
+
+    private bool isDead = false;
 
     private void Start()
     {
@@ -71,16 +82,20 @@ public class PlayerController : MonoBehaviour, INetObj
     {
         if (health <= 0)
         {
-            Debug.Log(clientID + " died");
-            NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, clientID);
-            nm.networkEntity.SendMessage(netDisconnection.Serialize());
-            nm.networkEntity.RemoveClient(clientID);
+            if (!isDead)
+            {
+                Debug.Log(clientID + " died");
+                NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, clientID);
+                nm.networkEntity.SendMessage(netDisconnection.Serialize());
+                nm.networkEntity.RemoveClient(clientID);
+                isDead = !isDead;
+            }
         }
     }
 
     public void OnReciveDamage()
     {
-        health--; 
+        health--;
     }
 
     public int GetID()

@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Xml.Linq;
 
 namespace Net
 {
@@ -173,7 +168,7 @@ namespace Net
                                     debug += item + " - ";
                                 }
 
-                                //consoleDebugger.Invoke(debug);
+                                consoleDebugger.Invoke(debug);
                             }
                         }
                     }
@@ -432,7 +427,6 @@ namespace Net
                             arrayCopyCollection[i] = item;
                         }
                     }
-
                     object genericObjects = typeof(Reflection).GetMethod(nameof(TranslateICollection), bindingFlags).MakeGenericMethod(info.FieldType.GenericTypeArguments[0]).Invoke(this, new[] { arrayCopyCollection });
                     object reference = Activator.CreateInstance(info.FieldType, genericObjects as ICollection);
                     info.SetValue(obj, reference);

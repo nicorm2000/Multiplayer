@@ -17,3 +17,23 @@ C:\Users\Nico\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\refint\NetworkS
 C:\Users\Nico\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.pdb
 C:\Users\Nico\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.genruntimeconfig.cache
 C:\Users\Nico\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\ref\NetworkServer.dll
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\NetworkServer.exe
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\NetworkServer.deps.json
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\NetworkServer.runtimeconfig.json
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\NetworkServer.runtimeconfig.dev.json
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\NetworkServer.dll
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\NetworkServer.pdb
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\Network_Lib.dll
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\bin\Debug\net5.0\net5.0\Network_Lib.pdb
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.csproj.AssemblyReference.cache
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.AssemblyInfoInputs.cache
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.AssemblyInfo.cs
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.csproj.CoreCompileInputs.cache
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.sourcelink.json
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkS.035FCDC7.Up2Date
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.dll
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\refint\NetworkServer.dll
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.pdb
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\NetworkServer.genruntimeconfig.cache
+C:\Users\Aula 2\Desktop\Multiplayer\NetworkServer\obj\Debug\net5.0\ref\NetworkServer.dll

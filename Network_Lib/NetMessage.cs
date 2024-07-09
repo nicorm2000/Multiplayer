@@ -46,7 +46,7 @@ namespace Net
 
             SerializeHeader(ref outData);
 
-            outData.AddRange(MessageChecker.SerializeString(data));
+            outData.AddRange(MessageChecker.SerializeString(data.ToString()));
 
             SerializeQueue(ref outData);
 

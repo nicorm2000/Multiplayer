@@ -53,7 +53,7 @@ namespace Net
             outData.AddRange(BitConverter.GetBytes(data.Item1));
             outData.AddRange(BitConverter.GetBytes(data.Item2));
 
-            outData.AddRange(MessageChecker.SerializeString(data.name.ToCharArray()));
+            outData.AddRange(MessageChecker.SerializeString(data.name));
 
             SerializeQueue(ref outData);
 

@@ -6,7 +6,7 @@ namespace NetworkServer
     {
         static void Main(string[] args)
         {
-            int port = 50101;
+            int port = 50201;
 
             if (args.Length > 0)
             {

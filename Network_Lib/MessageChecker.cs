@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Net
 {
@@ -15,16 +16,15 @@ namespace Net
             return (MessageType)BitConverter.ToInt32(message, 0);
         }
 
-        public static byte[] SerializeString(char[] charArray)
+        public static byte[] SerializeString(string input)
         {
             List<byte> outData = new List<byte>();
 
-            outData.AddRange(BitConverter.GetBytes(charArray.Length));
+            byte[] stringBytes = ASCIIEncoding.UTF32.GetBytes(input);
 
-            for (int i = 0; i < charArray.Length; i++)
-            {
-                outData.AddRange(BitConverter.GetBytes(charArray[i]));
-            }
+            outData.AddRange(BitConverter.GetBytes(stringBytes.Length));
+
+            outData.AddRange(stringBytes);
 
             return outData.ToArray();
         }
@@ -32,14 +32,17 @@ namespace Net
         public static string DeserializeString(byte[] message, ref int indexToInit)
         {
             int stringSize = BitConverter.ToInt32(message, indexToInit);
+            
+            indexToInit += 4;
 
             char[] charArray = new char[stringSize];
 
-            indexToInit += sizeof(int);
             for (int i = 0; i < stringSize; i++)
             {
-                charArray[i] = BitConverter.ToChar(message, indexToInit + sizeof(char) * i);
+                charArray[i] = BitConverter.ToChar(message, indexToInit + 4 * i);//CHECK VALUE DE LOS CHARS PORQUE VARIAN
             }
+
+            indexToInit += stringSize * 4;
 
             return new string(charArray);
         }
@@ -47,13 +50,14 @@ namespace Net
         public static string DeserializeString(byte[] message, int indexToInit)
         {
             int stringSize = BitConverter.ToInt32(message, indexToInit);
+            
+            indexToInit += 4;
 
             char[] charArray = new char[stringSize];
 
-            indexToInit += sizeof(int);
             for (int i = 0; i < stringSize; i++)
             {
-                charArray[i] = BitConverter.ToChar(message, indexToInit + sizeof(char) * i);
+                charArray[i] = BitConverter.ToChar(message, indexToInit + 4 * i);//CHECK VALUE DE LOS CHARS PORQUE VARIAN
             }
 
             return new string(charArray);

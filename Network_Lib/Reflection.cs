@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Network_Lib.BasicMessages;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using System.Xml.Linq;
@@ -96,16 +98,20 @@ namespace Net
 
                 int collectionSize = (info.GetValue(obj) as ICollection).Count;
 
+                bool isEmpty = true;
+
                 foreach (object elementOfCollection in (ICollection)info.GetValue(obj))
                 {
+                    isEmpty = false;
                     string debug = "";
                     idRoute.Add(new RouteInfo(attribute.VariableId, index++, collectionSize));
                     Type elementType = elementOfCollection.GetType();
-                    debug += "Collection info field type " + info.FieldType.ToString() + ") \n";
-                    debug += "Collection element value " + elementType.IsValueType + ") \n";
-                    debug += "Collection info field type primtive " + elementType.IsPrimitive + ") \n";
-                    debug += "Collection info field type enum " + elementType.IsEnum + ") \n";
-                    //consoleDebugger.Invoke(debug);
+                    debug += "Collection info field type " + info.FieldType.ToString() + "\n";
+                    debug += "Collection element value " + elementType.IsValueType + "\n";
+                    debug += "Collection info field type primtive " + elementType.IsPrimitive + "\n";
+                    debug += "Collection info field type enum " + elementType.IsEnum + "\n";
+                    debug += "Collection Size " + collectionSize + "\n";
+                    consoleDebugger.Invoke(debug);
                     if ((elementType.IsValueType && elementType.IsPrimitive) || elementType == typeof(string) || elementType.IsEnum)
                     {
                         debug += "Collections Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
@@ -125,6 +131,13 @@ namespace Net
                     {
                         Inspect(info.FieldType, info.GetValue(obj), idRoute);
                     }
+                }
+
+                if (collectionSize == 0)
+                {
+                    idRoute.Add(new RouteInfo(attribute.VariableId, index++, 0));
+                    SendPackage(isEmpty, attribute, idRoute);
+                    idRoute.RemoveAt(idRoute.Count - 1);
                 }
             }
             else
@@ -267,6 +280,12 @@ namespace Net
                     VariableMapping(netBoolMessage.GetMessageRoute(), netBoolMessage.GetData());
 
                     break;
+                case MessageType.Null:
+
+                    NetNullMessage netNullMessage = new NetNullMessage(data);
+                    VariableMappingNullException(netNullMessage.GetMessageRoute(), netNullMessage.GetData());
+
+                    break;
             }
         }
 
@@ -330,6 +349,18 @@ namespace Net
             }
         }
 
+        void VariableMappingNullException(List<RouteInfo> route, object variableValue)
+        {
+            if (route.Count > 0)
+            {
+                INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
+                if (objectRoot.GetOwnerID() != networkEntity.clientID)
+                {
+                    objectRoot = (INetObj)InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+                }
+            }
+        }
+
         public object InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
             string debug = "";
@@ -356,6 +387,24 @@ namespace Net
             return obj;
         }
 
+        public object InspectWriteNullException(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            if (obj != null)
+            {
+                foreach (FieldInfo info in type.GetFields(bindingFlags))
+                {
+                    NetVariable attributes = info.GetCustomAttribute<NetVariable>();
+                    if (attributes != null && attributes.VariableId == idRoute[idToRead].route)
+                    {
+                        obj = WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
+                        break;
+                    }
+                }
+            }
+
+            return obj;
+        }
+
         object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
             if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType.IsEnum)
@@ -372,6 +421,121 @@ namespace Net
 
                 //consoleDebugger.Invoke(debug);
                 info.SetValue(obj, value);
+            }
+            else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))
+            {
+                if (info.FieldType.IsArray)
+                {
+                    object objectReference = info.GetValue(obj);
+                    object[] arrayCopyCollection = new object[((ICollection)info.GetValue(obj)).Count];
+                    ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
+
+                    for (int i = 0; i < arrayCopyCollection.Length; i++)
+                    {
+                        if (idRoute[idToRead].collectionIndex != i)
+                        {
+                            continue;
+                        }
+
+                        if ((arrayCopyCollection[i].GetType().IsValueType && arrayCopyCollection[i].GetType().IsPrimitive) || arrayCopyCollection[i].GetType() == typeof(string) || arrayCopyCollection[i].GetType().IsEnum)
+                        {
+                            arrayCopyCollection[i] = value;
+                        }
+                        else
+                        {
+                            object item = InspectWrite(arrayCopyCollection[i].GetType(), arrayCopyCollection[i], idRoute, idToRead + 1, value);
+
+                            arrayCopyCollection[i] = item;
+                        }
+                    }
+
+                    object arrayAsGeneric = typeof(Reflection).GetMethod(nameof(TranslateArray), bindingFlags).MakeGenericMethod(info.FieldType.GetElementType()).Invoke(this, new[] { arrayCopyCollection });
+                    object goNext = Array.CreateInstance(info.FieldType.GetElementType(), ((Array)arrayAsGeneric).Length);
+                    Array.Copy((Array)arrayAsGeneric, (Array)goNext, (arrayAsGeneric as ICollection).Count);
+                    info.SetValue(obj, goNext);
+                }
+                else
+                {
+                    object objectReference = info.GetValue(obj);
+                    object[] arrayCopyCollection = new object[idRoute[idToRead].collectionSize];
+                    int collectionSize = (objectReference as ICollection).Count;
+
+                    string debug = "";
+                    debug += "Write value collection size: " + collectionSize + ") \n";
+                    debug += "Write value variable collection size: " + idRoute[idToRead].collectionSize + ") \n";
+                    consoleDebugger.Invoke(debug);
+
+                    if (idRoute[idToRead].collectionSize == collectionSize)
+                    {
+                        ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < arrayCopyCollection.Length; i++)
+                        {
+                            if (i < collectionSize)
+                            {
+                                IEnumerator enumerator = (objectReference as ICollection).GetEnumerator();
+
+                                int count = 0;
+
+                                while (enumerator.MoveNext())
+                                {
+                                    if (count == i)
+                                    {
+                                        arrayCopyCollection[i] = enumerator.Current;
+                                        break;
+                                    }
+
+                                    count++;
+                                }
+                            }
+                            else
+                            {
+                                arrayCopyCollection[i] = Activator.CreateInstance(GetElementType(info.FieldType));
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i < arrayCopyCollection.Length; i++)
+                    {
+                        if (idRoute[idToRead].collectionIndex != i)
+                        {
+                            continue;
+                        }
+
+                        if ((arrayCopyCollection[i].GetType().IsValueType && arrayCopyCollection[i].GetType().IsPrimitive) || arrayCopyCollection[i].GetType() == typeof(string) || arrayCopyCollection[i].GetType().IsEnum)
+                        {
+                            arrayCopyCollection[i] = value;
+                        }
+                        else
+                        {
+                            object item = InspectWrite(arrayCopyCollection[i].GetType(), arrayCopyCollection[i], idRoute, idToRead + 1, value);
+
+                            arrayCopyCollection[i] = item;
+                        }
+                    }
+
+                    object genericObjects = typeof(Reflection).GetMethod(nameof(TranslateICollection), bindingFlags).MakeGenericMethod(info.FieldType.GenericTypeArguments[0]).Invoke(this, new[] { arrayCopyCollection });
+                    object reference = Activator.CreateInstance(info.FieldType, genericObjects as ICollection);
+                    info.SetValue(obj, reference);
+                }
+            }
+            else
+            {
+                idToRead++;
+                object objReference = InspectWrite(info.FieldType, info.GetValue(obj), idRoute, idToRead, value);
+                info.SetValue(obj, objReference);
+            }
+
+            return obj;
+        }
+
+        object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType.IsEnum)
+            {
+                info.SetValue(obj, null);
             }
             else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))
             {

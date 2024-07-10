@@ -146,7 +146,7 @@ public class Server : NetworkEntity
                 BroadcastPlayerPosition(ipToId[ip], data);
 
                 break;
-
+            case MessageType.Null:
             case MessageType.Ping:
 
                 if (ipToId.ContainsKey(ip))

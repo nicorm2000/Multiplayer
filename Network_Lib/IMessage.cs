@@ -29,6 +29,7 @@ namespace Net
         Char = -88,
         Byte = -87,
         Bool = -86,
+        Null = -85,
 
         Instance = -10,
         InstanceRequest = -9,

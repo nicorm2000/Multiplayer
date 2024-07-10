@@ -8,11 +8,13 @@ namespace Net
     {
         [NetVariable(0)] public int route;
         [NetVariable(1)] public int collectionIndex;
+        [NetVariable(1)] public int collectionSize;
 
-        public RouteInfo(int route, int collectionIndex = -1)
+        public RouteInfo(int route, int collectionIndex = -1, int collectionSize = -1)
         {
             this.route = route;
             this.collectionIndex = collectionIndex;
+            this.collectionSize = collectionSize;
         }
 
         public void SetRoute(int route)
@@ -25,6 +27,11 @@ namespace Net
             this.collectionIndex = collectionIndex;
         }
 
+        public void SetCollectionSize(int collectionSize)
+        {
+            this.collectionSize = collectionSize;
+        }
+
         public int GetRoute()
         {
             return route;
@@ -35,9 +42,14 @@ namespace Net
             return collectionIndex;
         }
 
+        public int GetCollectionSize()
+        {
+            return collectionSize;
+        }
+
         public override string ToString()
         {
-            return $"Route: {route} - CollectionIndex: {collectionIndex}";
+            return $"Route: {route} - CollectionIndex: {collectionIndex} - CollectionSize: {collectionSize}";
         }
     }
 
@@ -76,6 +88,7 @@ namespace Net
             {
                 outData.AddRange(BitConverter.GetBytes(info.route));
                 outData.AddRange(BitConverter.GetBytes(info.collectionIndex));
+                outData.AddRange(BitConverter.GetBytes(info.collectionSize));
             }
         }
 
@@ -92,8 +105,10 @@ namespace Net
                     messageHeaderSize += sizeof(int);
                     int collectionIndex = BitConverter.ToInt32(message, messageHeaderSize);
                     messageHeaderSize += sizeof(int);
+                    int collectionSize = BitConverter.ToInt32(message, messageHeaderSize);
+                    messageHeaderSize += sizeof(int);
 
-                    messageRoute.Add(new RouteInfo(route, collectionIndex));
+                    messageRoute.Add(new RouteInfo(route, collectionIndex, collectionSize));
                 }
             }
         }

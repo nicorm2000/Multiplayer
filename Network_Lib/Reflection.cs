@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.Serialization;
-using System.Text;
 using System.Xml.Linq;
 
 namespace Net
@@ -93,16 +88,18 @@ namespace Net
 
                 //consoleDebugger.Invoke(debug);
 
-                SendPackage(info.GetValue(obj), attribute, idRoute);//PASO DIRECTO EL INFO.GETVALUE(OBJ) EN VEZ DE EL INFO Y EL OBJ CONTENEDOR PORQUE NO OPUEDO SACAR EL ILEDO INO DE UNA COLECCION, A SU VEZ ES AL PEDO PASARSE EL FIELD INFO PORQUE LO PUEDO SACAR ACA
+                SendPackage(info.GetValue(obj), attribute, idRoute);//PASO DIRECTO EL INFO.GETVALUE(OBJ) EN VEZ DE EL INFO Y EL OBJ CONTENEDOR PORQUE NO OPUEDO SACAR EL FIELD INFO DE UNA COLECCION, A SU VEZ ES AL PEDO PASARSE EL FIELD INFO PORQUE LO PUEDO SACAR ACA
             }
             else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))
             {
                 int index = 0;
 
+                int collectionSize = (info.GetValue(obj) as ICollection).Count;
+
                 foreach (object elementOfCollection in (ICollection)info.GetValue(obj))
                 {
                     string debug = "";
-                    idRoute.Add(new RouteInfo(attribute.VariableId, index++));
+                    idRoute.Add(new RouteInfo(attribute.VariableId, index++, collectionSize));
                     Type elementType = elementOfCollection.GetType();
                     debug += "Collection info field type " + info.FieldType.ToString() + ") \n";
                     debug += "Collection element value " + elementType.IsValueType + ") \n";
@@ -411,8 +408,45 @@ namespace Net
                 else
                 {
                     object objectReference = info.GetValue(obj);
-                    object[] arrayCopyCollection = new object[((ICollection)info.GetValue(obj)).Count];
-                    ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
+                    object[] arrayCopyCollection = new object[idRoute[idToRead].collectionSize];
+                    int collectionSize = (objectReference as ICollection).Count;
+
+                    string debug = "";
+                    debug += "Write value collection size: " + collectionSize + ") \n";
+                    debug += "Write value variable collection size: " + idRoute[idToRead].collectionSize + ") \n";
+                    consoleDebugger.Invoke(debug);
+
+                    if (idRoute[idToRead].collectionSize == collectionSize)
+                    {
+                        ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < arrayCopyCollection.Length; i++)
+                        {
+                            if (i < collectionSize)
+                            {
+                                IEnumerator enumerator = (objectReference as ICollection).GetEnumerator();
+
+                                int count = 0;
+
+                                while (enumerator.MoveNext())
+                                {
+                                    if (count == i)
+                                    {
+                                        arrayCopyCollection[i] = enumerator.Current;
+                                        break;
+                                    }
+
+                                    count++;
+                                }
+                            }
+                            else
+                            {
+                                arrayCopyCollection[i] = Activator.CreateInstance(GetElementType(info.FieldType));
+                            }
+                        }
+                    }
 
                     for (int i = 0; i < arrayCopyCollection.Length; i++)
                     {
@@ -470,6 +504,20 @@ namespace Net
             }
 
             return array;
+        }
+
+        private Type GetElementType(Type type)
+        {
+            if (type.IsArray)
+            {
+                return type.GetElementType();
+            }
+            else if (type.IsGenericType)
+            {
+                return type.GetGenericArguments()[0];
+            }
+
+            return typeof(object);
         }
     }
 

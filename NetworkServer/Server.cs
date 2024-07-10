@@ -77,7 +77,7 @@ public class Server : NetworkEntity
             Console.WriteLine("Adding Client: " + ip.Address);
 
             ipToId[ip] = newClientID;
-            clients.Add(newClientID, new Client(ip, newClientID, (float)(DateTime.UtcNow - appStartTime).TotalSeconds, clientName));
+            clients.Add(newClientID, new Client(ip, newClientID, Convert.ToSingle((DateTime.UtcNow - appStartTime).TotalSeconds), clientName));
             pingPong.AddClientForList(newClientID);
             OnNewPlayer?.Invoke(newClientID);
 

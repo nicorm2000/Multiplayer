@@ -83,7 +83,7 @@ namespace Match_Maker
                 Console.WriteLine("Adding Client: " + ip.Address);
 
                 ipToId[ip] = newClientID;
-                clients.Add(newClientID, new Client(ip, newClientID, (float)(DateTime.UtcNow - appStartTime).TotalSeconds, clientName));
+                clients.Add(newClientID, new Client(ip, newClientID, Convert.ToSingle((DateTime.UtcNow - appStartTime).TotalSeconds), clientName));
                 pingPong.AddClientForList(newClientID);
                 //OnNewPlayer?.Invoke(newClientID);  El Lobby no instanca a los players
 
@@ -361,8 +361,8 @@ namespace Match_Maker
                 return;
             }
 
-            Func<string, bool> IsToUpper = palabra => palabra == palabra.ToUpper();
-            Func<string, bool> IsToLower = palabra => palabra == palabra.ToLower();
+            Func<string, bool> IsToUpper = wordUpper => wordUpper == wordUpper.ToUpper();
+            Func<string, bool> IsToLower = wordLower => wordLower == wordLower.ToLower();
 
             int upperUserNamesCount = clients.Count(c => IsToUpper(c.Value.clientName));
             int lowerUserNamesCount = clients.Count(c => IsToLower(c.Value.clientName));

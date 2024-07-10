@@ -57,7 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Gameplay\GameManager.cs" />
-    <Compile Include="Assets\Scripts\test.cs" />
+    <Compile Include="Assets\Scripts\Test.cs" />
     <Compile Include="Assets\Scripts\Reflection\ReflectionSystem.cs" />
     <Compile Include="Assets\Scripts\Network\NetworkClient.cs" />
     <Compile Include="Assets\Scripts\Network\packets\NetworkPacket.cs" />

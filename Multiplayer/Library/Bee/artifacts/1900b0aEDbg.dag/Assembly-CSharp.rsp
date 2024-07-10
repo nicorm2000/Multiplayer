@@ -373,7 +373,7 @@
 "Assets/Scripts/Tank/bulletBehaviour.cs"
 "Assets/Scripts/Tank/TankMovement.cs"
 "Assets/Scripts/Tank/TowerTurns.cs"
-"Assets/Scripts/test.cs"
+"Assets/Scripts/Test.cs"
 "Assets/Scripts/UI/ChatScreen.cs"
 "Assets/Scripts/UI/NetworkScreen.cs"
 "Assets/Scripts/Utils/MonoBehaviourSingleton.cs"

@@ -20,8 +20,19 @@ public class PlayerController : MonoBehaviour, INetObj
     {
         [NetVariable(0)] public int testInt = 0;
     }
-
     [Serializable]
+    public class TestingClass4
+    {
+        [NetVariable(0)] public int testInt = 0;
+        public TestingClass2 testIntClass2 = new();
+
+        public TestingClass4(int testingInt, TestingClass2 testingClass2)
+        {
+            this.testInt = testingInt;
+            this.testIntClass2 = testingClass2;
+        }
+    }
+
     public struct TestingStruct
     {
         [NetVariable(0)] public int testInt;
@@ -42,19 +53,31 @@ public class PlayerController : MonoBehaviour, INetObj
     [NetVariable(12)] public byte myByte = 1;
     [NetVariable(13)] public sbyte mySByte = 1;
     [NetVariable(14)] public List<int> test = new() { 0, 1, 2, 3, 4, 5, 6, 50 };
-    [NetVariable(15)] public TestingClass testing = new ();
+    [NetVariable(15)] public TestingClass testing = new();
     [NetVariable(16)] public TestingStruct testingStruct = new() { testInt = 0 };
     [NetVariable(17)] public int[] myArray = new int[2];
+    [NetVariable(18)] TestingClass4 testingClass4;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
 
     public bool currentPlayer = false;
     public int clientID = -1;
+    private int testing4ConstructorInt = 0;
+    private TestingClass2 testing4ConstructorClass = new TestingClass2();
 
     NetObj netObj = new(-1, -1);
 
     NetworkManager nm;
+
+    [ContextMenu("Create Tower Turns")]
+    private void TestCreator()
+    {
+        if (testingClass4 == null)
+        {
+            testingClass4 = new TestingClass4(testing4ConstructorInt, testing4ConstructorClass);
+        }
+    }
 
     private void Start()
     {
@@ -65,10 +88,22 @@ public class PlayerController : MonoBehaviour, INetObj
         }
         myArray[0] = 1;
         myArray[1] = 2;
+
+        testingClass4 = new TestingClass4(testing4ConstructorInt, testing4ConstructorClass);
+        testingClass4 = null;
     }
 
     private void Update()
     {
+        if (testingClass4 != null)
+        {
+            Debug.Log("testScript IS NOT NULL");
+        }
+        else
+        {
+            Debug.Log("testScript IS NULL");
+        }
+
         if (health <= 0)
         {
             Debug.Log(clientID + " died");
@@ -80,7 +115,7 @@ public class PlayerController : MonoBehaviour, INetObj
 
     public void OnReciveDamage()
     {
-        health--; 
+        health--;
     }
 
     public int GetID()

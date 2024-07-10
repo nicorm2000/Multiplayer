@@ -1,11 +1,9 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class test : MonoBehaviour
+public class Test
 {
-    private void Start()
+    private void TestMethod()
     {
         char test = 'a';
         byte[] data = BitConverter.GetBytes(test);

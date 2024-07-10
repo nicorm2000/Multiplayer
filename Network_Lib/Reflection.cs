@@ -60,7 +60,7 @@ namespace Net
                     {
                         if (attribute is NetVariable)
                         {
-                            consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()}");
+                            //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()}");
                             ReadValue(info, obj, (NetVariable)attribute, new List<RouteInfo>(idRoute));
                         }
                     }
@@ -111,7 +111,7 @@ namespace Net
                     debug += "Collection info field type primtive " + elementType.IsPrimitive + "\n";
                     debug += "Collection info field type enum " + elementType.IsEnum + "\n";
                     debug += "Collection Size " + collectionSize + "\n";
-                    consoleDebugger.Invoke(debug);
+                    //consoleDebugger.Invoke(debug);
                     if ((elementType.IsValueType && elementType.IsPrimitive) || elementType == typeof(string) || elementType.IsEnum)
                     {
                         debug += "Collections Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
@@ -312,7 +312,7 @@ namespace Net
                             object message = ctor.Invoke(parameters);
                             //ParentBaseMessage a = message as ParentBaseMessage;
 
-                            consoleDebugger.Invoke("Se creo el Message " + message.ToString());
+                            //consoleDebugger.Invoke("Se creo el Message " + message.ToString());
                             CastToCorrectMessage(message, data);
                         }
                     }
@@ -420,6 +420,7 @@ namespace Net
                 }
 
                 //consoleDebugger.Invoke(debug);
+
                 info.SetValue(obj, value);
             }
             else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))
@@ -463,7 +464,7 @@ namespace Net
                     string debug = "";
                     debug += "Write value collection size: " + collectionSize + ") \n";
                     debug += "Write value variable collection size: " + idRoute[idToRead].collectionSize + ") \n";
-                    consoleDebugger.Invoke(debug);
+                    //consoleDebugger.Invoke(debug);
 
                     if (idRoute[idToRead].collectionSize == collectionSize)
                     {
@@ -523,8 +524,31 @@ namespace Net
             }
             else
             {
-                idToRead++;
-                object objReference = InspectWrite(info.FieldType, info.GetValue(obj), idRoute, idToRead, value);
+                string debug = "";
+                debug += "Write values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
+                debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + ". El nuevo valor a asignar es: " + value + "\n";
+
+                debug += "La ruta de la variable es: ";
+                foreach (RouteInfo item in idRoute)
+                {
+                    debug += item + " - ";
+                }
+
+                consoleDebugger.Invoke(debug);
+
+                object objReference = null;
+                objReference = info.GetValue(obj);
+
+                if (objReference == null)
+                {
+                    objReference = ConstructObject(info.FieldType);
+                }
+                else
+                {
+                    idToRead++;
+                    objReference = InspectWrite(info.FieldType, info.GetValue(obj), idRoute, idToRead, value);
+                }
+
                 info.SetValue(obj, objReference);
             }
 
@@ -578,7 +602,7 @@ namespace Net
                     string debug = "";
                     debug += "Write value collection size: " + collectionSize + ") \n";
                     debug += "Write value variable collection size: " + idRoute[idToRead].collectionSize + ") \n";
-                    consoleDebugger.Invoke(debug);
+                    //consoleDebugger.Invoke(debug);
 
                     if (idRoute[idToRead].collectionSize == collectionSize)
                     {
@@ -682,6 +706,49 @@ namespace Net
             }
 
             return typeof(object);
+        }
+
+        private object ConstructObject(Type type)
+        {
+            ConstructorInfo[] constructors = type.GetConstructors(bindingFlags);
+            ConstructorInfo constructorInfo = null;
+
+            foreach (ConstructorInfo constructor in constructors)
+            {
+                if (constructor.GetParameters().Length == 0)
+                {
+                    return constructor.Invoke(new object[0]);
+                }
+                else
+                {
+                    foreach (ParameterInfo parametersInfo in constructor.GetParameters())
+                    {
+                        if (parametersInfo.ParameterType == type)
+                        {
+                            continue;
+                        }
+                    }
+
+                    constructorInfo = constructor;
+                }
+            }
+
+            ParameterInfo[] parameterInfos = constructorInfo.GetParameters();
+            object[] parameters = new object[parameterInfos.Length];
+
+            for (int i = 0; i < parameterInfos.Length; i++)
+            {
+                if (parameterInfos[i].ParameterType.IsValueType || parameterInfos[i].ParameterType == typeof(string) || parameterInfos[i].ParameterType.IsEnum)
+                {
+                    parameters[i] = default;
+                }
+                else
+                {
+                    parameters[i] = ConstructObject(parameterInfos[i].ParameterType);
+                }
+            }
+
+            return constructorInfo.Invoke(parameters);
         }
     }
 

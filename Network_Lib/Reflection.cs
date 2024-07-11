@@ -77,7 +77,7 @@ namespace Net
 
             if (info.GetValue(obj) == null)
             {
-                //idRoute.Add(new RouteInfo(attribute.VariableId));
+                idRoute.Add(new RouteInfo(attribute.VariableId));
                 debug += "Read Value Message Sent: " + info.FieldType.ToString() + " - value - " + info.GetValue(obj) + " - ID Route - " + idRoute[0].route + "\n";
                 consoleDebugger.Invoke(debug);
                 SendPackage(null, attribute, idRoute);
@@ -412,11 +412,11 @@ namespace Net
         {
             string debug = "";
             debug += "Inspect NULL write value: " + value + "\n";
+            debug += "Inspect obj write value: " + obj + "\n";
+            debug += "ID route: " + idRoute[idToRead].route + "\n";
             consoleDebugger.Invoke(debug);
             if (obj != null)
             {
-                debug += "ID route: " + idRoute[idToRead].route + "\n";
-                consoleDebugger.Invoke(debug);
                 foreach (FieldInfo info in type.GetFields(bindingFlags))
                 {
                     NetVariable attributes = info.GetCustomAttribute<NetVariable>();

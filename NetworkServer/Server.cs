@@ -141,12 +141,12 @@ public class Server : NetworkEntity
             case MessageType.String:
             case MessageType.Uint:
             case MessageType.Ulong:
+            case MessageType.Null:
             case MessageType.Ushort:
 
                 BroadcastPlayerPosition(ipToId[ip], data);
 
                 break;
-            case MessageType.Null:
             case MessageType.Ping:
 
                 if (ipToId.ContainsKey(ip))

@@ -135,7 +135,6 @@ namespace Net
             if (IsSorteableMessage)
             {
                 outData.AddRange(BitConverter.GetBytes(messageOrder));
-                messageHeaderSize += sizeof(int);
             }
 
             if (IsNondisponsableMessage)

@@ -24,8 +24,6 @@ namespace Network_Lib.BasicMessages
         {
             DeserializeHeader(message);
 
-            data = null;
-
             return data;
         }
 
@@ -39,8 +37,6 @@ namespace Network_Lib.BasicMessages
             List<byte> outData = new List<byte>();
 
             SerializeHeader(ref outData);
-
-            //outData.AddRange(BitConverter.GetBytes(data));
 
             SerializeQueue(ref outData);
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Xml.Linq;
 
 namespace Net
@@ -74,11 +75,18 @@ namespace Net
 
         public void ReadValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute)
         {
-            if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType.IsEnum) //TODO: Chequear esto a futuro
+            string debug = "";
+            
+            if (info.GetValue(obj) == null)
+            {
+                //idRoute.Add(new RouteInfo(attribute.VariableId));
+                debug += "Read Value Message Sent: " + info.FieldType.ToString() + " - value - " + info.GetValue(obj) + " - ID Route - " + idRoute[0].route + "\n";
+                consoleDebugger.Invoke(debug);
+                SendPackage(null, attribute, idRoute);
+            }
+            else if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType.IsEnum) //TODO: Chequear esto a futuro
             {
                 idRoute.Add(new RouteInfo(attribute.VariableId));
-
-                string debug = "";
                 debug += "Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
                 debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + "\n";
 
@@ -103,7 +111,6 @@ namespace Net
                 foreach (object elementOfCollection in (ICollection)info.GetValue(obj))
                 {
                     isEmpty = false;
-                    string debug = "";
                     idRoute.Add(new RouteInfo(attribute.VariableId, index++, collectionSize));
                     Type elementType = elementOfCollection.GetType();
                     debug += "Collection info field type " + info.FieldType.ToString() + "\n";
@@ -136,7 +143,7 @@ namespace Net
                 if (collectionSize == 0)
                 {
                     idRoute.Add(new RouteInfo(attribute.VariableId, index++, 0));
-                    SendPackage(isEmpty, attribute, idRoute);
+                    SendPackage(null, attribute, idRoute);
                     idRoute.RemoveAt(idRoute.Count - 1);
                 }
             }
@@ -149,6 +156,13 @@ namespace Net
 
         public void SendPackage(object value, NetVariable attribute, List<RouteInfo> idRoute)
         {
+            if (value == null)
+            {
+                NetNullMessage netNullMessage = new NetNullMessage(attribute.MessagePriority, null, idRoute);
+                networkEntity.SendMessage(netNullMessage.Serialize());
+                return;
+            }
+
             Type packageType = value.GetType();
 
             string debug = "";
@@ -175,15 +189,15 @@ namespace Net
                                 debug += "SEND PACKAGE Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
                                 debug += "Se modifica la variable " + value.GetType() + " que tiene un valor de " + value + "\n";
                                 debug += "El tipo de mensajes " + MessageChecker.CheckMessageType(a.Serialize()) + "\n";
-                                debug += "Al constructor se le paso: " + attribute.MessagePriority + " - " + value + " - La ruta " + "\n";
-
+                                debug += "Al constructor se le paso: " + attribute.MessagePriority + " - " + value + "\n";
                                 debug += "La ruta de la variable es: ";
                                 foreach (RouteInfo item in idRoute)
                                 {
                                     debug += item + " - ";
                                 }
+                                debug += "\n";
 
-                                //consoleDebugger.Invoke(debug);
+                                consoleDebugger.Invoke(debug);
                             }
                         }
                     }
@@ -277,12 +291,16 @@ namespace Net
                 case MessageType.Bool:
 
                     NetBoolMessage netBoolMessage = new NetBoolMessage(data);
+                    debug += "Message Arrived BOOL\n";
+                    consoleDebugger.Invoke(debug);
                     VariableMapping(netBoolMessage.GetMessageRoute(), netBoolMessage.GetData());
 
                     break;
                 case MessageType.Null:
 
                     NetNullMessage netNullMessage = new NetNullMessage(data);
+                    debug += "Message Arrived NULL\n";
+                    consoleDebugger.Invoke(debug);
                     VariableMappingNullException(netNullMessage.GetMessageRoute(), netNullMessage.GetData());
 
                     break;
@@ -354,8 +372,12 @@ namespace Net
             if (route.Count > 0)
             {
                 INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
+                string debug = "Variable Mapping obejct root: " + objectRoot + "\n";
                 if (objectRoot.GetOwnerID() != networkEntity.clientID)
                 {
+                    debug += "Variable Mapping obejct root owner ID distinto del clientID\n";
+                    debug += "Variable Mapping variable value:" + variableValue + "\n";
+                    consoleDebugger.Invoke(debug);
                     objectRoot = (INetObj)InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
                 }
             }
@@ -365,7 +387,7 @@ namespace Net
         {
             string debug = "";
             debug += "Inspect write value: " + value + "\n";
-            //consoleDebugger.Invoke(debug);
+            consoleDebugger.Invoke(debug);
             if (obj != null)
             {
                 foreach (FieldInfo info in type.GetFields(bindingFlags))
@@ -376,7 +398,7 @@ namespace Net
                         debug += "Inspect write: " + obj + "\n";
                         debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
                         debug += "Inspect write variable ID: " + attributes.VariableId + "\n";
-                        //consoleDebugger.Invoke(debug);
+                        consoleDebugger.Invoke(debug);
 
                         obj = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         break;
@@ -389,6 +411,9 @@ namespace Net
 
         public object InspectWriteNullException(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
+            string debug = "";
+            debug += "Inspect NULL write value: " + value + "\n";
+            consoleDebugger.Invoke(debug);
             if (obj != null)
             {
                 foreach (FieldInfo info in type.GetFields(bindingFlags))
@@ -534,7 +559,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                consoleDebugger.Invoke(debug);
+                //consoleDebugger.Invoke(debug);
 
                 object objReference = null;
                 objReference = info.GetValue(obj);
@@ -728,7 +753,6 @@ namespace Net
                             continue;
                         }
                     }
-
                     constructorInfo = constructor;
                 }
             }
@@ -747,7 +771,6 @@ namespace Net
                     parameters[i] = ConstructObject(parameterInfos[i].ParameterType);
                 }
             }
-
             return constructorInfo.Invoke(parameters);
         }
     }

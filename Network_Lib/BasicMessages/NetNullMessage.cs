@@ -1,15 +1,14 @@
 ﻿using Net;
-using System;
 using System.Collections.Generic;
 
 namespace Network_Lib.BasicMessages
 {
     [NetMessageClass(typeof(NetNullMessage), MessageType.Null)]
-    public class NetNullMessage : BaseReflectionMessage<bool>
+    public class NetNullMessage : BaseReflectionMessage<Null>
     {
-        public bool data = true;
+        public Null data = null;
 
-        public NetNullMessage(MessagePriority messagePriority, bool data, List<RouteInfo> messageRoute) : base(messagePriority, messageRoute)
+        public NetNullMessage(MessagePriority messagePriority, Null data, List<RouteInfo> messageRoute) : base(messagePriority, messageRoute)
         {
             currentMessageType = MessageType.Null;
             this.data = data;
@@ -21,16 +20,16 @@ namespace Network_Lib.BasicMessages
             this.data = Deserialize(data);
         }
 
-        public override bool Deserialize(byte[] message)
+        public override Null Deserialize(byte[] message)
         {
             DeserializeHeader(message);
 
-            data = BitConverter.ToBoolean(message, messageHeaderSize);
+            data = null;
 
             return data;
         }
 
-        public bool GetData()
+        public Null GetData()
         {
             return data;
         }
@@ -41,11 +40,16 @@ namespace Network_Lib.BasicMessages
 
             SerializeHeader(ref outData);
 
-            outData.AddRange(BitConverter.GetBytes(data));
+            //outData.AddRange(BitConverter.GetBytes(data));
 
             SerializeQueue(ref outData);
 
             return outData.ToArray();
         }
     }
+}
+
+public class Null
+{
+    public Null() { }
 }

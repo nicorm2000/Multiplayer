@@ -57,15 +57,16 @@ public class PlayerController : MonoBehaviour, INetObj
     [NetVariable(16)] public TestingStruct testingStruct = new() { testInt = 0 };
     [NetVariable(17)] public int[] myArray = new int[2];
     [NetVariable(18)] TestingClass4 testingClass4;
+    [NetVariable(19)] public List<TestingClass3> jajaxd = null;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
+
 
     public bool currentPlayer = false;
     public int clientID = -1;
     private int testing4ConstructorInt = 0;
     private TestingClass2 testing4ConstructorClass = new();
-
     NetObj netObj = new(-1, -1);
 
     NetworkManager nm;
@@ -88,6 +89,18 @@ public class PlayerController : MonoBehaviour, INetObj
         }
     }
 
+    [ContextMenu("Add Decimal")]
+    private void AddDecimal()
+    {
+        myDecimal += 1;
+    }
+
+    [ContextMenu("Substract Decimal")]
+    private void SubstractDecimal()
+    {
+        myDecimal -= 1;
+    }
+
     private void Start()
     {
         nm = NetworkManager.Instance;
@@ -95,22 +108,30 @@ public class PlayerController : MonoBehaviour, INetObj
         {
             Camera.main.gameObject.GetComponent<CameraOrbit>().SetFollowObject(cameraPivot);
         }
-        //myArray[0] = 1;
-        //myArray[1] = 2;
+        myArray[0] = 1;
+        myArray[1] = 2;
 
         testingClass4 = null;
+
+        jajaxd = new List<TestingClass3>
+        {
+            new() { testInt = 7 },
+            new() { testInt = 17 }
+        };
     }
 
     private void Update()
     {
-        if (testingClass4 != null)
-        {
-            Debug.Log($"Client {clientID} testScript IS NOT NULL");
-        }
-        else
-        {
-            Debug.Log($"Client {clientID} testScript IS NULL");
-        }
+        //if (testingClass4 != null)
+        //{
+        //    //Debug.Log($"Client {clientID} testScript IS NOT NULL");
+        //}
+        //else
+        //{
+        //    //Debug.Log($"Client {clientID} testScript IS NULL");
+        //}
+
+        //Debug.Log($"Client {clientID} myDecimal: /*myDecimal*/");
 
         if (health <= 0)
         {

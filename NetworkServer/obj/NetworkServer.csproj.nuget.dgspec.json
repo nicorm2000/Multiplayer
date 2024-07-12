@@ -1,25 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Nico\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj": {}
+    "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Nico\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj": {
+    "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Nico\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj",
+        "projectUniqueName": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj",
         "projectName": "NetworkServer",
-        "projectPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj",
-        "packagesPath": "C:\\Users\\Nico\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\NetworkServer\\obj\\",
+        "projectPath": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\NetworkServer\\NetworkServer.csproj",
+        "packagesPath": "C:\\Users\\Aula 2\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\NetworkServer\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Nico\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+          "C:\\Users\\Aula 2\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net5.0"
@@ -32,8 +32,8 @@
           "net5.0": {
             "targetAlias": "net5.0",
             "projectReferences": {
-              "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj": {
-                "projectPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj"
+              "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj": {
+                "projectPath": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj"
               }
             }
           }
@@ -42,6 +42,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -63,26 +68,26 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj": {
+    "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
+        "projectUniqueName": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
         "projectName": "Network_Lib",
-        "projectPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
-        "packagesPath": "C:\\Users\\Nico\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\obj\\",
+        "projectPath": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
+        "packagesPath": "C:\\Users\\Aula 2\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Nico\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+          "C:\\Users\\Aula 2\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "netstandard2.1"
@@ -101,6 +106,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -122,7 +132,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200\\RuntimeIdentifierGraph.json"
         }
       }
     }

@@ -120,6 +120,7 @@ public class NetworkClient : NetworkEntity
     {
         if (data == null || ip == null)
         {
+            Debug.Log("On Receive IP or Data NULL");
             return;
         }
 

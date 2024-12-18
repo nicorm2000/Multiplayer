@@ -21,13 +21,16 @@ namespace Net
 
         public override string Deserialize(byte[] message)
         {
+            string text = "";
+
             DeserializeHeader(message);
 
             if (MessageChecker.DeserializeCheckSum(message))
             {
-                MessageChecker.DeserializeString(message, ref messageHeaderSize);
+                text = MessageChecker.DeserializeString(message, ref messageHeaderSize);
             }
-            return data;
+
+            return text;
         }
 
         public string GetData()

@@ -8,25 +8,25 @@
     ".NETStandard,Version=v2.1": []
   },
   "packageFolders": {
-    "C:\\Users\\Aula 2\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Nico\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
+      "projectUniqueName": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
       "projectName": "Network_Lib",
-      "projectPath": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
-      "packagesPath": "C:\\Users\\Aula 2\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Aula 2\\Desktop\\Multiplayer\\Network_Lib\\obj\\",
+      "projectPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj",
+      "packagesPath": "C:\\Users\\Nico\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
       ],
       "configFilePaths": [
-        "C:\\Users\\Aula 2\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Nico\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
       ],
       "originalTargetFrameworks": [
         "netstandard2.1"
@@ -45,11 +45,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -71,7 +66,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
       }
     }
   }

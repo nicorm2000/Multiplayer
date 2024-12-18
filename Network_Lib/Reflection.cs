@@ -55,8 +55,8 @@ namespace Net
             {
                 foreach (FieldInfo info in type.GetFields(bindingFlags))
                 {
-                    debug += "___info field: " + info.FieldType + "\n";
-                    debug += "___info route: " + idRoute[0].route + "\n";
+                    //debug += "___info field: " + info.FieldType + "\n";
+                    //debug += "___info route: " + idRoute[0].route + "\n";
                     consoleDebugger.Invoke(debug);
                     IEnumerable<Attribute> attributes = info.GetCustomAttributes();
                     foreach (Attribute attribute in attributes)
@@ -232,7 +232,7 @@ namespace Net
                                 }
                                 debug += "\n";
 
-                                //consoleDebugger.Invoke(debug);
+                                consoleDebugger.Invoke(debug);
                             }
                         }
                     }
@@ -245,7 +245,7 @@ namespace Net
             //DeserializeReflectionMessage(data);
             string debug = "";
             debug += "Data type received: " + MessageChecker.CheckMessageType(data) + "\n";
-            //consoleDebugger.Invoke(debug);
+            consoleDebugger.Invoke(debug);
             switch (MessageChecker.CheckMessageType(data))
             {
                 case MessageType.Ulong:
@@ -394,7 +394,7 @@ namespace Net
                 {
                     debug += "Variable Mapping obejct root owner ID distinto del clientID\n";
                     debug += "Variable Mapping variable value:" + variableValue + "\n";
-                    //consoleDebugger.Invoke(debug);
+                    consoleDebugger.Invoke(debug);
                     objectRoot = (INetObj)InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
                 }
             }

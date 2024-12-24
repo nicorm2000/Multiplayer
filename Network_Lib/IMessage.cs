@@ -30,6 +30,7 @@ namespace Net
         Byte = -87,
         Bool = -86,
         Null = -85,
+        Empty = -84,
 
         Instance = -10,
         InstanceRequest = -9,

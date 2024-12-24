@@ -141,6 +141,7 @@ public class Server : NetworkEntity
             case MessageType.String:
             case MessageType.Uint:
             case MessageType.Ulong:
+            case MessageType.Empty:
             case MessageType.Null:
             case MessageType.Ushort:
 

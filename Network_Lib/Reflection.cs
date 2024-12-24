@@ -2,12 +2,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Xml.Linq;
 
 namespace Net
 {
+    public enum NullOrEmpty
+    {
+        Null,
+        Empty
+    }
+
     public class Reflection
     {
         BindingFlags bindingFlags;
@@ -91,7 +98,7 @@ namespace Net
                 idRoute.Add(new RouteInfo(attribute.VariableId));
                 debug += "Read Value Message Sent: " + info.FieldType.ToString() + " - value - " + info.GetValue(obj) + " - ID Route - " + idRoute[0].route + "\n";
                 consoleDebugger.Invoke(debug);
-                SendPackage(null, attribute, idRoute);
+                SendPackage(NullOrEmpty.Null, attribute, idRoute);
             }
             else if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType == typeof(decimal) || info.FieldType.IsEnum) //TODO: Chequear esto a futuro
             {
@@ -159,14 +166,23 @@ namespace Net
                         consoleDebugger.Invoke(debug);
                         Inspect(elementOfCollection.GetType(), elementOfCollection, idRoute);
                         idRoute.RemoveAt(idRoute.Count - 1);
-                    }              
+                    }
                 }
 
                 if (collectionSize == 0)
                 {
-                    idRoute.Add(new RouteInfo(attribute.VariableId, index++, 0));
-                    SendPackage(null, attribute, idRoute);
-                    idRoute.RemoveAt(idRoute.Count - 1);
+                    if (info.GetValue(obj) == null)
+                    {
+                        idRoute.Add(new RouteInfo(attribute.VariableId, index++, 0));
+                        SendPackage(NullOrEmpty.Null, attribute, idRoute);
+                        idRoute.RemoveAt(idRoute.Count - 1);
+                    }
+                    else
+                    {
+                        idRoute.Add(new RouteInfo(attribute.VariableId, index++, 0));
+                        SendPackage(NullOrEmpty.Empty, attribute, idRoute);
+                        idRoute.RemoveAt(idRoute.Count - 1);
+                    }
                 }
             }
             else
@@ -188,13 +204,22 @@ namespace Net
         public void SendPackage(object value, NetVariable attribute, List<RouteInfo> idRoute)
         {
             string debug = "";
-            if (value == null)
+            if (value is NullOrEmpty.Null)
             {
                 NetNullMessage netNullMessage = new NetNullMessage(attribute.MessagePriority, null, idRoute);
                 debug += "Message Sent\n";
                 debug += "Message Header Size: " + netNullMessage.messageHeaderSize + "\n";
                 //consoleDebugger.Invoke(debug);
                 networkEntity.SendMessage(netNullMessage.Serialize());
+                return;
+            }
+            if (value is NullOrEmpty.Empty)
+            {
+                NetEmptyMessage netEmptyMessage = new NetEmptyMessage(attribute.MessagePriority, new Empty(), idRoute);
+                debug += "Message Sent\n";
+                debug += "Message Header Size: " + netEmptyMessage.messageHeaderSize + "\n";
+                //consoleDebugger.Invoke(debug);
+                networkEntity.SendMessage(netEmptyMessage.Serialize());
                 return;
             }
 
@@ -336,6 +361,12 @@ namespace Net
                     VariableMappingNullException(netNullMessage.GetMessageRoute(), netNullMessage.GetData());
 
                     break;
+                case MessageType.Empty:
+
+                    NetEmptyMessage netEmptyMessage = new NetEmptyMessage(data);
+                    VariableMappingEmpty(netEmptyMessage.GetMessageRoute(), netEmptyMessage.GetData());
+
+                    break;
             }
         }
 
@@ -415,6 +446,22 @@ namespace Net
             }
         }
 
+        void VariableMappingEmpty(List<RouteInfo> route, object variableValue)
+        {
+            if (route.Count > 0)
+            {
+                INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
+                string debug = "Variable Mapping obejct root: " + objectRoot + "\n";
+                if (objectRoot.GetOwnerID() != networkEntity.clientID)
+                {
+                    debug += "Variable Mapping obejct root owner ID distinto del clientID\n";
+                    debug += "Variable Mapping variable value:" + variableValue + "\n";
+                    //consoleDebugger.Invoke(debug);
+                    objectRoot = (INetObj)InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+                }
+            }
+        }
+
         public object InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
             string debug = "";
@@ -466,6 +513,31 @@ namespace Net
             return obj;
         }
 
+        public object InspectWriteEmpty(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            string debug = "";
+            debug += "Inspect NULL write value: " + value + "\n";
+            debug += "Inspect obj write value: " + obj + "\n";
+            debug += "ID route: " + idRoute[idToRead].route + "\n";
+            debug += "ID to read: " + idToRead + "\n";
+            debug += "Value: " + value + "\n";
+            //consoleDebugger.Invoke(debug);
+            if (obj != null)
+            {
+                foreach (FieldInfo info in type.GetFields(bindingFlags))
+                {
+                    NetVariable attributes = info.GetCustomAttribute<NetVariable>();
+                    if (attributes != null && attributes.VariableId == idRoute[idToRead].route)
+                    {
+                        obj = WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
+                        break;
+                    }
+                }
+            }
+
+            return obj;
+        }
+
         object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
             if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType == typeof(decimal) || info.FieldType.IsEnum)
@@ -489,8 +561,35 @@ namespace Net
                 if (info.FieldType.IsArray)
                 {
                     object objectReference = info.GetValue(obj);
-                    object[] arrayCopyCollection = new object[((ICollection)info.GetValue(obj)).Count];
-                    ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
+                    if (idRoute[idToRead].collectionSize == 0)
+                    {
+                        objectReference = Array.CreateInstance(info.FieldType.GetElementType(), 0);
+                        info.SetValue(obj, objectReference);
+
+                        return obj;
+                    }
+
+                    object[] arrayCopyCollection = new object[idRoute[idToRead].collectionSize];
+                    int collectionSize = (objectReference as ICollection).Count;
+
+                    if (idRoute[idToRead].collectionSize == collectionSize)
+                    {
+                        ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < idRoute[idToRead].collectionSize; i++)
+                        {
+                            if (collectionSize > i)
+                            {
+                                arrayCopyCollection[i] = (objectReference as ICollection).Cast<object>().ElementAt(i);
+                            }
+                            else
+                            {
+                                arrayCopyCollection[i] = Activator.CreateInstance(info.FieldType.GetElementType());
+                            }
+                        }
+                    }
 
                     for (int i = 0; i < arrayCopyCollection.Length; i++)
                     {
@@ -627,6 +726,15 @@ namespace Net
                 if (info.FieldType.IsArray)
                 {
                     object objectReference = info.GetValue(obj);
+
+                    if (idRoute[idToRead].collectionSize == 0)
+                    {
+                        objectReference = Array.CreateInstance(info.FieldType.GetElementType(), 0);
+                        info.SetValue(obj, objectReference);
+
+                        return obj;
+                    }
+
                     object[] arrayCopyCollection = new object[((ICollection)info.GetValue(obj)).Count];
                     ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
 

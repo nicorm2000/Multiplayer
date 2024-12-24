@@ -171,7 +171,6 @@ namespace Net
             }
             else
             {
-                idRoute.Add(new RouteInfo(attribute.VariableId));
                 debug += "Class Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
                 debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + "\n";
                 debug += "La ruta de la variable es: ";
@@ -420,7 +419,7 @@ namespace Net
         {
             string debug = "";
             debug += "Inspect write value: " + value + "\n";
-            //consoleDebugger.Invoke(debug);
+            consoleDebugger.Invoke(debug);
             if (obj != null)
             {
                 foreach (FieldInfo info in type.GetFields(bindingFlags))
@@ -431,7 +430,7 @@ namespace Net
                         debug += "Inspect write: " + obj + "\n";
                         debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
                         debug += "Inspect write variable ID: " + attributes.VariableId + "\n";
-                        //consoleDebugger.Invoke(debug);
+                        consoleDebugger.Invoke(debug);
 
                         obj = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         break;
@@ -481,7 +480,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
 
                 info.SetValue(obj, value);
             }
@@ -526,7 +525,7 @@ namespace Net
                     string debug = "";
                     debug += "Write value collection size: " + collectionSize + ") \n";
                     debug += "Write value variable collection size: " + idRoute[idToRead].collectionSize + ") \n";
-                    //consoleDebugger.Invoke(debug);
+                    consoleDebugger.Invoke(debug);
 
                     if (idRoute[idToRead].collectionSize == collectionSize)
                     {
@@ -596,7 +595,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
 
                 object objReference = null;
                 objReference = info.GetValue(obj);
@@ -608,7 +607,7 @@ namespace Net
                 else
                 {
                     idToRead++;
-                    objReference = InspectWrite(info.FieldType, info.GetValue(obj), idRoute, idToRead, value);
+                    objReference = InspectWrite(info.FieldType, objReference, idRoute, idToRead, value);
                 }
 
                 info.SetValue(obj, objReference);

@@ -158,7 +158,7 @@ namespace Net
                         debug += "\n";
                         consoleDebugger.Invoke(debug);
                         Inspect(elementOfCollection.GetType(), elementOfCollection, idRoute);
-                        //idRoute.RemoveAt(idRoute.Count - 1);
+                        idRoute.RemoveAt(idRoute.Count - 1);
                     }              
                 }
 

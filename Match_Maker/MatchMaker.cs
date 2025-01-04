@@ -251,6 +251,24 @@ namespace Match_Maker
         /// <returns>True if the username is valid, false otherwise.</returns>
         bool CheckValidUserName(string userName, IPEndPoint ip)
         {
+            bool hasUpperCase = false;
+            bool hasLowerCase = false;
+
+            foreach (char c in userName)
+            {
+                if (char.IsUpper(c))
+                    hasUpperCase = true;
+                if (char.IsLower(c))
+                    hasLowerCase = true;
+
+                if (hasUpperCase && hasLowerCase)
+                {
+                    NetErrorMessage netInvalidUserName = new("Invalid username letter case");
+                    Broadcast(netInvalidUserName.Serialize(), ip);
+                    return false;
+                }
+            }
+
             if (!IsToLower(userName) && !IsToUpper(userName))
             {
                 NetErrorMessage netInvalidUserName = new("Invalid username letter case");

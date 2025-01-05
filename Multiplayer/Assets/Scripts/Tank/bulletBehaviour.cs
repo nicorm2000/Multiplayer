@@ -22,6 +22,29 @@ namespace Game
             Destroy(gameObject, 5.0f);
 
             velocityVector = transform.forward * velocity;
+
+            Debug.Log("Shoot Game");
+            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMR));
+            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRB), false);
+            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRI), 3);
+        }
+
+        [NetMethod(0)]
+        private void TestMR()
+        {
+            Debug.Log("Funca");
+        }
+
+        [NetMethod(1)]
+        private void TestMRB(bool a)
+        {
+            Debug.Log("a: " + a);
+        }
+
+        [NetMethod(2)]
+        private void TestMRI(int a)
+        {
+            Debug.Log("int: " + a);
         }
 
         public void SetOwnerID(int clientIdOrigin)

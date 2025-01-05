@@ -6,7 +6,7 @@ namespace Net
     {
         protected NetworkEntity networkEntity;
         public float deltaTime = 0;
-        protected int timeUntilDisconnection = 5;
+        protected int timeUntilDisconnection = 5000;
         protected float sendMessageCounter = 0;
         protected float secondsPerCheck = 1.0f;
         protected DateTime currentDateTime = DateTime.UtcNow;

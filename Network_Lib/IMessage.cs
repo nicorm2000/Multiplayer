@@ -31,6 +31,7 @@ namespace Net
         Bool = -86,
         Null = -85,
         Empty = -84,
+        Method = -83,
 
         Instance = -10,
         InstanceRequest = -9,

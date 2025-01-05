@@ -1,11 +1,9 @@
-using System.Collections;
 using UnityEngine;
 using Net;
-using System;
 
-public class ReflectionSystem : MonoBehaviour
+public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
 {
-    Reflection reflection;
+    public Reflection reflection;
 
     private void Start()
     {

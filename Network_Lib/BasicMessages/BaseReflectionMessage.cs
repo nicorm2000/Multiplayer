@@ -3,12 +3,13 @@ using System;
 
 namespace Net
 {
+
     [System.Serializable]
     public struct RouteInfo
     {
-        [NetVariable(0)] public int route;
-        [NetVariable(1)] public int collectionIndex;
-        [NetVariable(2)] public int collectionSize;
+        public int route;
+        public int collectionIndex;
+        public int collectionSize;
 
         public RouteInfo(int route, int collectionIndex = -1, int collectionSize = -1)
         {
@@ -52,7 +53,6 @@ namespace Net
             return $"Route: {route} - CollectionIndex: {collectionIndex} - CollectionSize: {collectionSize}";
         }
     }
-
 
     public abstract class BaseReflectionMessage<T> : BaseMessage<T>
     {

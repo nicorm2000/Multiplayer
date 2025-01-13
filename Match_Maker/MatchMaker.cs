@@ -34,6 +34,7 @@ namespace Match_Maker
         }
 
         public readonly Dictionary<int, Client> clients = new();
+        //public Dictionary<int, List<Client>> totalClientsInServers = new();
 
         public readonly Dictionary<IPEndPoint, int> ipToId = new();
 
@@ -47,6 +48,9 @@ namespace Match_Maker
 
         int minPlayerToStartGame = 2;
         int serverPort = 0;
+
+        //int serverNumber = 0;
+        //int playerCounterTotalServers = 0;
 
         /// <summary>
         /// Starts the server on the specified port.
@@ -83,7 +87,11 @@ namespace Match_Maker
                 Console.WriteLine("Adding Client: " + ip.Address);
 
                 ipToId[ip] = newClientID;
-                clients.Add(newClientID, new Client(ip, newClientID, Convert.ToSingle((DateTime.UtcNow - appStartTime).TotalSeconds), clientName));
+                Client clientAux = new(ip, newClientID, Convert.ToSingle((DateTime.UtcNow - appStartTime).TotalSeconds), clientName);
+                clients.Add(newClientID, clientAux);
+                //Agregar player a lista para que el matchmaker sepa quienes estan
+                //totalClientsInServers[playerCounterTotalServers].Add(clientAux);
+                //playerCounterTotalServers++;
                 pingPong.AddClientForList(newClientID);
                 //OnNewPlayer?.Invoke(newClientID);  El Lobby no instanca a los players
 
@@ -113,6 +121,11 @@ namespace Match_Maker
                 pingPong.RemoveClientForList(idToRemove);
                 ipToId.Remove(clients[idToRemove].ipEndPoint);
                 clients.Remove(idToRemove);
+                // Aca logica para sacar al player de la lista del matchmaker de nombres
+                //if ()
+                //{
+                //    totalClientsInServers[playerCounterTotalServers].Remove(idToRemove);
+                //}
 
                 CheckPlayerInLobby();
             }
@@ -428,6 +441,9 @@ namespace Match_Maker
             serverPort++;
 
             serversApplicationRunnnig.Add(CreateServerProcess(serverPort));
+            //Sumar uno al server para que pase al otro
+            //totalClientsInServers.Add(serverNumber, new List<Client>());
+            //serverNumber++;
             return serverPort;
         }
 

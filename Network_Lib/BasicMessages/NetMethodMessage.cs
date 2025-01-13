@@ -28,15 +28,15 @@ namespace Network_Lib.BasicMessages
             if (MessageChecker.DeserializeCheckSum(message))
             {
                 data.Item1 = BitConverter.ToInt32(message, messageHeaderSize);
-                messageHeaderSize += 4;
+                messageHeaderSize += sizeof(int);
                 int listSize = BitConverter.ToInt32(message, messageHeaderSize);
-                messageHeaderSize += 4;
+                messageHeaderSize += sizeof(int);
                 List<(string, string)> list = new List<(string, string)>();
 
                 for (int i = 0; i < listSize; i++)
                 {
-                    string type = MessageChecker.DeserializeStringPerChar(message, ref messageHeaderSize);
-                    string typeData = MessageChecker.DeserializeStringPerChar(message, ref messageHeaderSize);
+                    string type = MessageChecker.DeserializeString(message, ref messageHeaderSize);
+                    string typeData = MessageChecker.DeserializeString(message, ref messageHeaderSize);
 
                     list.Add((type, typeData));
                 }
@@ -64,8 +64,8 @@ namespace Network_Lib.BasicMessages
 
             foreach ((string type, string data) item in data.Item2)
             {
-                MessageChecker.SerializeStringPerChar(item.type.ToCharArray());
-                MessageChecker.SerializeStringPerChar(item.data.ToCharArray());
+                outData.AddRange(MessageChecker.SerializeString(item.type.ToCharArray()));
+                outData.AddRange(MessageChecker.SerializeString(item.data.ToCharArray()));
             }
 
             SerializeQueue(ref outData);

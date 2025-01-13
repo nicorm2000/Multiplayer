@@ -54,7 +54,7 @@ namespace Net
             {
                 charArray[i] = BitConverter.ToChar(message, indexToInit + sizeof(char) * i);
             }
-            //indexToInit += sizeof(char) * stringSize;
+            indexToInit += sizeof(char) * stringSize;
 
             return new string(charArray);
         }
@@ -76,23 +76,15 @@ namespace Net
 
         public static string DeserializeStringPerChar(byte[] message, ref int indexToInit)
         {
-            if (indexToInit + sizeof(int) > message.Length)
-                throw new ArgumentOutOfRangeException("Cannot read string size: index out of range.");
-
             int stringSize = BitConverter.ToInt32(message, indexToInit);
-
-            if (indexToInit + sizeof(int) + stringSize > message.Length)
-                throw new ArgumentOutOfRangeException("String data exceeds message bounds.");
 
             char[] charArray = new char[stringSize];
 
             indexToInit += sizeof(int);
-
             for (int i = 0; i < stringSize; i++)
             {
-                charArray[i] = (char)message[indexToInit + i];
+                charArray[i] = (char)message[indexToInit + sizeof(char) * i];
             }
-
             indexToInit += stringSize;
 
             return new string(charArray);

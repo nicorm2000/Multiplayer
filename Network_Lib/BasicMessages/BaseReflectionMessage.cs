@@ -1,9 +1,66 @@
 ﻿using System.Collections.Generic;
 using System;
+using System.Collections.ObjectModel;
+using System.Collections;
+using System.Data;
 
 namespace Net
 {
-
+    // New Route Info ACORDATE DE MODIFICAR EL HEADER DE LOS MENSAJES SI USAS EL NUEVO
+    //public int Route { get; set; }
+    //public IEnumerable Collection { get; set; }
+    //public object Index { get; set; }
+    //
+    //public RouteInfo(int route, IEnumerable collection = null, object index = null)
+    //{
+    //    Route = route;
+    //    Collection = collection;
+    //    Index = index;
+    //}
+    //
+    //// This will handle access for any ICollection or IEnumerable
+    //public object GetItem()
+    //{
+    //    if (Collection == null)
+    //        return null;
+    //
+    //    if (Collection is IDictionary dictionary && Index != null)
+    //    {
+    //        // Dictionary: Handle key-based lookup
+    //        return dictionary[Index];
+    //    }
+    //    else if (Collection is IEnumerable enumerable)
+    //    {
+    //        if (Index is int index) // Single index for any IEnumerable (e.g., List<T>, Array)
+    //        {
+    //            int count = 0;
+    //            foreach (var item in enumerable)
+    //            {
+    //                if (count == index)
+    //                    return item;
+    //                count++;
+    //            }
+    //            return null; // Index out of range
+    //        }
+    //        else if (Index is IEnumerable<int> indexList) // Handling multi-indexing for multidimensional arrays
+    //        {
+    //            var enumerator = enumerable.GetEnumerator();
+    //            foreach (var idx in indexList)
+    //            {
+    //                if (!enumerator.MoveNext())
+    //                    return null;
+    //            }
+    //            return enumerator.Current;
+    //        }
+    //        return "Unsupported index type.";
+    //    }
+    //    return "Unsupported collection type.";
+    //}
+    //
+    //public override string ToString()
+    //{
+    //    return $"Route: {Route}, Collection Type: {Collection?.GetType().Name ?? "null"}, Index: {Index}";
+    //}
     [System.Serializable]
     public struct RouteInfo
     {

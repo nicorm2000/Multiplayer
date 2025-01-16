@@ -62,6 +62,7 @@
     <Compile Include="Assets\Scripts\Network\NetworkClient.cs" />
     <Compile Include="Assets\Scripts\Network\packets\NetworkPacket.cs" />
     <Compile Include="Assets\Scripts\Gameplay\ServerGameplay.cs" />
+    <Compile Include="Assets\Scripts\Utils\ExtensionMethods.cs" />
     <Compile Include="Assets\Scripts\UI\NetworkScreen.cs" />
     <Compile Include="Assets\Scripts\Factory\ServiceInitializer.cs" />
     <Compile Include="Assets\Scripts\Factory\PrefabService.cs" />
@@ -77,7 +78,6 @@
     <Compile Include="Assets\Scripts\Utils\MonoBehaviourSingleton.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Network\NetworkManager.cs" />
-    <Compile Include="Assets\Scripts\Reflection\MonoBehaviour.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

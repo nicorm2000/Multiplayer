@@ -43,7 +43,7 @@ namespace Match_Maker
         ServerPingPong pingPong;
         ServerSortableMessage sortableMessage;
         ServerNondisponsableMessage nondisponsableMessage;
-
+        Dictionary<int, IPEndPoint> serversIps = new Dictionary<int, IPEndPoint>();
         List<Process> serversApplicationRunnnig = new();
 
         int minPlayerToStartGame = 2;
@@ -444,6 +444,13 @@ namespace Match_Maker
             //Sumar uno al server para que pase al otro
             //totalClientsInServers.Add(serverNumber, new List<Client>());
             //serverNumber++;
+
+            //MANDAR ESTO
+            //IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+            //
+            //serversIps[serverPort] = new IPEndPoint(ipAddress, serverPort);
+            //NetMatchMakerIP netErrorMessage = new("Handshake MatchMaker Server");
+            //Broadcast(netErrorMessage.Serialize(), serversIps[serverPort]);
             return serverPort;
         }
 

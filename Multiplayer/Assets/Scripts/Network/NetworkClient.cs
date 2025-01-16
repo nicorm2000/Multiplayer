@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Net;
-using Network_Lib.BasicMessages;
 using UnityEngine;
 
 public class NetworkClient : NetworkEntity
@@ -236,7 +234,6 @@ public class NetworkClient : NetworkEntity
 
                     NetworkManager.Instance.onInstanceCreated?.Invoke(obj.GetOwnerID(), instance); //Enivo un evento con el objeto instanciado y su owner
                 }
-
 
                 break;
 

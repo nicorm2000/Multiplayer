@@ -33,7 +33,6 @@ public class TowerTurns : MonoBehaviour
         }
     }
 
-    [NetMethod(0)]
     void Shoot()
     {
         IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();

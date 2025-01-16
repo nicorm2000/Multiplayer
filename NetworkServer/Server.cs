@@ -41,6 +41,8 @@ public class Server : NetworkEntity
     ServerSortableMessage sortableMessage;
     ServerNondisponsableMessage nondisponsableMessage;
 
+    IPEndPoint matchmMakerIp;
+
     int instancesIdCount = 0;
 
     /// <summary>
@@ -229,6 +231,13 @@ public class Server : NetworkEntity
 
                 break;
 
+            //HACER ESTO
+            case MessageType.MatchMakerIp:
+
+                matchmMakerIp = ip;
+
+                break;
+
             default:
                 break;
         }
@@ -266,6 +275,11 @@ public class Server : NetworkEntity
         //  Console.WriteLine(s);
 
         connection.Send(data, ip);
+    }
+
+    public void BroadcastToMatchMaker(byte[] data)
+    {
+        connection.Send(data, matchmMakerIp);
     }
 
     /// <summary>

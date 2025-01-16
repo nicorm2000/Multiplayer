@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-
-
 namespace Net
 {
     public class ClientNondisponsableMessage : NondisponsableMessageBase

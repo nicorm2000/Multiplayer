@@ -18,7 +18,6 @@ namespace Net
     //    Index = index;
     //}
     //
-    //// This will handle access for any ICollection or IEnumerable
     //public object GetItem()
     //{
     //    if (Collection == null)
@@ -26,12 +25,11 @@ namespace Net
     //
     //    if (Collection is IDictionary dictionary && Index != null)
     //    {
-    //        // Dictionary: Handle key-based lookup
     //        return dictionary[Index];
     //    }
     //    else if (Collection is IEnumerable enumerable)
     //    {
-    //        if (Index is int index) // Single index for any IEnumerable (e.g., List<T>, Array)
+    //        if (Index is int index) 
     //        {
     //            int count = 0;
     //            foreach (var item in enumerable)
@@ -40,9 +38,9 @@ namespace Net
     //                    return item;
     //                count++;
     //            }
-    //            return null; // Index out of range
+    //            return null;
     //        }
-    //        else if (Index is IEnumerable<int> indexList) // Handling multi-indexing for multidimensional arrays
+    //        else if (Index is IEnumerable<int> indexList) 
     //        {
     //            var enumerator = enumerable.GetEnumerator();
     //            foreach (var idx in indexList)
@@ -103,6 +101,11 @@ namespace Net
         public int GetCollectionSize()
         {
             return collectionSize;
+        }
+
+        public void GetItem()
+        {
+
         }
 
         public override string ToString()

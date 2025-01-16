@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 
-
 namespace Net
 {
-
     public abstract class NondisponsableMessageBase
     {
         protected NetworkEntity networkEntity;

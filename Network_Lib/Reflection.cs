@@ -6,6 +6,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Xml.Linq;
 
 namespace Net
 {
@@ -19,9 +21,12 @@ namespace Net
     {
         BindingFlags bindingFlags;
         Assembly executeAssembly;
+        Assembly gameAssembly;
 
         public static Action<string> consoleDebugger;
         public static Action consoleDebuggerPause;
+
+        public Dictionary<Type, MethodInfo> extensionMethods = new Dictionary<Type, MethodInfo>();
 
         NetworkEntity networkEntity;
 
@@ -31,6 +36,24 @@ namespace Net
             networkEntity.OnReceivedMessage += OnReceivedReflectionMessage;
 
             executeAssembly = Assembly.GetExecutingAssembly();
+
+            gameAssembly = Assembly.GetCallingAssembly();
+            string debug = "";
+            foreach (Type type in gameAssembly.GetTypes())
+            {
+                NetExtensionClass netExtensionClass = type.GetCustomAttribute<NetExtensionClass>();
+                if (netExtensionClass != null)
+                {
+                    foreach (MethodInfo methodInfo in type.GetMethods())
+                    {
+                        NetExtensionMethod netExtensionMethod = methodInfo.GetCustomAttribute<NetExtensionMethod>();
+                        if (netExtensionMethod != null)
+                        {
+                            extensionMethods.TryAdd(netExtensionMethod.extensionMethod, methodInfo);
+                        }
+                    }
+                }
+            }
 
             bindingFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
         }
@@ -62,16 +85,31 @@ namespace Net
             {
                 foreach (FieldInfo info in type.GetFields(bindingFlags))
                 {
-                    //debug += "___info field: " + info.FieldType + "\n";
-                    //debug += "___info route: " + idRoute[0].route + "\n";
-                    //consoleDebugger.Invoke(debug);
+                    debug += "___info field: " + info.FieldType + "\n";
+                    debug += "___info route: " + idRoute[0].route + "\n";
+                    consoleDebugger.Invoke(debug);
                     IEnumerable<Attribute> attributes = info.GetCustomAttributes();
                     foreach (Attribute attribute in attributes)
                     {
                         if (attribute is NetVariable)
                         {
-                            //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
+                            consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
                             ReadValue(info, obj, (NetVariable)attribute, new List<RouteInfo>(idRoute));
+                        }
+                    }
+                    if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo))
+                    {
+                        object unitializedObject = FormatterServices.GetUninitializedObject(type);
+                        object fields = methodInfo.Invoke(null, new object[] { unitializedObject });
+
+                        if (fields != null)
+                        {
+                            List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
+                            foreach (var field in values)
+                            {
+                                consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
+                                ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute));
+                            }
                         }
                     }
                     if (type.BaseType != null)
@@ -97,7 +135,7 @@ namespace Net
             {
                 idRoute.Add(new RouteInfo(attribute.VariableId));
                 debug += "Read Value Message Sent: " + info.FieldType.ToString() + " - value - " + info.GetValue(obj) + " - ID Route - " + idRoute[0].route + "\n";
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
                 SendPackage(NullOrEmpty.Null, attribute, idRoute);
             }
             else if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType == typeof(decimal) || info.FieldType.IsEnum) //TODO: Chequear esto a futuro
@@ -377,48 +415,6 @@ namespace Net
             }
         }
 
-        void DeserializeReflectionMessage(byte[] data)
-        {
-            MessageType messageType = MessageChecker.CheckMessageType(data);  //Por reflection hay qe obtener todos los tipos de mensajes y creo el tipo de mensaje que coincida con getType
-
-            foreach (Type type in executeAssembly.GetTypes())
-            {
-                if (type.BaseType != null && type.BaseType.IsGenericType && type.BaseType.GetGenericTypeDefinition() == typeof(BaseReflectionMessage<>))
-                {
-                    NetMessageClass attribute = type.GetCustomAttribute<NetMessageClass>();
-
-                    if (attribute.MessageType == messageType)
-                    {
-                        Type[] parametersToApply = { typeof(byte[]) };
-
-                        object[] parameters = new[] { data };
-
-                        ConstructorInfo? ctor = attribute.GetType().GetConstructor(parametersToApply); //Attribute.GetType me da la clase que necesito,
-
-                        if (ctor != null)
-                        {
-                            object message = ctor.Invoke(parameters);
-                            //ParentBaseMessage a = message as ParentBaseMessage;
-
-                            //consoleDebugger.Invoke("Se creo el Message " + message.ToString());
-                            CastToCorrectMessage(message, data);
-                        }
-                    }
-                }
-            }
-        }
-
-        void CastToCorrectMessage(object obj, byte[] data)
-        {
-            //if (obj.GetType() == typeof(NetFloatMessage))
-            //{
-            //    consoleDebugger.Invoke("Se casteo " + obj.GetType());
-            //
-            //    NetFloatMessage netFloatMessage = new NetFloatMessage(data);
-            //    VariableMapping(netFloatMessage.GetMessageRoute(), netFloatMessage.GetData());
-            //}
-        }
-
         void VariableMapping(List<RouteInfo> route, object variableValue)
         {
             if (route.Count > 0)
@@ -488,6 +484,27 @@ namespace Net
 
                         obj = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         break;
+                    }
+                }
+                if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo))
+                {
+                    object unitializedObject = FormatterServices.GetUninitializedObject(type);
+                    object fields = methodInfo.Invoke(null, new object[] { unitializedObject });
+
+                    if (fields != null)
+                    {
+                        List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
+                        foreach (var field in values)
+                        {
+                            if (field.Item2.VariableId == idRoute[idToRead].route)
+                            {
+                                debug += "Inspect write: " + obj + "\n";
+                                debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
+                                debug += "Inspect write variable ID: " + field.Item2.VariableId + "\n";
+                                consoleDebugger.Invoke(debug);
+                                obj = WriteValue(field.Item1, obj, field.Item2, idRoute, idToRead, value);
+                            }
+                        }
                     }
                 }
             }
@@ -1077,6 +1094,24 @@ namespace Net
         public int MethodId
         {
             get { return methodId; }
+        }
+    }
+
+    public class NetExtensionClass : Attribute
+    {
+        public NetExtensionClass()
+        {
+
+        }
+    }
+
+    public class NetExtensionMethod : Attribute
+    {
+        public Type extensionMethod;
+
+        public NetExtensionMethod(Type type)
+        {
+            extensionMethod = type;
         }
     }
 }

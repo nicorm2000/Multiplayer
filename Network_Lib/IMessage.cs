@@ -50,7 +50,8 @@ namespace Net
         UpdateLobbyTimer = 4,
         UpdateGameplayTimer = 5,
         UpdateLobbyTimerForNewPlayers = 6,
-        Winner = 7
+        Winner = 7,
+        MatchMakerIp = 8,
     };
 
     public interface IMessage<T>

@@ -38,7 +38,7 @@ namespace Net
             executeAssembly = Assembly.GetExecutingAssembly();
 
             gameAssembly = Assembly.GetCallingAssembly();
-            string debug = "";
+
             foreach (Type type in gameAssembly.GetTypes())
             {
                 NetExtensionClass netExtensionClass = type.GetCustomAttribute<NetExtensionClass>();
@@ -87,13 +87,13 @@ namespace Net
                 {
                     debug += "___info field: " + info.FieldType + "\n";
                     debug += "___info route: " + idRoute[0].route + "\n";
-                    consoleDebugger.Invoke(debug);
+                    //consoleDebugger.Invoke(debug);
                     IEnumerable<Attribute> attributes = info.GetCustomAttributes();
                     foreach (Attribute attribute in attributes)
                     {
                         if (attribute is NetVariable)
                         {
-                            consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
+                            //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
                             ReadValue(info, obj, (NetVariable)attribute, new List<RouteInfo>(idRoute));
                         }
                     }
@@ -107,7 +107,7 @@ namespace Net
                             List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
                             foreach (var field in values)
                             {
-                                consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
+                                consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
                                 ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute));
                             }
                         }
@@ -135,7 +135,7 @@ namespace Net
             {
                 idRoute.Add(new RouteInfo(attribute.VariableId));
                 debug += "Read Value Message Sent: " + info.FieldType.ToString() + " - value - " + info.GetValue(obj) + " - ID Route - " + idRoute[0].route + "\n";
-                consoleDebugger.Invoke(debug);
+                //consoleDebugger.Invoke(debug);
                 SendPackage(NullOrEmpty.Null, attribute, idRoute);
             }
             else if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType == typeof(decimal) || info.FieldType.IsEnum) //TODO: Chequear esto a futuro
@@ -150,7 +150,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
 
                 SendPackage(info.GetValue(obj), attribute, idRoute);//PASO DIRECTO EL INFO.GETVALUE(OBJ) EN VEZ DE EL INFO Y EL OBJ CONTENEDOR PORQUE NO OPUEDO SACAR EL FIELD INFO DE UNA COLECCION, A SU VEZ ES AL PEDO PASARSE EL FIELD INFO PORQUE LO PUEDO SACAR ACA
             }
@@ -576,7 +576,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                //consoleDebugger.Invoke(debug);
+                consoleDebugger.Invoke(debug);
 
                 info.SetValue(obj, value);
             }

@@ -1,6 +1,5 @@
 using Net;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour, INetObj
@@ -66,34 +65,13 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(23)] public Vector4 MyVector4 = Vector4.zero;
     //[NetVariable(24)] public Quaternion MyQuaternion = new(0f, 0f, 0f, 1f);
     //[NetVariable(25)] public Color MyColor = new(1f,0.5f,0f,1f);
-    //[NetVariable(26)] public Color32 MyColor32 = new(0, 0, 0, 255); // Funca bien pero tira error al principio
-    //[NetVariable(27)] public Rect MyRect = new(0, 0, 1, 1); // Problema de escritura, lo lee + error
-    //[NetVariable(28)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Problema de escritura, lo lee + error
-    //[NetVariable(29)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0)); // Funca, pero me mata los FPS
-    //[NetVariable(30)] public Plane MyPlane = new(new Vector3(1,2,3), 0); // Problema de escritura, lo lee + error
-    //[NetVariable(31)] public Vector2Int MyVector2Int = new (0,0); // Problema de escritura, lo lee + error porque es struct
-    //[NetVariable(32)] public Vector3Int MyVector3Int = new (0,0,0); // Problema de escritura, lo lee + error porque es struct
-    // Mas jodidos de lo que parecen
-    //[NetVariable(33)]
-    //public Gradient MyGradient = new Gradient
-    //{
-    //    colorKeys = new GradientColorKey[]
-    //    {
-    //    new GradientColorKey(Color.white, 0f),
-    //    new GradientColorKey(Color.black, 1f)
-    //    },
-    //    alphaKeys = new GradientAlphaKey[]
-    //    {
-    //    new GradientAlphaKey(1f, 0f),
-    //    new GradientAlphaKey(1f, 1f)
-    //    }
-    //};
-    //[NetVariable(34)]
-    //public AnimationCurve MyAnimationCurve = new AnimationCurve
-    //(
-    //    new Keyframe(0f, 0f),
-    //    new Keyframe(1f, 1f)
-    //);
+    //[NetVariable(26)] public Color32 MyColor32 = new(0, 0, 0, 255);
+    //[NetVariable(27)] public Rect MyRect = new(0, 0, 1, 1);
+    //[NetVariable(28)] public Bounds MyBounds = new(Vector3.zero, Vector3.one);
+    //[NetVariable(29)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
+    //[NetVariable(30)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
+    //[NetVariable(31)] public Vector2Int MyVector2Int = new (0,0);
+    //[NetVariable(32)] public Vector3Int MyVector3Int = new (0,0,0);
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;

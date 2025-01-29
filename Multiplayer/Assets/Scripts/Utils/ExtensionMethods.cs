@@ -6,6 +6,8 @@ using Net;
 [NetExtensionClass]
 public static class ExtensionMethods
 {
+    private static BindingFlags INSTANCE_NONPUBLIC_FLAGS = BindingFlags.Instance | BindingFlags.NonPublic;
+
     [NetExtensionMethod(typeof(Vector2))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Vector2 vector2)
     {
@@ -50,8 +52,8 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> vector2IntValues = new()
         {
-            (vector2Int.GetType().GetField(nameof(vector2Int.x)), new NetVariable(0)),
-            (vector2Int.GetType().GetField(nameof(vector2Int.y)), new NetVariable(1))
+            (vector2Int.GetType().GetField("m_X", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0)),
+            (vector2Int.GetType().GetField("m_Y", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1))
         };
 
         return vector2IntValues;
@@ -62,9 +64,9 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> vector3IntValues = new()
         {
-            (vector3Int.GetType().GetField(nameof(vector3Int.x)), new NetVariable(0)),
-            (vector3Int.GetType().GetField(nameof(vector3Int.y)), new NetVariable(1)),
-            (vector3Int.GetType().GetField(nameof(vector3Int.z)), new NetVariable(2))
+            (vector3Int.GetType().GetField("m_X", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0)),
+            (vector3Int.GetType().GetField("m_Y", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1)),
+            (vector3Int.GetType().GetField("m_Z", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(2))
         };
 
         return vector3IntValues;
@@ -117,10 +119,10 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> rectValues = new()
         {
-            (rect.GetType().GetField(nameof(rect.x)), new NetVariable(0)),
-            (rect.GetType().GetField(nameof(rect.y)), new NetVariable(1)),
-            (rect.GetType().GetField(nameof(rect.width)), new NetVariable(2)),
-            (rect.GetType().GetField(nameof(rect.height)), new NetVariable(3))
+            (rect.GetType().GetField("m_XMin", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0)),
+            (rect.GetType().GetField("m_YMin", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1)),
+            (rect.GetType().GetField("m_Width", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(2)),
+            (rect.GetType().GetField("m_Height", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(3))
         };
 
         return rectValues;
@@ -131,8 +133,8 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> boundValues = new()
         {
-            (bounds.GetType().GetField(nameof(bounds.center)), new NetVariable(0)),
-            (bounds.GetType().GetField(nameof(bounds.extents)), new NetVariable(1))
+            (bounds.GetType().GetField("m_Center", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0)),
+            (bounds.GetType().GetField("m_Extents", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1))
         };
 
         return boundValues;
@@ -169,36 +171,10 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> planeValues = new()
         {
-            (plane.GetType().GetField(nameof(plane.normal)), new NetVariable(0)),
-            (plane.GetType().GetField(nameof(plane.distance)), new NetVariable(1))
+            (plane.GetType().GetField("m_Normal", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0)),
+            (plane.GetType().GetField("m_Distance", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1))
         };
 
         return planeValues;
-    }
-
-    [NetExtensionMethod(typeof(Gradient))]
-    public static List<(FieldInfo, NetVariable)> GetFields(this Gradient gradient)
-    {
-        List<(FieldInfo, NetVariable)> gradientValues = new()
-        {
-            (gradient.GetType().GetField(nameof(gradient.colorKeys)), new NetVariable(0)),
-            (gradient.GetType().GetField(nameof(gradient.alphaKeys)), new NetVariable(1)),
-            (gradient.GetType().GetField(nameof(gradient.mode)), new NetVariable(2))
-        };
-
-        return gradientValues;
-    }
-
-    [NetExtensionMethod(typeof(AnimationCurve))]
-    public static List<(FieldInfo, NetVariable)> GetFields(this AnimationCurve animationCurve)
-    {
-        List<(FieldInfo, NetVariable)> animationCurveValues = new()
-        {
-            (animationCurve.GetType().GetField(nameof(animationCurve.keys)), new NetVariable(0)),
-            (animationCurve.GetType().GetField(nameof(animationCurve.preWrapMode)), new NetVariable(1)),
-            (animationCurve.GetType().GetField(nameof(animationCurve.postWrapMode)), new NetVariable(2))
-        };
-
-        return animationCurveValues;
     }
 }

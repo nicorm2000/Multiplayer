@@ -99,7 +99,7 @@ namespace Net
                     }
                     if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo))
                     {
-                        object unitializedObject = type.IsValueType ? Activator.CreateInstance(type) : FormatterServices.GetUninitializedObject(type);
+                        object unitializedObject = FormatterServices.GetUninitializedObject(type);
                         object fields = methodInfo.Invoke(null, new object[] { unitializedObject });
 
                         if (fields != null)

@@ -107,7 +107,7 @@ namespace Net
                             List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
                             foreach (var field in values)
                             {
-                                consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
+                                //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
                                 ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute));
                             }
                         }
@@ -150,7 +150,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                consoleDebugger.Invoke(debug);
+                //consoleDebugger.Invoke(debug);
 
                 SendPackage(info.GetValue(obj), attribute, idRoute);//PASO DIRECTO EL INFO.GETVALUE(OBJ) EN VEZ DE EL INFO Y EL OBJ CONTENEDOR PORQUE NO OPUEDO SACAR EL FIELD INFO DE UNA COLECCION, A SU VEZ ES AL PEDO PASARSE EL FIELD INFO PORQUE LO PUEDO SACAR ACA
             }
@@ -501,7 +501,7 @@ namespace Net
                                 debug += "Inspect write: " + obj + "\n";
                                 debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
                                 debug += "Inspect write variable ID: " + field.Item2.VariableId + "\n";
-                                consoleDebugger.Invoke(debug);
+                                //consoleDebugger.Invoke(debug);
                                 obj = WriteValue(field.Item1, obj, field.Item2, idRoute, idToRead, value);
                             }
                         }
@@ -576,7 +576,7 @@ namespace Net
                     debug += item + " - ";
                 }
 
-                consoleDebugger.Invoke(debug);
+                //consoleDebugger.Invoke(debug);
 
                 info.SetValue(obj, value);
             }
@@ -979,7 +979,7 @@ namespace Net
         {
             string debug = "";
             debug += "Started SendMethodMessage";
-            consoleDebugger.Invoke(debug);
+            //consoleDebugger.Invoke(debug);
             object objectToReturn = null;
 
             if (iNetObj.GetOwnerID() != networkEntity.clientID)
@@ -989,7 +989,7 @@ namespace Net
 
             NetMethod netmethod = method.GetCustomAttribute<NetMethod>();
             debug += "NetMethod is " + netmethod;
-            consoleDebugger.Invoke(debug);
+            //consoleDebugger.Invoke(debug);
             if (netmethod != null)
             {
                 object invokeMethod = method.Invoke(iNetObj, parameters);
@@ -1023,7 +1023,7 @@ namespace Net
                 {
                     debug += "Parameter List: " + item;
                 }
-                consoleDebugger.Invoke(debug);
+                //consoleDebugger.Invoke(debug);
 
                 NetMethodMessage messageToSend = new NetMethodMessage(MessagePriority.Default, messageData, idRoute);
                 networkEntity.SendMessage(messageToSend.Serialize());

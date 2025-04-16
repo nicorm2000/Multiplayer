@@ -32,7 +32,7 @@ namespace Net
             return data;
         }
 
-        public float GetData()
+        public override float GetData()
         {
             return data;
         }

@@ -27,7 +27,7 @@ namespace Network_Lib.BasicMessages
             return data;
         }
 
-        public Empty GetData()
+        public override Empty GetData()
         {
             return data;
         }

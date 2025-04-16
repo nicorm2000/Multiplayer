@@ -288,7 +288,7 @@ public class Server : NetworkEntity
     /// <param name="data">The data to broadcast.</param>
     public void Broadcast(byte[] data)
     {
-        using (var iterator = clients.GetEnumerator())
+        using (Dictionary<int, Client>.Enumerator iterator = clients.GetEnumerator())
         {
             while (iterator.MoveNext())
             {

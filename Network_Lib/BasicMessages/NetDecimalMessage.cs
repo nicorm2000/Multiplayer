@@ -36,7 +36,7 @@ namespace Net
             return data;
         }
 
-        public decimal GetData()
+        public override decimal GetData()
         {
             return data;
         }

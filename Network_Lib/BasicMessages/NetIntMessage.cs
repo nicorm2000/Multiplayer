@@ -31,7 +31,7 @@ namespace Net
             return data;
         }
 
-        public int GetData()
+        public override int GetData()
         {
             return data;
         }

@@ -47,7 +47,7 @@ namespace Network_Lib.BasicMessages
             return data;
         }
 
-        public (int, List<(string, string)>) GetData()
+        public override (int, List<(string, string)>) GetData()
         {
             return data;
         }

@@ -154,5 +154,7 @@ namespace Net
        // public abstract byte[] Serialize();
 
         public abstract T Deserialize(byte[] message);
+
+        public abstract T GetData();
     }
 }

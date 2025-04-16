@@ -28,7 +28,7 @@ namespace Net
             return data;
         }
 
-        public byte GetData()
+        public override byte GetData()
         {
             return data;
         }

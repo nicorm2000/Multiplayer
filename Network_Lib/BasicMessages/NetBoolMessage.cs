@@ -29,7 +29,7 @@ namespace Net
             return data;
         }
 
-        public bool GetData()
+        public override bool GetData()
         {
             return data;
         }

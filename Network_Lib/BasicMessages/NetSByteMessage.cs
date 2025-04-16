@@ -28,7 +28,7 @@ namespace Net
             return data;
         }
 
-        public sbyte GetData()
+        public override sbyte GetData()
         {
             return data;
         }

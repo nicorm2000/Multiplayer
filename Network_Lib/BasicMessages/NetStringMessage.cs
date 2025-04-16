@@ -33,7 +33,7 @@ namespace Net
             return text;
         }
 
-        public string GetData()
+        public override string GetData()
         {
             return data;
         }

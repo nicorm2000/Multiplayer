@@ -31,7 +31,7 @@ namespace Net
             return data;
         }
 
-        public ulong GetData()
+        public override ulong GetData()
         {
             return data;
         }

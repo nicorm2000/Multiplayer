@@ -31,7 +31,7 @@ namespace Net
             return data;
         }
 
-        public short GetData()
+        public override short GetData()
         {
             return data;
         }

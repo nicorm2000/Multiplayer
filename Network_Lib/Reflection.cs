@@ -1,8 +1,10 @@
-﻿using Network_Lib.BasicMessages;
+﻿﻿using Network_Lib.BasicMessages;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -71,7 +73,7 @@ namespace Net
                 {
                     List<RouteInfo> idRoute = new List<RouteInfo>
                     {
-                        new RouteInfo(netObj.GetID())
+                        RouteInfo.CreateForProperty(netObj.GetID())
                     };
                     Inspect(netObj.GetType(), netObj, idRoute);
                 }
@@ -91,10 +93,10 @@ namespace Net
                     IEnumerable<Attribute> attributes = info.GetCustomAttributes();
                     foreach (Attribute attribute in attributes)
                     {
-                        if (attribute is NetVariable)
+                        if (attribute is NetVariable netVariable)
                         {
                             //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
-                            ReadValue(info, obj, (NetVariable)attribute, new List<RouteInfo>(idRoute));
+                            ReadValue(info, obj, netVariable, new List<RouteInfo>(idRoute));
                         }
                     }
                     if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo))
@@ -129,134 +131,130 @@ namespace Net
 
         public void ReadValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute)
         {
-            string debug = "";
+            object fieldValue = info.GetValue(obj);
+            Type fieldType = info.FieldType;
 
-            if (info.GetValue(obj) == null)
+            if (fieldValue == null)
             {
-                idRoute.Add(new RouteInfo(attribute.VariableId));
-                debug += "Read Value Message Sent: " + info.FieldType.ToString() + " - value - " + info.GetValue(obj) + " - ID Route - " + idRoute[0].route + "\n";
-                //consoleDebugger.Invoke(debug);
+                idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
                 SendPackage(NullOrEmpty.Null, attribute, idRoute);
+                return;
             }
-            else if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType == typeof(decimal) || info.FieldType.IsEnum) //TODO: Chequear esto a futuro
+            
+            if ((fieldType.IsValueType && fieldType.IsPrimitive) || fieldType == typeof(string) || fieldType.IsEnum)
             {
-                idRoute.Add(new RouteInfo(attribute.VariableId));
-                debug += "Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
-                debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + "\n";
+                idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
+                SendPackage(fieldValue, attribute, idRoute);
+                return;
+            }
 
-                debug += "La ruta de la variable es: ";
-                foreach (RouteInfo item in idRoute)
+            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
+            {
+                IEnumerable collection = (IEnumerable)fieldValue;
+                int count = GetCollectionCount(collection);
+
+                if (count == 0)
                 {
-                    debug += item + " - ";
+                    idRoute.Add(RouteInfo.CreateForCollection(attribute.VariableId, index: 0, size: 0, GetElementType(fieldType)));
+
+                    SendPackage(fieldValue == null ? NullOrEmpty.Null : NullOrEmpty.Empty, attribute, idRoute);
+                    return;
                 }
 
-                //consoleDebugger.Invoke(debug);
+                if (IsDictionary(fieldType))
+                {
+                    var dict = (IDictionary)fieldValue;
+                    Type valueType = GetDictionaryValueType(fieldType);
 
-                SendPackage(info.GetValue(obj), attribute, idRoute);//PASO DIRECTO EL INFO.GETVALUE(OBJ) EN VEZ DE EL INFO Y EL OBJ CONTENEDOR PORQUE NO OPUEDO SACAR EL FIELD INFO DE UNA COLECCION, A SU VEZ ES AL PEDO PASARSE EL FIELD INFO PORQUE LO PUEDO SACAR ACA
-            }
-            else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))
-            {
+                    foreach (DictionaryEntry entry in dict)
+                    {
+                        List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
+                        {
+                            RouteInfo.CreateForDictionary(attribute.VariableId, GetStableKeyHash(entry.Key), valueType)
+                        };
+
+                        ProcessValue(entry.Value, currentRoute, attribute);
+                    }
+                    return;
+                }
+
+                if (fieldType.IsArray && fieldType.GetArrayRank() > 1)
+                {
+                    Array array = (Array)fieldValue;
+                    Type elementType = fieldType.GetElementType();
+                    int[] dimensions = new int[array.Rank];
+                    for (int i = 0; i < dimensions.Length; i++)
+                    {
+                        dimensions[i] = array.GetLength(i);
+                    }
+
+                    foreach (object? item in array)
+                    {
+                        int[] indices = GetArrayIndices(array, item);
+                        List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
+                        {
+                            RouteInfo.CreateForMultiDimensionalArray(attribute.VariableId, indices, dimensions, elementType)
+                        };
+
+                        ProcessValue(item, currentRoute, attribute);
+                    }
+                    return;
+                }
+
+                if (IsJaggedArray(fieldType))
+                {
+                    Array jaggedArray = (Array)fieldValue;
+                    Type elementType = GetJaggedArrayElementType(fieldType);
+
+                    for (int i = 0; i < jaggedArray.Length; i++)
+                    {
+                        object innerArray = jaggedArray.GetValue(i);
+                        if (innerArray == null) continue;
+
+                        foreach (object? item in (IEnumerable)innerArray)
+                        {
+                            List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
+                            {
+                                RouteInfo.CreateForJaggedArray(attribute.VariableId, new[] { i, GetJaggedArrayIndex(innerArray, item) }, elementType)
+                            };
+
+                            ProcessValue(item, currentRoute, attribute);
+                        }
+                    }
+                    return;
+                }
+
                 int index = 0;
-
-                int collectionSize = (info.GetValue(obj) as ICollection).Count;
-
-                bool isEmpty = true;
-
-                foreach (object elementOfCollection in (ICollection)info.GetValue(obj))
+                foreach (var item in collection)
                 {
-                    isEmpty = false;
-                    idRoute.Add(new RouteInfo(attribute.VariableId, index++, collectionSize));
-                    Type elementType = elementOfCollection.GetType();
-                    debug += "Collection info field type " + info.FieldType.ToString() + "\n";
-                    debug += "Collection element value " + elementType.IsValueType + "\n";
-                    debug += "Collection info field type primtive " + elementType.IsPrimitive + "\n";
-                    debug += "Collection info field type enum " + elementType.IsEnum + "\n";
-                    debug += "Collection Size " + collectionSize + "\n";
-                    //consoleDebugger.Invoke(debug);
-                    if ((elementType.IsValueType && elementType.IsPrimitive) || elementType == typeof(string) || info.FieldType == typeof(decimal) || elementType.IsEnum)
+                    List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
                     {
-                        debug += "Collections Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
-                        debug += "Se modifica la variable " + elementType + " que tiene un valor de " + elementOfCollection + "\n";
-                        debug += "La ruta de la variable es: ";
-                        foreach (RouteInfo item in idRoute)
-                        {
-                            debug += item + " - ";
-                        }
-                        debug += "\n";
-                        //consoleDebugger.Invoke(debug);
+                        RouteInfo.CreateForCollection(attribute.VariableId, index++, count, item?.GetType() ?? GetElementType(fieldType))
+                    };
 
-                        SendPackage(elementOfCollection, attribute, idRoute); // PASO DIRECTO EL ELEMENTOFCOLLECTION PORQUE YA ES EL VALOR DE LA COLECCION
-                        idRoute.RemoveAt(idRoute.Count - 1);
-                    }
-                    else
-                    {
-                        debug += "Is a class\n";
-                        debug += "Collections Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
-                        debug += "Se modifica la variable " + elementType + " que tiene un valor de " + elementOfCollection + "\n";
-                        debug += "Se modifica la variable fieldtype " + info.FieldType + "\n";
-                        debug += "Se modifica la variable getvalue" + info.GetValue(obj) + "\n";
-                        debug += "La ruta de la variable es: ";
-                        foreach (RouteInfo item in idRoute)
-                        {
-                            debug += item + " - ";
-                        }
-                        debug += "\n";
-                        //consoleDebugger.Invoke(debug);
-                        Inspect(elementOfCollection.GetType(), elementOfCollection, idRoute);
-                        idRoute.RemoveAt(idRoute.Count - 1);
-                    }
+                    ProcessValue(item, currentRoute, attribute);
                 }
-
-                if (collectionSize == 0)
-                {
-                    if (info.GetValue(obj) == null)
-                    {
-                        idRoute.Add(new RouteInfo(attribute.VariableId, index++, 0));
-                        SendPackage(NullOrEmpty.Null, attribute, idRoute);
-                        idRoute.RemoveAt(idRoute.Count - 1);
-                    }
-                    else
-                    {
-                        idRoute.Add(new RouteInfo(attribute.VariableId, index++, 0));
-                        SendPackage(NullOrEmpty.Empty, attribute, idRoute);
-                        idRoute.RemoveAt(idRoute.Count - 1);
-                    }
-                }
+                return;
             }
             else
             {
-                debug += "Class Read values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
-                debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + "\n";
-                debug += "La ruta de la variable es: ";
-                foreach (RouteInfo item in idRoute)
-                {
-                    debug += item + " - ";
-                }
-                debug += "\n";
-                //consoleDebugger.Invoke(debug);
                 idRoute.Add(new RouteInfo(attribute.VariableId));
-                Inspect(info.FieldType, info.GetValue(obj), idRoute);
+                Inspect(fieldType, fieldValue, idRoute);
             }
         }
 
         public void SendPackage(object value, NetVariable attribute, List<RouteInfo> idRoute)
         {
-            string debug = "";
             if (value is NullOrEmpty.Null)
             {
                 NetNullMessage netNullMessage = new NetNullMessage(attribute.MessagePriority, null, idRoute);
-                debug += "Message Sent\n";
-                debug += "Message Header Size: " + netNullMessage.messageHeaderSize + "\n";
-                //consoleDebugger.Invoke(debug);
                 networkEntity.SendMessage(netNullMessage.Serialize());
                 return;
             }
+
             if (value is NullOrEmpty.Empty)
             {
                 NetEmptyMessage netEmptyMessage = new NetEmptyMessage(attribute.MessagePriority, new Empty(), idRoute);
-                debug += "Message Sent\n";
-                debug += "Message Header Size: " + netEmptyMessage.messageHeaderSize + "\n";
-                //consoleDebugger.Invoke(debug);
                 networkEntity.SendMessage(netEmptyMessage.Serialize());
                 return;
             }
@@ -272,30 +270,27 @@ namespace Net
                     {
                         if (packageType == arg)
                         {
-                            Type[] parametersToApply = { typeof(MessagePriority), packageType, typeof(List<RouteInfo>) };
-
-                            object[] parameters = new[] { attribute.MessagePriority, value, idRoute };
-
-                            ConstructorInfo? ctor = type.GetConstructor(parametersToApply);
-                            if (ctor != null)
+                            try
                             {
-                                object message = ctor.Invoke(parameters);
-                                ParentBaseMessage a = message as ParentBaseMessage;
-                                networkEntity.SendMessage(a.Serialize());
+                                object[] parameters = new[] { attribute.MessagePriority, value, idRoute };
+                                ConstructorInfo ctor = type.GetConstructor(new[] {typeof(MessagePriority), packageType, typeof(List<RouteInfo>)
+                            });
 
-                                debug += "SEND PACKAGE Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
-                                debug += "Se modifica la variable " + value.GetType() + " que tiene un valor de " + value + "\n";
-                                debug += "El tipo de mensajes " + MessageChecker.CheckMessageType(a.Serialize()) + "\n";
-                                debug += "Al constructor se le paso: " + attribute.MessagePriority + " - " + value + "\n";
-                                debug += "La ruta de la variable es: ";
-                                foreach (RouteInfo item in idRoute)
+                                if (ctor != null)
                                 {
-                                    debug += item + " - ";
+                                    var message = (ParentBaseMessage)ctor.Invoke(parameters);
+                                    networkEntity.SendMessage(message.Serialize());
                                 }
-                                debug += "\n";
+                                else
+                                {
 
-                                //consoleDebugger.Invoke(debug);
+                                }
                             }
+                            catch (Exception ex)
+                            {
+
+                            }
+                            return;
                         }
                     }
                 }
@@ -397,7 +392,6 @@ namespace Net
 
                     NetNullMessage netNullMessage = new NetNullMessage(data);
                     VariableMappingNullException(netNullMessage.GetMessageRoute(), netNullMessage.GetData());
-
                     break;
                 case MessageType.Empty:
 
@@ -417,93 +411,66 @@ namespace Net
 
         void VariableMapping(List<RouteInfo> route, object variableValue)
         {
-            if (route.Count > 0)
+            if (route == null || route.Count == 0) return;
+
+            INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
+
+            if (objectRoot.GetOwnerID() != networkEntity.clientID)
             {
-                INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
-
-                string debug = "Variable Mapping obejct root: " + objectRoot + "\n";
-
-                if (objectRoot.GetOwnerID() != networkEntity.clientID)
-                {
-                    debug += "Variable Mapping obejct root owner ID distinto del clientID\n";
-                    debug += "Variable Mapping variable value:" + variableValue + "\n";
-                    //consoleDebugger.Invoke(debug);
-                    objectRoot = (INetObj)InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
-                }
+                _ = (INetObj)InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             }
         }
 
         void VariableMappingNullException(List<RouteInfo> route, object variableValue)
         {
-            if (route.Count > 0)
+            if (route == null || route.Count == 0) return;
+
+            INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
+            if (objectRoot.GetOwnerID() != networkEntity.clientID)
             {
-                INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
-                string debug = "Variable Mapping obejct root: " + objectRoot + "\n";
-                if (objectRoot.GetOwnerID() != networkEntity.clientID)
-                {
-                    debug += "Variable Mapping obejct root owner ID distinto del clientID\n";
-                    debug += "Variable Mapping variable value:" + variableValue + "\n";
-                    //consoleDebugger.Invoke(debug);
-                    objectRoot = (INetObj)InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
-                }
+                _ = (INetObj)InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             }
         }
 
         void VariableMappingEmpty(List<RouteInfo> route, object variableValue)
         {
-            if (route.Count > 0)
+            if (route == null || route.Count == 0) return;
+
+            INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
+            if (objectRoot.GetOwnerID() != networkEntity.clientID)
             {
-                INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
-                string debug = "Variable Mapping obejct root: " + objectRoot + "\n";
-                if (objectRoot.GetOwnerID() != networkEntity.clientID)
-                {
-                    debug += "Variable Mapping obejct root owner ID distinto del clientID\n";
-                    debug += "Variable Mapping variable value:" + variableValue + "\n";
-                    //consoleDebugger.Invoke(debug);
-                    objectRoot = (INetObj)InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
-                }
+                _ = (INetObj)InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             }
         }
 
         public object InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            string debug = "";
-            debug += "Inspect write value: " + value + "\n";
-            //consoleDebugger.Invoke(debug);
-            if (obj != null)
+            if (obj == null || idRoute.Count <= idToRead)
+                return obj;
+
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            foreach (FieldInfo info in type.GetFields(bindingFlags)) // Regular fields
             {
-                foreach (FieldInfo info in type.GetFields(bindingFlags))
+                NetVariable attributes = info.GetCustomAttribute<NetVariable>();
+                if (attributes != null && attributes.VariableId == currentRoute.route)
                 {
-                    NetVariable attributes = info.GetCustomAttribute<NetVariable>();
-                    if (attributes != null && attributes.VariableId == idRoute[idToRead].route)
-                    {
-                        debug += "Inspect write: " + obj + "\n";
-                        debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
-                        debug += "Inspect write variable ID: " + attributes.VariableId + "\n";
-                        //consoleDebugger.Invoke(debug);
-
-                        obj = WriteValue(info, obj, attributes, idRoute, idToRead, value);
-                        break;
-                    }
+                    return WriteValue(info, obj, attributes, idRoute, idToRead, value);
                 }
-                if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo))
-                {
-                    object unitializedObject = FormatterServices.GetUninitializedObject(type);
-                    object fields = methodInfo.Invoke(null, new object[] { unitializedObject });
+            }
 
-                    if (fields != null)
+            if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo)) // Extension fields
+            {
+                object unitializedObject = FormatterServices.GetUninitializedObject(type);
+                object fields = methodInfo.Invoke(null, new object[] { unitializedObject });
+
+                if (fields is List<(FieldInfo, NetVariable)> values)
+                {
+                    foreach (var field in values)
                     {
-                        List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
-                        foreach (var field in values)
+                        if (field.Item2.VariableId == currentRoute.route)
                         {
-                            if (field.Item2.VariableId == idRoute[idToRead].route)
-                            {
-                                debug += "Inspect write: " + obj + "\n";
-                                debug += "Inspect write route: " + idRoute[idToRead].route + "\n";
-                                debug += "Inspect write variable ID: " + field.Item2.VariableId + "\n";
-                                //consoleDebugger.Invoke(debug);
-                                obj = WriteValue(field.Item1, obj, field.Item2, idRoute, idToRead, value);
-                            }
+                            return WriteValue(field.Item1, obj, field.Item2, idRoute, idToRead, value);
                         }
                     }
                 }
@@ -514,23 +481,17 @@ namespace Net
 
         public object InspectWriteNullException(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            string debug = "";
-            debug += "Inspect NULL write value: " + value + "\n";
-            debug += "Inspect obj write value: " + obj + "\n";
-            debug += "ID route: " + idRoute[idToRead].route + "\n";
-            debug += "ID to read: " + idToRead + "\n";
-            debug += "Value: " + value + "\n";
-            //consoleDebugger.Invoke(debug);
-            if (obj != null)
+            if (obj == null || idRoute.Count <= idToRead)
+                return obj;
+
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            foreach (FieldInfo info in type.GetFields(bindingFlags)) // Regular fields
             {
-                foreach (FieldInfo info in type.GetFields(bindingFlags))
+                NetVariable attributes = info.GetCustomAttribute<NetVariable>();
+                if (attributes != null && attributes.VariableId == currentRoute.route)
                 {
-                    NetVariable attributes = info.GetCustomAttribute<NetVariable>();
-                    if (attributes != null && attributes.VariableId == idRoute[idToRead].route)
-                    {
-                        obj = WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
-                        break;
-                    }
+                    return WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
                 }
             }
 
@@ -539,23 +500,17 @@ namespace Net
 
         public object InspectWriteEmpty(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            string debug = "";
-            debug += "Inspect NULL write value: " + value + "\n";
-            debug += "Inspect obj write value: " + obj + "\n";
-            debug += "ID route: " + idRoute[idToRead].route + "\n";
-            debug += "ID to read: " + idToRead + "\n";
-            debug += "Value: " + value + "\n";
-            //consoleDebugger.Invoke(debug);
-            if (obj != null)
+            if (obj == null || idRoute.Count <= idToRead)
+                return obj;
+
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            foreach (FieldInfo info in type.GetFields(bindingFlags)) // Regular fields
             {
-                foreach (FieldInfo info in type.GetFields(bindingFlags))
+                NetVariable attributes = info.GetCustomAttribute<NetVariable>();
+                if (attributes != null && attributes.VariableId == currentRoute.route)
                 {
-                    NetVariable attributes = info.GetCustomAttribute<NetVariable>();
-                    if (attributes != null && attributes.VariableId == idRoute[idToRead].route)
-                    {
-                        obj = WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
-                        break;
-                    }
+                    return WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
                 }
             }
 
@@ -564,303 +519,471 @@ namespace Net
 
         object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType == typeof(decimal) || info.FieldType.IsEnum)
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
+
+            if ((fieldType.IsValueType && fieldType.IsPrimitive) || fieldType == typeof(string) || fieldType.IsEnum) // Simple cases
             {
-                string debug = "";
-                debug += "Write values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
-                debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + ". El nuevo valor a asignar es: " + value + "\n";
-
-                debug += "La ruta de la variable es: ";
-                foreach (RouteInfo item in idRoute)
-                {
-                    debug += item + " - ";
-                }
-
-                //consoleDebugger.Invoke(debug);
-
                 info.SetValue(obj, value);
+                return obj;
             }
-            else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))
+
+            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
             {
-                if (info.FieldType.IsArray)
+                return HandleCollectionWrite(info, obj, attribute, idRoute, idToRead, value);
+            }
+
+            return HandleComplexObjectWrite(info, obj, idRoute, idToRead, value);
+        }
+
+        private object HandleCollectionWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
+
+            if (currentRoute.IsDictionary) // Dictionaries
+            {
+                return HandleDictionaryWrite(info, obj, attribute, idRoute, idToRead, value);
+            }
+
+            if (currentRoute.IsMultiDimensionalArray)  // Multidimensional Array
+            {
+                return HandleMultiDimensionalArrayWrite(info, obj, attribute, idRoute, idToRead, value);
+            }
+
+            if (currentRoute.IsJaggedArray)  // Jagged Array
+            {
+                return HandleJaggedArrayWrite(info, obj, attribute, idRoute, idToRead, value);
+            }
+
+            return HandleRegularCollectionWrite(info, obj, attribute, idRoute, idToRead, value);  // Regular collections
+        }
+
+        private object HandleDictionaryWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            IDictionary dict = info.GetValue(obj) as IDictionary; // Get current dictionary or create a new one
+            if (dict == null)
+            {
+                Type dictType = typeof(Dictionary<,>).MakeGenericType(typeof(object), currentRoute.ElementType ?? typeof(object));
+                dict = (IDictionary)Activator.CreateInstance(dictType);
+            }
+
+            object key = FindKeyByHash(dict, currentRoute.collectionKey); // Get the key by a hash
+
+            if (idRoute.Count <= idToRead + 1) // If we are in the final level, assign a value
+            {
+                if (key != null)
                 {
-                    object objectReference = info.GetValue(obj);
-                    if (idRoute[idToRead].collectionSize == 0)
-                    {
-                        objectReference = Array.CreateInstance(info.FieldType.GetElementType(), 0);
-                        info.SetValue(obj, objectReference);
-
-                        return obj;
-                    }
-
-                    object[] arrayCopyCollection = new object[idRoute[idToRead].collectionSize];
-                    int collectionSize = (objectReference as ICollection).Count;
-
-                    if (idRoute[idToRead].collectionSize == collectionSize)
-                    {
-                        ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < idRoute[idToRead].collectionSize; i++)
-                        {
-                            if (collectionSize > i)
-                            {
-                                arrayCopyCollection[i] = (objectReference as ICollection).Cast<object>().ElementAt(i);
-                            }
-                            else
-                            {
-                                arrayCopyCollection[i] = Activator.CreateInstance(info.FieldType.GetElementType());
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < arrayCopyCollection.Length; i++)
-                    {
-                        if (idRoute[idToRead].collectionIndex != i)
-                        {
-                            continue;
-                        }
-
-                        if ((arrayCopyCollection[i].GetType().IsValueType && arrayCopyCollection[i].GetType().IsPrimitive) || arrayCopyCollection[i].GetType() == typeof(string) || info.FieldType == typeof(decimal) || arrayCopyCollection[i].GetType().IsEnum)
-                        {
-                            arrayCopyCollection[i] = value;
-                        }
-                        else
-                        {
-                            object item = InspectWrite(arrayCopyCollection[i].GetType(), arrayCopyCollection[i], idRoute, idToRead + 1, value);
-
-                            arrayCopyCollection[i] = item;
-                        }
-                    }
-
-                    object arrayAsGeneric = typeof(Reflection).GetMethod(nameof(TranslateArray), bindingFlags).MakeGenericMethod(info.FieldType.GetElementType()).Invoke(this, new[] { arrayCopyCollection });
-                    object goNext = Array.CreateInstance(info.FieldType.GetElementType(), ((Array)arrayAsGeneric).Length);
-                    Array.Copy((Array)arrayAsGeneric, (Array)goNext, (arrayAsGeneric as ICollection).Count);
-                    info.SetValue(obj, goNext);
+                    dict[key] = value;
                 }
-                else
+            }
+            else // If not keep going
+            {
+                object dictValue = key != null ? dict[key] : null;
+                if (dictValue == null)
                 {
-                    object objectReference = info.GetValue(obj);
-                    object[] arrayCopyCollection = new object[idRoute[idToRead].collectionSize];
-                    int collectionSize = (objectReference as ICollection).Count;
-
-                    string debug = "";
-                    debug += "Write value collection size: " + collectionSize + ") \n";
-                    debug += "Write value variable collection size: " + idRoute[idToRead].collectionSize + ") \n";
-                    //consoleDebugger.Invoke(debug);
-
-                    if (idRoute[idToRead].collectionSize == collectionSize)
-                    {
-                        ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < arrayCopyCollection.Length; i++)
-                        {
-                            if (i < collectionSize)
-                            {
-                                IEnumerator enumerator = (objectReference as ICollection).GetEnumerator();
-
-                                int count = 0;
-
-                                while (enumerator.MoveNext())
-                                {
-                                    if (count == i)
-                                    {
-                                        arrayCopyCollection[i] = enumerator.Current;
-                                        break;
-                                    }
-
-                                    count++;
-                                }
-                            }
-                            else
-                            {
-                                arrayCopyCollection[i] = Activator.CreateInstance(GetElementType(info.FieldType));
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < arrayCopyCollection.Length; i++)
-                    {
-                        if (idRoute[idToRead].collectionIndex != i)
-                        {
-                            continue;
-                        }
-
-                        if ((arrayCopyCollection[i].GetType().IsValueType && arrayCopyCollection[i].GetType().IsPrimitive) || arrayCopyCollection[i].GetType() == typeof(string) || info.FieldType == typeof(decimal) || arrayCopyCollection[i].GetType().IsEnum)
-                        {
-                            arrayCopyCollection[i] = value;
-                        }
-                        else
-                        {
-                            object item = InspectWrite(arrayCopyCollection[i].GetType(), arrayCopyCollection[i], idRoute, idToRead + 1, value);
-
-                            arrayCopyCollection[i] = item;
-                        }
-                    }
-
-                    object genericObjects = typeof(Reflection).GetMethod(nameof(TranslateICollection), bindingFlags).MakeGenericMethod(info.FieldType.GenericTypeArguments[0]).Invoke(this, new[] { arrayCopyCollection });
-                    object reference = Activator.CreateInstance(info.FieldType, genericObjects as ICollection);
-                    info.SetValue(obj, reference);
+                    dictValue = CreateDefaultInstance(currentRoute.ElementType);
+                    if (key != null) dict[key] = dictValue;
                 }
+
+                InspectWrite(dictValue.GetType(), dictValue, idRoute, idToRead + 1, value);
+            }
+
+            info.SetValue(obj, dict);
+            return obj;
+        }
+
+        private object HandleMultiDimensionalArrayWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            Array array = info.GetValue(obj) as Array; // Get current array or create a new one
+            if (array == null)
+            {
+                array = Array.CreateInstance(currentRoute.ElementType ?? typeof(object), currentRoute.Dimensions.Length > 0 ? currentRoute.Dimensions : new[] { 0 });
+            }
+
+            int[] indices = currentRoute.GetMultiDimensionalIndices(); // Get multidimensional index
+
+            if (idRoute.Count <= idToRead + 1) // If we are in the final level, assign a value
+            {
+                if (IsWithinBounds(array, indices))
+                {
+                    array.SetValue(value, indices);
+                }
+            }
+            else // If not keep going
+            {
+                object element = array.GetValue(indices);
+                if (element == null)
+                {
+                    element = CreateDefaultInstance(currentRoute.ElementType);
+                    array.SetValue(element, indices);
+                }
+
+                InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
+            }
+
+            info.SetValue(obj, array);
+            return obj;
+        }
+
+        private object HandleJaggedArrayWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            Array jaggedArray = info.GetValue(obj) as Array; // Get current jagged array or create a new one
+            if (jaggedArray == null)
+            {
+                jaggedArray = Array.CreateInstance(currentRoute.ElementType?.MakeArrayType() ?? typeof(object).MakeArrayType(), currentRoute.Dimensions.Length > 0 ? currentRoute.Dimensions[0] : 0);
+            }
+
+            int[] pathIndices = currentRoute.Dimensions; // Get jagged index
+
+            object currentArray = jaggedArray; 
+            for (int i = 0; i < pathIndices.Length - 1; i++) // Navigate till the intern array
+            {
+                Array innerArray = ((Array)currentArray).GetValue(pathIndices[i]) as Array;
+                if (innerArray == null)
+                {
+                    innerArray = Array.CreateInstance(currentRoute.ElementType ?? typeof(object), pathIndices[i + 1]); ((Array)currentArray).SetValue(innerArray, pathIndices[i]);
+                }
+                currentArray = innerArray;
+            }
+
+            int lastIndex = pathIndices[pathIndices.Length - 1]; // Assign last value
+            if (idRoute.Count <= idToRead + 1)
+            {
+                ((Array)currentArray).SetValue(value, lastIndex);
             }
             else
             {
-                string debug = "";
-                debug += "Write values from Root Player (Owner: " + NetObjFactory.GetINetObject(idRoute[0].route).GetOwnerID().ToString() + ") \n";
-                debug += "Se modifica la variable " + info + " que tiene un valor de " + info.GetValue(obj) + ". El nuevo valor a asignar es: " + value + "\n";
-
-                debug += "La ruta de la variable es: ";
-                foreach (RouteInfo item in idRoute)
+                object element = ((Array)currentArray).GetValue(lastIndex);
+                if (element == null)
                 {
-                    debug += item + " - ";
+                    element = CreateDefaultInstance(currentRoute.ElementType);
+                    ((Array)currentArray).SetValue(element, lastIndex);
                 }
 
-                //consoleDebugger.Invoke(debug);
+                InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
+            }
 
-                object objReference = null;
-                objReference = info.GetValue(obj);
+            info.SetValue(obj, jaggedArray);
+            return obj;
+        }
 
-                if (objReference == null)
+        private object HandleRegularCollectionWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
+
+            IList collection = info.GetValue(obj) as IList; // Get current collection or create a new one
+            if (collection == null)
+            {
+                if (fieldType.IsArray)
                 {
-                    objReference = ConstructObject(info.FieldType);
+                    collection = Array.CreateInstance(currentRoute.ElementType ?? typeof(object),currentRoute.collectionSize);
                 }
                 else
                 {
-                    idToRead++;
-                    objReference = InspectWrite(info.FieldType, objReference, idRoute, idToRead, value);
-                }
+                    Type collectionType = fieldType.IsGenericType ?fieldType.GetGenericTypeDefinition().MakeGenericType(currentRoute.ElementType ?? typeof(object)) : typeof(List<>).MakeGenericType(currentRoute.ElementType ?? typeof(object));
 
+                    collection = (IList)Activator.CreateInstance(collectionType);
+                }
+            }
+
+            if (currentRoute.collectionKey >= 0 && currentRoute.collectionKey >= collection.Count) // Verify & adjust size if necessary
+            {
+                for (int i = collection.Count; i <= currentRoute.collectionKey; i++)
+                {
+                    collection.Add(CreateDefaultInstance(currentRoute.ElementType));
+                }
+            }
+
+            if (currentRoute.collectionKey >= 0) // Assign value
+            {
+                if (idRoute.Count <= idToRead + 1)
+                {
+                    collection[currentRoute.collectionKey] = value;
+                }
+                else
+                {
+                    object element = collection[currentRoute.collectionKey];
+                    if (element == null)
+                    {
+                        element = CreateDefaultInstance(currentRoute.ElementType);
+                        collection[currentRoute.collectionKey] = element;
+                    }
+
+                    InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
+                }
+            }
+
+            info.SetValue(obj, collection);
+            return obj;
+        }
+
+        private object HandleComplexObjectWrite(FieldInfo info, object obj, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            object objReference = info.GetValue(obj);
+
+            if (objReference == null)
+            {
+                objReference = ConstructObject(info.FieldType);
                 info.SetValue(obj, objReference);
             }
 
+            if (idRoute.Count > idToRead + 1)
+            {
+                InspectWrite(info.FieldType, objReference, idRoute, idToRead + 1, value);
+            }
+
             return obj;
+        }
+
+        private object FindKeyByHash(IDictionary dict, int keyHash)
+        {
+            foreach (object key in dict.Keys)
+            {
+                if (GetStableKeyHash(key) == keyHash)
+                {
+                    return key;
+                }
+            }
+            return null;
+        }
+
+        private bool IsWithinBounds(Array array, int[] indices)
+        {
+            if (array.Rank != indices.Length) return false;
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                if (indices[i] < 0 || indices[i] >= array.GetLength(i))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private object CreateDefaultInstance(Type type)
+        {
+            if (type == null) return null;
+            if (type.IsValueType) return Activator.CreateInstance(type);
+            return FormatterServices.GetUninitializedObject(type);
         }
 
         object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            if ((info.FieldType.IsValueType && info.FieldType.IsPrimitive) || info.FieldType == typeof(string) || info.FieldType == typeof(decimal) || info.FieldType.IsEnum)
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
+
+            if ((fieldType.IsValueType && fieldType.IsPrimitive) || fieldType == typeof(string) || fieldType.IsEnum) // Simple cases
             {
                 info.SetValue(obj, null);
+                return obj;
             }
-            else if (typeof(System.Collections.ICollection).IsAssignableFrom(info.FieldType))
+
+            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
             {
-                if (info.FieldType.IsArray)
-                {
-                    object objectReference = info.GetValue(obj);
-
-                    if (idRoute[idToRead].collectionSize == 0)
-                    {
-                        objectReference = Array.CreateInstance(info.FieldType.GetElementType(), 0);
-                        info.SetValue(obj, objectReference);
-
-                        return obj;
-                    }
-
-                    object[] arrayCopyCollection = new object[((ICollection)info.GetValue(obj)).Count];
-                    ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
-
-                    for (int i = 0; i < arrayCopyCollection.Length; i++)
-                    {
-                        if (idRoute[idToRead].collectionIndex != i)
-                        {
-                            continue;
-                        }
-
-                        if ((arrayCopyCollection[i].GetType().IsValueType && arrayCopyCollection[i].GetType().IsPrimitive) || arrayCopyCollection[i].GetType() == typeof(string) || arrayCopyCollection[i].GetType().IsEnum)
-                        {
-                            arrayCopyCollection[i] = value;
-                        }
-                        else
-                        {
-                            object item = InspectWrite(arrayCopyCollection[i].GetType(), arrayCopyCollection[i], idRoute, idToRead + 1, value);
-
-                            arrayCopyCollection[i] = item;
-                        }
-                    }
-
-                    object arrayAsGeneric = typeof(Reflection).GetMethod(nameof(TranslateArray), bindingFlags).MakeGenericMethod(info.FieldType.GetElementType()).Invoke(this, new[] { arrayCopyCollection });
-                    object goNext = Array.CreateInstance(info.FieldType.GetElementType(), ((Array)arrayAsGeneric).Length);
-                    Array.Copy((Array)arrayAsGeneric, (Array)goNext, (arrayAsGeneric as ICollection).Count);
-                    info.SetValue(obj, goNext);
-                }
-                else
-                {
-                    object objectReference = info.GetValue(obj);
-                    object[] arrayCopyCollection = new object[idRoute[idToRead].collectionSize];
-                    int collectionSize = (objectReference as ICollection).Count;
-
-                    string debug = "";
-                    debug += "Write value collection size: " + collectionSize + ") \n";
-                    debug += "Write value variable collection size: " + idRoute[idToRead].collectionSize + ") \n";
-                    //consoleDebugger.Invoke(debug);
-
-                    if (idRoute[idToRead].collectionSize == collectionSize)
-                    {
-                        ((ICollection)info.GetValue(obj)).CopyTo(arrayCopyCollection, 0);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < arrayCopyCollection.Length; i++)
-                        {
-                            if (i < collectionSize)
-                            {
-                                IEnumerator enumerator = (objectReference as ICollection).GetEnumerator();
-
-                                int count = 0;
-
-                                while (enumerator.MoveNext())
-                                {
-                                    if (count == i)
-                                    {
-                                        arrayCopyCollection[i] = enumerator.Current;
-                                        break;
-                                    }
-
-                                    count++;
-                                }
-                            }
-                            else
-                            {
-                                arrayCopyCollection[i] = Activator.CreateInstance(GetElementType(info.FieldType));
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < arrayCopyCollection.Length; i++)
-                    {
-                        if (idRoute[idToRead].collectionIndex != i)
-                        {
-                            continue;
-                        }
-
-                        if ((arrayCopyCollection[i].GetType().IsValueType && arrayCopyCollection[i].GetType().IsPrimitive) || arrayCopyCollection[i].GetType() == typeof(string) || arrayCopyCollection[i].GetType().IsEnum)
-                        {
-                            arrayCopyCollection[i] = value;
-                        }
-                        else
-                        {
-                            object item = InspectWrite(arrayCopyCollection[i].GetType(), arrayCopyCollection[i], idRoute, idToRead + 1, value);
-
-                            arrayCopyCollection[i] = item;
-                        }
-                    }
-
-                    object genericObjects = typeof(Reflection).GetMethod(nameof(TranslateICollection), bindingFlags).MakeGenericMethod(info.FieldType.GenericTypeArguments[0]).Invoke(this, new[] { arrayCopyCollection });
-                    object reference = Activator.CreateInstance(info.FieldType, genericObjects as ICollection);
-                    info.SetValue(obj, reference);
-                }
-            }
-            else
-            {
-                info.SetValue(obj, null);
+                return HandleCollectionNullException(info, obj, attribute, idRoute, idToRead, value);
             }
 
+            info.SetValue(obj, null);
             return obj;
         }
 
+        private object HandleCollectionNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
+
+            if (currentRoute.IsDictionary)
+            {
+                return HandleDictionaryNullException(info, obj, attribute, idRoute, idToRead, value);
+            }
+
+            if (currentRoute.IsMultiDimensionalArray)
+            {
+                return HandleMultiDimensionalArrayNullException(info, obj, attribute, idRoute, idToRead, value);
+            }
+
+            if (currentRoute.IsJaggedArray)
+            {
+                return HandleJaggedArrayNullException(info, obj, attribute, idRoute, idToRead, value);
+            }
+
+            return HandleRegularCollectionNullException(info, obj, attribute, idRoute, idToRead, value);
+        }
+
+        private object HandleDictionaryNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead]; // Create empty dictionary
+
+            Type dictType = typeof(Dictionary<,>).MakeGenericType(typeof(object), currentRoute.ElementType ?? typeof(object)); // Create empty dictionary correct type
+            IDictionary emptyDict = (IDictionary)Activator.CreateInstance(dictType);
+
+            info.SetValue(obj, emptyDict);
+            return obj;
+        }
+
+        private object HandleMultiDimensionalArrayNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            Array emptyArray = Array.CreateInstance(currentRoute.ElementType ?? typeof(object), currentRoute.Dimensions.Length > 0 ? currentRoute.Dimensions : new[] { 0 }); // Correct dimensions empty array
+
+            info.SetValue(obj, emptyArray);
+            return obj;
+        }
+
+        private object HandleJaggedArrayNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+
+            Array emptyJaggedArray = Array.CreateInstance(currentRoute.ElementType?.MakeArrayType() ?? typeof(object).MakeArrayType(), currentRoute.Dimensions.Length > 0 ? currentRoute.Dimensions[0] : 0); // Empty jagged array
+
+            info.SetValue(obj, emptyJaggedArray);
+            return obj;
+        }
+
+        private object HandleRegularCollectionNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
+
+            object emptyCollection;
+
+            if (fieldType.IsArray)
+            {
+                emptyCollection = Array.CreateInstance(currentRoute.ElementType ?? typeof(object), 0); // Empty array
+            }
+            else if (fieldType.IsGenericType)
+            {
+                Type collectionType = fieldType.GetGenericTypeDefinition().MakeGenericType(currentRoute.ElementType ?? typeof(object)); // Generic empty collection
+                emptyCollection = Activator.CreateInstance(collectionType);
+            }
+            else
+            {
+                Type listType = typeof(List<>).MakeGenericType(currentRoute.ElementType ?? typeof(object)); // Empty list by default
+                emptyCollection = Activator.CreateInstance(listType);
+            }
+
+            info.SetValue(obj, emptyCollection);
+            return obj;
+        }
+
+        private bool IsDictionary(Type type) => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>);
+
+        private bool IsJaggedArray(Type type) => type.IsArray && type.GetElementType()?.IsArray == true;
+
+        private void ProcessValue(object value, List<RouteInfo> route, NetVariable attribute)
+        {
+            if (value == null)
+            {
+                SendPackage(NullOrEmpty.Null, attribute, route);
+                return;
+            }
+
+            Type valueType = value.GetType();
+
+            if ((valueType.IsValueType && valueType.IsPrimitive) || valueType == typeof(string) || valueType == typeof(decimal) || valueType.IsEnum)
+            {
+                SendPackage(value, attribute, route);
+            }
+            else
+            {
+                Inspect(valueType, value, route);
+            }
+        }
+
+        private int GetCollectionCount(IEnumerable collection)
+        {
+            if (collection is ICollection coll) return coll.Count;
+
+            // Fallback for non-ICollection enumerables
+            int count = 0;
+            foreach (var item in collection) count++;
+            return count;
+        }
+
+        private int GetStableKeyHash(object key)
+        {
+            if (key == null) return 0;
+
+            // Use consistent string representation for complex keys
+            string keyString = key is IConvertible convertible ? convertible.ToString(CultureInfo.InvariantCulture) : key.ToString();
+
+            return keyString.GetHashCode();
+        }
+
+        private int[] GetArrayIndices(Array array, object value)
+        {
+            int[] indices = new int[array.Rank];
+            for (int i = 0; i < indices.Length; i++)
+            {
+                indices[i] = -1; // Initialize
+            }
+
+            // Find the indices of the value in the array
+            // Note: This is simplified - may need optimization for large arrays
+            foreach (var item in array)
+            {
+                bool found = true;
+                for (int i = 0; i < indices.Length; i++)
+                {
+                    if (!object.Equals(item, value))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+
+                if (found)
+                {
+                    for (int i = 0; i < indices.Length; i++)
+                    {
+                        indices[i] = (int)array.GetValue(i);
+                    }
+                    break;
+                }
+            }
+
+            return indices;
+        }
+
+        private int GetJaggedArrayIndex(object array, object value)
+        {
+            if (!(array is IEnumerable enumerable)) return -1;
+
+            int index = 0;
+            foreach (var item in enumerable)
+            {
+                if (object.Equals(item, value)) return index;
+                index++;
+            }
+            return -1;
+        }
+
+        private Type GetDictionaryValueType(Type dictionaryType)
+        {
+            return dictionaryType.IsGenericType ?
+                dictionaryType.GetGenericArguments()[1] :
+                typeof(object);
+        }
+
+        private Type GetJaggedArrayElementType(Type jaggedArrayType)
+        {
+            Type elementType = jaggedArrayType.GetElementType();
+            while (elementType != null && elementType.IsArray)
+            {
+                elementType = elementType.GetElementType();
+            }
+            return elementType ?? typeof(object);
+        }
 
         private object TranslateICollection<T>(object[] objs)
         {

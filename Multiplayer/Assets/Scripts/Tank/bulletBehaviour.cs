@@ -2,7 +2,6 @@ using UnityEngine;
 using Net;
 namespace Game
 {
-
     public class bulletBehaviour : MonoBehaviour, INetObj
     {
         [SerializeField] float velocity;

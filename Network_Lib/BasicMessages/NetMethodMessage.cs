@@ -1,13 +1,14 @@
 ﻿using Net;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Network_Lib.BasicMessages
 {
     [NetMessageClass(typeof(NetMethodMessage), MessageType.Method)]
     public class NetMethodMessage : BaseReflectionMessage<(int, List<(string, string)>)>
     {
-        (int, List<(string, string)>) data;
+        private (int, List<(string, string)>) data = (0, new List<(string, string)>());
 
         public NetMethodMessage(MessagePriority messagePriority, (int, List<(string, string)>) data, List<RouteInfo> messageRoute) : base(messagePriority, messageRoute)
         {
@@ -17,34 +18,56 @@ namespace Network_Lib.BasicMessages
 
         public NetMethodMessage(byte[] data) : base(MessagePriority.Default, new List<RouteInfo>())
         {
-            currentMessageType = MessageType.Sbyte;
+            currentMessageType = MessageType.Method;
             this.data = Deserialize(data);
         }
 
         public override (int, List<(string, string)>) Deserialize(byte[] message)
         {
-            DeserializeHeader(message);
-
-            if (MessageChecker.DeserializeCheckSum(message))
+            try
             {
-                data.Item1 = BitConverter.ToInt32(message, messageHeaderSize);
-                messageHeaderSize += sizeof(int);
-                int listSize = BitConverter.ToInt32(message, messageHeaderSize);
-                messageHeaderSize += sizeof(int);
-                List<(string, string)> list = new List<(string, string)>();
+                DeserializeHeader(message);
 
-                for (int i = 0; i < listSize; i++)
+                // Initialize with empty list to ensure Item2 is never null
+                data = (0, new List<(string, string)>());
+
+                if (!MessageChecker.DeserializeCheckSum(message))
                 {
-                    string type = MessageChecker.DeserializeString(message, ref messageHeaderSize);
-                    string typeData = MessageChecker.DeserializeString(message, ref messageHeaderSize);
-
-                    list.Add((type, typeData));
+                    //Debug.LogWarning("Checksum validation failed");
+                    return data;
                 }
 
-                data.Item2 = list;
-            }
+                // Read method ID
+                data.Item1 = BitConverter.ToInt32(message, messageHeaderSize);
+                messageHeaderSize += sizeof(int);
 
-            return data;
+                // Read parameters list count
+                int paramCount = BitConverter.ToInt32(message, messageHeaderSize);
+                messageHeaderSize += sizeof(int);
+
+                // Read each parameter
+                for (int i = 0; i < paramCount; i++)
+                {
+                    string typeName = MessageChecker.DeserializeString(message, ref messageHeaderSize);
+                    string value = MessageChecker.DeserializeString(message, ref messageHeaderSize);
+
+                    if (!string.IsNullOrEmpty(typeName) && !string.IsNullOrEmpty(value))
+                    {
+                        data.Item2.Add((typeName, value));
+                    }
+                    else
+                    {
+                        //Debug.LogWarning($"Invalid parameter at index {i} - Type: {typeName}, Value: {value}");
+                    }
+                }
+
+                return data;
+            }
+            catch (Exception ex)
+            {
+                //Debug.LogError($"Deserialization error: {ex.Message}");
+                return (0, new List<(string, string)>());
+            }
         }
 
         public (int, List<(string, string)>) GetData()
@@ -58,14 +81,20 @@ namespace Network_Lib.BasicMessages
 
             SerializeHeader(ref outData);
 
+            // Write method ID
             outData.AddRange(BitConverter.GetBytes(data.Item1));
 
-            outData.AddRange(BitConverter.GetBytes(data.Item2.Count));
+            // Write parameters count
+            outData.AddRange(BitConverter.GetBytes(data.Item2?.Count ?? 0));
 
-            foreach ((string type, string data) item in data.Item2)
+            // Write each parameter
+            if (data.Item2 != null)
             {
-                outData.AddRange(MessageChecker.SerializeString(item.type.ToCharArray()));
-                outData.AddRange(MessageChecker.SerializeString(item.data.ToCharArray()));
+                foreach (var param in data.Item2)
+                {
+                    outData.AddRange(MessageChecker.SerializeString(param.Item1?.ToCharArray() ?? Array.Empty<char>()));
+                    outData.AddRange(MessageChecker.SerializeString(param.Item2?.ToCharArray() ?? Array.Empty<char>()));
+                }
             }
 
             SerializeQueue(ref outData);

@@ -1,15 +1,12 @@
-﻿﻿using Network_Lib.BasicMessages;
-using System;
-using System.Collections;
+﻿using System.Runtime.Serialization;
 using System.Collections.Generic;
+﻿using Network_Lib.BasicMessages;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Net;
+using System.Collections;
 using System.Reflection;
-using System.Runtime.Serialization;
-using System.Xml.Linq;
+using System.Net;
+using System;
 
 namespace Net
 {
@@ -904,7 +901,6 @@ namespace Net
         {
             if (collection is ICollection coll) return coll.Count;
 
-            // Fallback for non-ICollection enumerables
             int count = 0;
             foreach (var item in collection) count++;
             return count;
@@ -914,7 +910,6 @@ namespace Net
         {
             if (key == null) return 0;
 
-            // Use consistent string representation for complex keys
             string keyString = key is IConvertible convertible ? convertible.ToString(CultureInfo.InvariantCulture) : key.ToString();
 
             return keyString.GetHashCode();
@@ -923,31 +918,28 @@ namespace Net
         private int[] GetArrayIndices(Array array, object value)
         {
             int[] indices = new int[array.Rank];
+
             for (int i = 0; i < indices.Length; i++)
             {
-                indices[i] = -1; // Initialize
+                indices[i] = -1;
             }
 
-            // Find the indices of the value in the array
-            // Note: This is simplified - may need optimization for large arrays
-            foreach (var item in array)
+            int[] currentIndices = new int[array.Rank];
+
+            for (int i = 0; i < array.Length; i++)
             {
-                bool found = true;
-                for (int i = 0; i < indices.Length; i++)
+                int temp = i;
+                for (int dim = array.Rank - 1; dim >= 0; dim--)
                 {
-                    if (!object.Equals(item, value))
-                    {
-                        found = false;
-                        break;
-                    }
+                    currentIndices[dim] = temp % array.GetLength(dim);
+                    temp /= array.GetLength(dim);
                 }
 
-                if (found)
+                object currentValue = array.GetValue(currentIndices);
+
+                if (object.Equals(currentValue, value))
                 {
-                    for (int i = 0; i < indices.Length; i++)
-                    {
-                        indices[i] = (int)array.GetValue(i);
-                    }
+                    Array.Copy(currentIndices, indices, currentIndices.Length);
                     break;
                 }
             }

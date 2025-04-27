@@ -45,12 +45,12 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class DictionaryTestClass
     {
-        [NetVariable(0)] public Dictionary<int, int> testDictionary = new Dictionary<int, int>();
+        [NetVariable(0)] public Dictionary<int, string> testDictionary = new Dictionary<int, string>();
 
         public DictionaryTestClass()
         {
-            testDictionary.Add(1, 1);
-            testDictionary.Add(2, 2);
+            testDictionary.Add(1, "abc");
+            testDictionary.Add(2, "xyz");
         }
     }
 
@@ -96,6 +96,13 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class IntCollection : CustomCollection<int> { }
 
+    public enum TestEnum
+    {
+        Default = 0,
+        Modified = 1,
+        Special = 255
+    }
+
     [NetVariable(0)] public float health = 3;
     //[NetVariable(1)] public bool myBool = false;
     [NetVariable(2)] public string myString = "pepe";
@@ -132,6 +139,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [NetVariable(33)] private DictionaryTestClass dictionaryTest;
     //[NetVariable(34)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
     //[NetVariable(35)] private IntCollection _customCollection = new IntCollection();
+    [NetVariable(36)] public TestEnum enumField = TestEnum.Default;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -144,6 +152,14 @@ public class PlayerController : MonoBehaviour, INetObj
 
     NetworkManager nm;
 
+    [ContextMenu("Test Enum - Set Default")]
+    void SetEnumDefault() => enumField = TestEnum.Default;
+
+    [ContextMenu("Test Enum - Set Modified")]
+    void SetEnumModified() => enumField = TestEnum.Modified;
+
+    [ContextMenu("Test Enum - Set Special")]
+    void SetEnumSpecial() => enumField = TestEnum.Special;
     #region CLASS
     [ContextMenu("Create TestingClass4")]
     private void TestCreator()
@@ -194,7 +210,7 @@ public class PlayerController : MonoBehaviour, INetObj
     
         int newKey = dictionaryTest.testDictionary.Keys.Max() + 1;
         string newValue = $"Entry {newKey} (Client {clientID})";
-        dictionaryTest.testDictionary.Add(newKey, newKey);
+        dictionaryTest.testDictionary.Add(newKey, newValue);
         Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
     }
     
@@ -204,7 +220,7 @@ public class PlayerController : MonoBehaviour, INetObj
         if (dictionaryTest?.testDictionary.Count > 0)
         {
             int lastKey = dictionaryTest.testDictionary.Keys.Max();
-            int removedValue = dictionaryTest.testDictionary[lastKey];
+            string removedValue = dictionaryTest.testDictionary[lastKey];
             dictionaryTest.testDictionary.Remove(lastKey);
             Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
         }
@@ -216,11 +232,11 @@ public class PlayerController : MonoBehaviour, INetObj
         if (dictionaryTest?.testDictionary.Count > 0)
         {
             int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
-            int randomKey2 = UnityEngine.Random.Range(0, 1000);
-            int oldValue = dictionaryTest.testDictionary[randomKey];
-            //string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
-            dictionaryTest.testDictionary[randomKey] = randomKey2;
-            Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {randomKey2}");
+            //int randomKey2 = UnityEngine.Random.Range(0, 1000);
+            string oldValue = dictionaryTest.testDictionary[randomKey];
+            string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
+            dictionaryTest.testDictionary[randomKey] = newValue;
+            Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
         }
     }
     

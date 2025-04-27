@@ -7,6 +7,9 @@ using System.Collections;
 using System.Reflection;
 using System.Net;
 using System;
+using System.Linq;
+using System.Numerics;
+using System.Text;
 
 namespace Net
 {
@@ -26,6 +29,7 @@ namespace Net
         public static Action consoleDebuggerPause;
 
         public Dictionary<Type, MethodInfo> extensionMethods = new Dictionary<Type, MethodInfo>();
+        private Dictionary<(object, int), HashSet<int>> lastKnownDictKeys = new Dictionary<(object, int), HashSet<int>>();
 
         NetworkEntity networkEntity;
 
@@ -104,7 +108,7 @@ namespace Net
                         if (fields != null)
                         {
                             List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
-                            foreach (var field in values)
+                            foreach ((FieldInfo, NetVariable) field in values)
                             {
                                 //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
                                 ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute));
@@ -137,10 +141,11 @@ namespace Net
                 SendPackage(NullOrEmpty.Null, attribute, idRoute);
                 return;
             }
-            
+
             if ((fieldType.IsValueType && fieldType.IsPrimitive) || fieldType == typeof(string) || fieldType.IsEnum)
             {
                 idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
+                consoleDebugger?.Invoke($"Enum detected: {fieldType.Name}");
                 SendPackage(fieldValue, attribute, idRoute);
                 return;
             }
@@ -160,19 +165,43 @@ namespace Net
 
                 if (IsDictionary(fieldType))
                 {
-                    var dict = (IDictionary)fieldValue;
-                    Type valueType = GetDictionaryValueType(fieldType);
+                    IDictionary dict = (IDictionary)fieldValue;
+                    Type[] genericArgs = fieldType.GetGenericArguments();
+                    Type keyType = genericArgs[0];
+                    Type valueType = genericArgs[1];
+
+                    // Store original keys to detect removals
+                    var originalKeys = new HashSet<object>(dict.Keys.Cast<object>());
 
                     foreach (DictionaryEntry entry in dict)
                     {
+                        // Create route with ACTUAL KEY, not hash
                         List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
                         {
-                            RouteInfo.CreateForDictionary(attribute.VariableId, GetStableKeyHash(entry.Key), valueType)
+                            RouteInfo.CreateForDictionary(
+                                attribute.VariableId,
+                                GetKeyIdentifier(entry.Key, keyType),
+                                valueType
+                            )
                         };
 
                         ProcessValue(entry.Value, currentRoute, attribute);
+                        originalKeys.Remove(entry.Key);
                     }
-                    return;
+
+                    // Handle removed keys
+                    foreach (var removedKey in originalKeys)
+                    {
+                        List<RouteInfo> removeRoute = new List<RouteInfo>(idRoute)
+                        {
+                            RouteInfo.CreateForDictionary(
+                                attribute.VariableId,
+                                GetKeyIdentifier(removedKey, keyType),
+                                valueType
+                            )
+                        };
+                        SendPackage(NullOrEmpty.Null, attribute, removeRoute);
+                    }
                 }
 
                 if (fieldType.IsArray && fieldType.GetArrayRank() > 1)
@@ -222,7 +251,7 @@ namespace Net
                 }
 
                 int index = 0;
-                foreach (var item in collection)
+                foreach (object? item in collection)
                 {
                     List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
                     {
@@ -238,6 +267,14 @@ namespace Net
                 idRoute.Add(new RouteInfo(attribute.VariableId));
                 Inspect(fieldType, fieldValue, idRoute);
             }
+        }
+
+        private int GetKeyIdentifier(object key, Type keyType)
+        {
+            if (keyType == typeof(int)) return (int)key;
+            if (keyType == typeof(string)) return key.ToString().GetHashCode();
+            if (keyType.IsEnum) return (int)key;
+            return key.ToString().GetHashCode();
         }
 
         public void SendPackage(object value, NetVariable attribute, List<RouteInfo> idRoute)
@@ -267,6 +304,11 @@ namespace Net
                     {
                         if (packageType == arg)
                         {
+                            if (value is Enum enumValue)
+                            {
+                                consoleDebugger?.Invoke($"Sending enum: {enumValue.GetType().Name}.{enumValue}");
+                                consoleDebugger?.Invoke($"Underlying value: {Convert.ChangeType(enumValue, Enum.GetUnderlyingType(enumValue.GetType()))}");
+                            }
                             try
                             {
                                 object[] parameters = new[] { attribute.MessagePriority, value, idRoute };
@@ -275,7 +317,7 @@ namespace Net
 
                                 if (ctor != null)
                                 {
-                                    var message = (ParentBaseMessage)ctor.Invoke(parameters);
+                                    ParentBaseMessage message = (ParentBaseMessage)ctor.Invoke(parameters);
                                     networkEntity.SendMessage(message.Serialize());
                                 }
                                 else
@@ -463,7 +505,7 @@ namespace Net
 
                 if (fields is List<(FieldInfo, NetVariable)> values)
                 {
-                    foreach (var field in values)
+                    foreach ((FieldInfo, NetVariable) field in values)
                     {
                         if (field.Item2.VariableId == currentRoute.route)
                         {
@@ -559,44 +601,60 @@ namespace Net
         private object HandleDictionaryWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
             RouteInfo currentRoute = idRoute[idToRead];
+            Type[] genericArgs = info.FieldType.GetGenericArguments();
+            Type keyType = genericArgs[0];
+            Type valueType = genericArgs[1];
 
-            IDictionary dict = info.GetValue(obj) as IDictionary;
-            if (dict == null)
+            IDictionary dict = info.GetValue(obj) as IDictionary ?? (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
+
+            // Convert route key back to proper type
+            object key = ConvertRouteKey(currentRoute.collectionKey, keyType);
+
+            if (idRoute.Count <= idToRead + 1) // Final assignment
             {
-                Type dictType = typeof(Dictionary<,>).MakeGenericType(typeof(int), currentRoute.ElementType ?? typeof(object));
-                dict = (IDictionary)Activator.CreateInstance(dictType);
-            }
-
-            object key = FindKeyByHash(dict, currentRoute.collectionKey);
-
-            if (idRoute.Count <= idToRead + 1)
-            {
-                if (key != null)
+                // Special handling for string values
+                if (valueType == typeof(string))
                 {
-                    dict[key] = value;
+                    dict[key] = value?.ToString() ?? string.Empty;
                 }
                 else
                 {
-                    dict[currentRoute.collectionKey] = value;
+                    dict[key] = ConvertValue(value, valueType);
                 }
             }
-            else
+            else // Nested object
             {
-                object dictValue = key != null ? dict[key] : null;
-                if (dictValue == null)
-                {
-                    dictValue = CreateDefaultInstance(currentRoute.ElementType);
-                    if (key != null)
-                        dict[key] = dictValue;
-                    else
-                        dict[currentRoute.collectionKey] = dictValue;
-                }
-
+                object dictValue = dict[key] ?? CreateDefaultInstance(valueType);
+                dict[key] = dictValue;
                 InspectWrite(dictValue.GetType(), dictValue, idRoute, idToRead + 1, value);
             }
 
             info.SetValue(obj, dict);
             return obj;
+        }
+
+        private object ConvertRouteKey(int routeKey, Type keyType)
+        {
+            if (keyType == typeof(int)) return routeKey;
+            if (keyType == typeof(string)) return routeKey.ToString();
+            if (keyType.IsEnum) return Enum.ToObject(keyType, routeKey);
+            return Convert.ChangeType(routeKey, keyType);
+        }
+
+        private object ConvertValue(object value, Type targetType)
+        {
+            if (value == null) return null;
+            if (targetType.IsInstanceOfType(value)) return value;
+            if (targetType == typeof(string)) return value.ToString();
+
+            try
+            {
+                return Convert.ChangeType(value, targetType);
+            }
+            catch
+            {
+                return value;
+            }
         }
 
         private object HandleMultiDimensionalArrayWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
@@ -646,7 +704,7 @@ namespace Net
 
             int[] pathIndices = currentRoute.Dimensions; // Get jagged index
 
-            object currentArray = jaggedArray; 
+            object currentArray = jaggedArray;
             for (int i = 0; i < pathIndices.Length - 1; i++) // Navigate till the intern array
             {
                 Array innerArray = ((Array)currentArray).GetValue(pathIndices[i]) as Array;
@@ -688,11 +746,11 @@ namespace Net
             {
                 if (fieldType.IsArray)
                 {
-                    collection = Array.CreateInstance(currentRoute.ElementType ?? typeof(object),currentRoute.collectionSize);
+                    collection = Array.CreateInstance(currentRoute.ElementType ?? typeof(object), currentRoute.collectionSize);
                 }
                 else
                 {
-                    Type collectionType = fieldType.IsGenericType ?fieldType.GetGenericTypeDefinition().MakeGenericType(currentRoute.ElementType ?? typeof(object)) : typeof(List<>).MakeGenericType(currentRoute.ElementType ?? typeof(object));
+                    Type collectionType = fieldType.IsGenericType ? fieldType.GetGenericTypeDefinition().MakeGenericType(currentRoute.ElementType ?? typeof(object)) : typeof(List<>).MakeGenericType(currentRoute.ElementType ?? typeof(object));
 
                     collection = (IList)Activator.CreateInstance(collectionType);
                 }
@@ -747,16 +805,38 @@ namespace Net
             return obj;
         }
 
-        private object FindKeyByHash(IDictionary dict, int keyHash)
+        private object CreateKeyFromHash(Type keyType, int hash)
+        {
+            if (keyType == typeof(int)) return hash;
+            if (keyType == typeof(string)) return hash.ToString();
+            if (keyType.IsEnum) return Enum.ToObject(keyType, hash);
+
+            try
+            {
+                return Convert.ChangeType(hash, keyType);
+            }
+            catch
+            {
+                return hash.ToString();
+            }
+        }
+
+        private object FindKeyByHash(IDictionary dict, int keyHash, Type keyType)
         {
             foreach (object key in dict.Keys)
             {
-                if (GetStableKeyHash(key) == keyHash)
-                {
+                if (GetKeyHash(key, keyType) == keyHash)
                     return key;
-                }
             }
             return null;
+        }
+
+        private int GetKeyHash(object key, Type keyType)
+        {
+            if (keyType == typeof(string)) return key.ToString().GetHashCode();
+            if (keyType.IsEnum) return (int)key;
+            if (key is IConvertible) return Convert.ToInt32(key);
+            return key.ToString().GetHashCode();
         }
 
         private bool IsWithinBounds(Array array, int[] indices)
@@ -886,6 +966,8 @@ namespace Net
 
         private void ProcessValue(object value, List<RouteInfo> route, NetVariable attribute)
         {
+            DebugLog($"Processing value: {value ?? "null"} (Type: {value?.GetType().Name ?? "null"})");
+
             if (value == null)
             {
                 SendPackage(NullOrEmpty.Null, attribute, route);
@@ -894,14 +976,32 @@ namespace Net
 
             Type valueType = value.GetType();
 
-            if ((valueType.IsValueType && valueType.IsPrimitive) || valueType == typeof(string) || valueType == typeof(decimal) || valueType.IsEnum)
+            // Add special handling for common Unity types if needed
+            if (valueType == typeof(Vector3) || valueType == typeof(Quaternion))
             {
+                DebugLog($"Processing Unity type: {valueType.Name}");
+            }
+
+            if ((valueType.IsValueType && valueType.IsPrimitive) || valueType == typeof(string) || valueType.IsEnum)
+            {
+                DebugLog($"Sending primitive/enum/string value: {value}");
                 SendPackage(value, attribute, route);
             }
             else
             {
+                DebugLog($"Inspecting complex type: {valueType.Name}");
                 Inspect(valueType, value, route);
             }
+        }
+
+        public void RemoveDictionaryEntry(INetObj netObj, List<RouteInfo> idRoute, object key, NetVariable attribute)
+        {
+            List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
+            {
+                RouteInfo.CreateForDictionary(attribute.VariableId, GetStableKeyHash(key), key.GetType())
+            };
+
+            SendPackage(NullOrEmpty.Null, attribute, currentRoute);
         }
 
         private int GetCollectionCount(IEnumerable collection)
@@ -909,7 +1009,7 @@ namespace Net
             if (collection is ICollection coll) return coll.Count;
 
             int count = 0;
-            foreach (var item in collection) count++;
+            foreach (object? item in collection) count++;
             return count;
         }
 
@@ -917,7 +1017,22 @@ namespace Net
         {
             if (key == null) return 0;
 
-            string keyString = key is IConvertible convertible ? convertible.ToString(CultureInfo.InvariantCulture) : key.ToString();
+            if (key is string str)
+            {
+                unchecked
+                {
+                    int hash = 23;
+                    foreach (char c in str)
+                    {
+                        hash = hash * 31 + c;
+                    }
+                    return hash;
+                }
+            }
+
+            string keyString = key is IConvertible convertible ?
+                convertible.ToString(CultureInfo.InvariantCulture) :
+                key.ToString();
 
             return keyString.GetHashCode();
         }
@@ -959,7 +1074,7 @@ namespace Net
             if (!(array is IEnumerable enumerable)) return -1;
 
             int index = 0;
-            foreach (var item in enumerable)
+            foreach (object? item in enumerable)
             {
                 if (object.Equals(item, value)) return index;
                 index++;
@@ -1123,7 +1238,7 @@ namespace Net
 
                 List<(string, string)> parametersList = new List<(string, string)>();
 
-                foreach (var parameter in parameters)
+                foreach (object? parameter in parameters)
                 {
                     (string, string) param;
                     param.Item1 = parameter.GetType().ToString();
@@ -1141,7 +1256,7 @@ namespace Net
                     new RouteInfo(iNetObj.GetID())
                 };
 
-                foreach (var item in messageData.Item2)
+                foreach (object? item in messageData.Item2)
                 {
                     debug += "Parameter List: " + item;
                 }
@@ -1151,6 +1266,11 @@ namespace Net
                 networkEntity.SendMessage(messageToSend.Serialize());
             }
             return objectToReturn;
+        }
+
+        private void DebugLog(string message)
+        {
+            consoleDebugger?.Invoke($"[Reflection] {message}");
         }
     }
 

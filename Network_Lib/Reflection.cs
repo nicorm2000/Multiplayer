@@ -560,29 +560,36 @@ namespace Net
         {
             RouteInfo currentRoute = idRoute[idToRead];
 
-            IDictionary dict = info.GetValue(obj) as IDictionary; // Get current dictionary or create a new one
+            IDictionary dict = info.GetValue(obj) as IDictionary;
             if (dict == null)
             {
-                Type dictType = typeof(Dictionary<,>).MakeGenericType(typeof(object), currentRoute.ElementType ?? typeof(object));
+                Type dictType = typeof(Dictionary<,>).MakeGenericType(typeof(int), currentRoute.ElementType ?? typeof(object));
                 dict = (IDictionary)Activator.CreateInstance(dictType);
             }
 
-            object key = FindKeyByHash(dict, currentRoute.collectionKey); // Get the key by a hash
+            object key = FindKeyByHash(dict, currentRoute.collectionKey);
 
-            if (idRoute.Count <= idToRead + 1) // If we are in the final level, assign a value
+            if (idRoute.Count <= idToRead + 1)
             {
                 if (key != null)
                 {
                     dict[key] = value;
                 }
+                else
+                {
+                    dict[currentRoute.collectionKey] = value;
+                }
             }
-            else // If not keep going
+            else
             {
                 object dictValue = key != null ? dict[key] : null;
                 if (dictValue == null)
                 {
                     dictValue = CreateDefaultInstance(currentRoute.ElementType);
-                    if (key != null) dict[key] = dictValue;
+                    if (key != null)
+                        dict[key] = dictValue;
+                    else
+                        dict[currentRoute.collectionKey] = dictValue;
                 }
 
                 InspectWrite(dictValue.GetType(), dictValue, idRoute, idToRead + 1, value);

@@ -181,17 +181,17 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 #endregion
     #region DECIMAL
-    [ContextMenu("Add Decimal")]
-    private void AddDecimal()
-    {
-        //myDecimal += 1;
-    }
-
-    [ContextMenu("Substract Decimal")]
-    private void SubstractDecimal()
-    {
-        //myDecimal -= 1;
-    }
+    //[ContextMenu("Add Decimal")]
+    //private void AddDecimal()
+    //{
+    //    myDecimal += 1;
+    //}
+    //
+    //[ContextMenu("Substract Decimal")]
+    //private void SubstractDecimal()
+    //{
+    //    myDecimal -= 1;
+    //}
 #endregion
     #region DICTIONARY
     //[ContextMenu("Initialize Dictionary")]
@@ -489,7 +489,7 @@ public class PlayerController : MonoBehaviour, INetObj
         //    Debug.Log("Distance:" + MyPlane.distance);
         //}
         #endregion
-        //Debug.Log($"Client {clientID} myDecimal: /*myDecimal*/");
+        //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
         #region DICTIONARY
         //if (dictionaryTest != null)
         //{

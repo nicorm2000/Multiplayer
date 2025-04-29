@@ -24,11 +24,22 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
-            {
-                data = BitConverter.ToUInt64(message, messageHeaderSize);
-            }
-            return data;
+            if (message.Length < messageHeaderSize + sizeof(ulong))
+                return data;
+
+            bool checksumValid = MessageChecker.DeserializeCheckSum(message);
+            ulong extractedValue = BitConverter.ToUInt64(message, messageHeaderSize);
+
+            if (!checksumValid && !IsPlausibleULong(extractedValue))
+                return data;
+
+            return extractedValue;
+        }
+
+        private bool IsPlausibleULong(ulong value)
+        {
+            const ulong MAX_EXPECTED_VALUE = 1000000000000;
+            return value <= MAX_EXPECTED_VALUE;
         }
 
         public ulong GetData()
@@ -39,13 +50,9 @@ namespace Net
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
             outData.AddRange(BitConverter.GetBytes(data));
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

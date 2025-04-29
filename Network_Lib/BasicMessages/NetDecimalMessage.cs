@@ -24,16 +24,20 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
+            const int decimalSize = 16;
+            if (message.Length < messageHeaderSize + decimalSize)
+                return data;
+
+            bool checksumValid = MessageChecker.DeserializeCheckSum(message);
+            if (!checksumValid)
+                return data;
+
+            int[] bits = new int[4];
+            for (int i = 0; i < 4; i++)
             {
-                int[] bits = new int[4];
-                for (int i = 0; i < 4; i++)
-                {
-                    bits[i] = BitConverter.ToInt32(message, messageHeaderSize + i * 4);
-                }
-                data = new decimal(bits);
+                bits[i] = BitConverter.ToInt32(message, messageHeaderSize + i * 4);
             }
-            return data;
+            return new decimal(bits);
         }
 
         public decimal GetData()
@@ -44,7 +48,6 @@ namespace Net
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
 
             int[] bits = decimal.GetBits(data);
@@ -53,8 +56,7 @@ namespace Net
                 outData.AddRange(BitConverter.GetBytes(bit));
             }
 
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

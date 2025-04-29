@@ -22,18 +22,23 @@ namespace Net
 
         public override char Deserialize(byte[] message)
         {
-            byte[] tmp = new byte[message.Length - messageHeaderSize];
             DeserializeHeader(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
-            {
-                for (int i = messageHeaderSize; i < message.Length; i++)
-                {
-                    tmp[i - messageHeaderSize] = message[i];
-                }
-                data = BitConverter.ToChar(tmp);
-            }
-            return data;
+            if (message.Length < messageHeaderSize + sizeof(char))
+                return data;
+
+            bool checksumValid = MessageChecker.DeserializeCheckSum(message);
+            char extractedValue = BitConverter.ToChar(message, messageHeaderSize);
+
+            if (!checksumValid && !IsPlausibleChar(extractedValue))
+                return data;
+
+            return extractedValue;
+        }
+
+        private bool IsPlausibleChar(char value)
+        {
+            return value >= 32 && value <= 126;
         }
 
         public char GetData()
@@ -44,13 +49,9 @@ namespace Net
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
             outData.AddRange(BitConverter.GetBytes(data));
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

@@ -24,11 +24,23 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
-            {
-                data = BitConverter.ToDouble(message, messageHeaderSize);
-            }
-            return data;
+            if (message.Length < messageHeaderSize + sizeof(double))
+                return data;
+
+            bool checksumValid = MessageChecker.DeserializeCheckSum(message);
+            double extractedValue = BitConverter.ToDouble(message, messageHeaderSize);
+
+            if (!checksumValid && !IsPlausibleDouble(extractedValue))
+                return data;
+
+            return extractedValue;
+        }
+
+        private bool IsPlausibleDouble(double value)
+        {
+            const double MAX_EXPECTED = 1e100;
+            const double MIN_EXPECTED = -1e100;
+            return !double.IsNaN(value) && value >= MIN_EXPECTED && value <= MAX_EXPECTED;
         }
 
         public double GetData()
@@ -39,13 +51,9 @@ namespace Net
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
             outData.AddRange(BitConverter.GetBytes(data));
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

@@ -24,28 +24,39 @@ namespace Network_Lib.BasicMessages
 
         public override (int, List<(string, string)>) Deserialize(byte[] message)
         {
-            bool bypassChecksum = true;
-
-            if (!bypassChecksum && !MessageChecker.DeserializeCheckSum(message))
-            {
-                return (0, new List<(string, string)>());
-            }
-
             DeserializeHeader(message);
-            data.Item1 = BitConverter.ToInt32(message, messageHeaderSize);
+
+            if (!MessageChecker.DeserializeCheckSum(message))
+                return (0, new List<(string, string)>());
+
+            if (message.Length < messageHeaderSize + sizeof(int))
+                return (0, new List<(string, string)>());
+
+            int methodId = BitConverter.ToInt32(message, messageHeaderSize);
             messageHeaderSize += sizeof(int);
+
+            if (message.Length < messageHeaderSize + sizeof(int))
+                return (0, new List<(string, string)>());
 
             int paramCount = BitConverter.ToInt32(message, messageHeaderSize);
             messageHeaderSize += sizeof(int);
 
+            var parameters = new List<(string, string)>();
             for (int i = 0; i < paramCount; i++)
             {
+                if (message.Length < messageHeaderSize + sizeof(int))
+                    break;
+
                 string type = MessageChecker.DeserializeString(message, ref messageHeaderSize);
                 string value = MessageChecker.DeserializeString(message, ref messageHeaderSize);
-                data.Item2.Add((type, value));
+
+                if (!string.IsNullOrEmpty(type) && !string.IsNullOrEmpty(value))
+                {
+                    parameters.Add((type, value));
+                }
             }
 
-            return data;
+            return (methodId, parameters);
         }
 
         public (int, List<(string, string)>) GetData()
@@ -55,29 +66,20 @@ namespace Network_Lib.BasicMessages
 
         public override byte[] Serialize()
         {
-            List<byte> messageWithoutChecksum = new List<byte>();
+            List<byte> outData = new List<byte>();
+            SerializeHeader(ref outData);
 
-            SerializeHeader(ref messageWithoutChecksum);
-            messageWithoutChecksum.AddRange(BitConverter.GetBytes(data.Item1));
-            messageWithoutChecksum.AddRange(BitConverter.GetBytes(data.Item2.Count));
+            outData.AddRange(BitConverter.GetBytes(data.Item1));
+            outData.AddRange(BitConverter.GetBytes(data.Item2.Count));
 
-            foreach (var (type, value) in data.Item2)
+            foreach ((string type, string value) in data.Item2)
             {
-                messageWithoutChecksum.AddRange(MessageChecker.SerializeString(type.ToCharArray()));
-                messageWithoutChecksum.AddRange(MessageChecker.SerializeString(value.ToCharArray()));
+                outData.AddRange(MessageChecker.SerializeString(type.ToCharArray()));
+                outData.AddRange(MessageChecker.SerializeString(value.ToCharArray()));
             }
 
-            int finalLength = messageWithoutChecksum.Count + sizeof(int);
-
-            List<byte> tempForChecksum = new List<byte>(messageWithoutChecksum);
-            tempForChecksum.AddRange(new byte[sizeof(int)]);
-
-            byte[] checksum = MessageChecker.SerializeCheckSum(tempForChecksum);
-
-            List<byte> finalMessage = new List<byte>(messageWithoutChecksum);
-            finalMessage.AddRange(checksum);
-
-            return finalMessage.ToArray();
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
+            return outData.ToArray();
         }
     }
 }

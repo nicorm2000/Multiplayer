@@ -213,7 +213,7 @@ namespace Net
             if (value is NullOrEmpty.Null)
             {
                 debug += "Sending NullMessage\n";
-                consoleDebugger?.Invoke(debug);
+                //consoleDebugger?.Invoke(debug);
                 NetNullMessage netNullMessage = new NetNullMessage(attribute.MessagePriority, null, idRoute);
                 networkEntity.SendMessage(netNullMessage.Serialize());
                 return;
@@ -222,7 +222,7 @@ namespace Net
             if (value is NullOrEmpty.Empty)
             {
                 debug += "Sending EmptyMessage\n";
-                consoleDebugger?.Invoke(debug);
+                //consoleDebugger?.Invoke(debug);
                 NetEmptyMessage netEmptyMessage = new NetEmptyMessage(attribute.MessagePriority, new Empty(), idRoute);
                 networkEntity.SendMessage(netEmptyMessage.Serialize());
                 return;
@@ -544,14 +544,14 @@ namespace Net
                 if (obj == null)
                 {
                     debug += "Target object is null\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     return null;
                 }
 
                 if (idRoute.Count <= idToRead)
                 {
                     debug += "Route exhausted without finding target\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     return obj;
                 }
 
@@ -566,11 +566,11 @@ namespace Net
                     {
                         debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
                         debug += $"Current field value: {info.GetValue(obj)}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
 
                         var result = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         return result;
                     }
                 }
@@ -589,7 +589,7 @@ namespace Net
                             if (field.Item2.VariableId == currentRoute.route)
                             {
                                 debug += $"Found extension field: {field.Item1.Name}\n";
-                                consoleDebugger?.Invoke(debug);
+                                //consoleDebugger?.Invoke(debug);
                                 return WriteValue(field.Item1, obj, field.Item2, idRoute, idToRead, value);
                             }
                         }
@@ -603,7 +603,7 @@ namespace Net
                 debug += $"InspectWrite error: {ex.Message}\n{ex.StackTrace}";
             }
 
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
             return obj;
         }
 

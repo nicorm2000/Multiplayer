@@ -23,9 +23,10 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            data = message[messageHeaderSize];
+            if (message.Length < messageHeaderSize + sizeof(byte))
+                return data;
 
-            return data;
+            return message[messageHeaderSize];
         }
 
         public byte GetData()
@@ -36,13 +37,9 @@ namespace Net
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
             outData.Add(data);
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

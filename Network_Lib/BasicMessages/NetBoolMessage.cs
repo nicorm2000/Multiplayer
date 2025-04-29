@@ -24,9 +24,10 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            data = BitConverter.ToBoolean(message, messageHeaderSize);
+            if (message.Length < messageHeaderSize + sizeof(bool))
+                return data;
 
-            return data;
+            return BitConverter.ToBoolean(message, messageHeaderSize);
         }
 
         public bool GetData()
@@ -37,13 +38,9 @@ namespace Net
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
             outData.AddRange(BitConverter.GetBytes(data));
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

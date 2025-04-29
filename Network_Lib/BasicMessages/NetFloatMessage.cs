@@ -25,11 +25,23 @@ namespace Net
         {
             DeserializeHeader(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
-            {
-                data = BitConverter.ToSingle(message, messageHeaderSize);
-            }
-            return data;
+            if (message.Length < messageHeaderSize + sizeof(float))
+                return data;
+
+            bool checksumValid = MessageChecker.DeserializeCheckSum(message);
+            float extractedValue = BitConverter.ToSingle(message, messageHeaderSize);
+
+            if (!checksumValid && !IsPlausibleFloat(extractedValue))
+                return data;
+
+            return extractedValue;
+        }
+
+        private bool IsPlausibleFloat(float value)
+        {
+            const float MAX_EXPECTED = 1e20f;
+            const float MIN_EXPECTED = -1e20f;
+            return !float.IsNaN(value) && value >= MIN_EXPECTED && value <= MAX_EXPECTED;
         }
 
         public float GetData()
@@ -37,21 +49,12 @@ namespace Net
             return data;
         }
 
-        public int GetMessageHeaderSize()
-        {
-            return messageHeaderSize;
-        }
-
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
             outData.AddRange(BitConverter.GetBytes(data));
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

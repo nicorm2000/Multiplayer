@@ -23,8 +23,7 @@ namespace Network_Lib.BasicMessages
         public override Null Deserialize(byte[] message)
         {
             DeserializeHeader(message);
-
-            return data;
+            return new Null();
         }
 
         public Null GetData()
@@ -35,11 +34,8 @@ namespace Network_Lib.BasicMessages
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

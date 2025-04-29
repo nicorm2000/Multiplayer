@@ -31,9 +31,10 @@ C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.Gener
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.AssemblyInfoInputs.cache
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.AssemblyInfo.cs
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.csproj.CoreCompileInputs.cache
-C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.csproj.CopyComplete
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.dll
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\refint\Match_Maker.dll
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.pdb
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.genruntimeconfig.cache
 C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\ref\Match_Maker.dll
+C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Maker.sourcelink.json
+C:\Users\Nico\Desktop\Multiplayer\Match_Maker\obj\Debug\net5.0\Match_Ma.6EECFCC1.Up2Date

@@ -16,7 +16,10 @@
       },
       "Network_Lib/1.0.0": {
         "runtime": {
-          "Network_Lib.dll": {}
+          "Network_Lib.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       }
     }

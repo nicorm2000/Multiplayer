@@ -1,7 +1,6 @@
 using Net;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour, INetObj
@@ -104,7 +103,7 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
-    [NetVariable(1)] public bool myBool = false;
+    //[NetVariable(1)] public bool myBool = false;
     //[NetVariable(2)] public string myString = "pepe";
     //[NetVariable(3)] public char myChar = 'a';
     //[NetVariable(4)] public decimal myDecimal = 1;
@@ -117,7 +116,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(11)] public ulong myULong = 1;
     //[NetVariable(12)] public byte myByte = 1;
     //[NetVariable(13)] public sbyte mySByte = 1;
-    //[NetVariable(14)] public List<int> test = new() { 0, 1, 2, 3, 4, 5, 6, 50 };
+    [NetVariable(14)] public List<int> testList;
     //[NetVariable(15)] public TestingClass testing = new();
     //[NetVariable(16)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
     //[NetVariable(17)] public int[] myArray = new int[2];
@@ -152,6 +151,7 @@ public class PlayerController : MonoBehaviour, INetObj
 
     NetworkManager nm;
 
+    #region ENUM
     //[ContextMenu("Test Enum - Set Default")]
     //void SetEnumDefault() => enumField = TestEnum.Default;
     //
@@ -160,6 +160,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //
     //[ContextMenu("Test Enum - Set Special")]
     //void SetEnumSpecial() => enumField = TestEnum.Special;
+    #endregion
     #region CLASS
     [ContextMenu("Create TestingClass4")]
     private void TestCreator()
@@ -439,6 +440,11 @@ public class PlayerController : MonoBehaviour, INetObj
         {
             Camera.main.gameObject.GetComponent<CameraOrbit>().SetFollowObject(cameraPivot);
         }
+        //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
+
+        testList.Add(1);
+        testList.Add(2);
+        testList.Add(3);
         //myArray[0] = 1;
         //myArray[1] = 2;
         //
@@ -456,13 +462,22 @@ public class PlayerController : MonoBehaviour, INetObj
     private void Update()
     {
         #region CLASS
-        //if (testingClass4 != null)
+        //if (Input.GetKeyDown(KeyCode.P))
         //{
-        //    //Debug.Log($"Client {clientID} testScript IS NOT NULL");
+        //    testing = null;
+        //}
+        //else if (Input.GetKeyDown(KeyCode.O))
+        //{
+        //    if (testing == null)
+        //        testing = new();
+        //}
+        //if (testing != null)
+        //{
+        //    Debug.Log($"Client {clientID} testing class IS NOT NULL");
         //}
         //else
         //{
-        //    //Debug.Log($"Client {clientID} testScript IS NULL");
+        //    Debug.Log($"Client {clientID} testing class IS NULL");
         //}
         #endregion
         #region PLANE

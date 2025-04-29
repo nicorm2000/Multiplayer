@@ -23,12 +23,25 @@ namespace Net
         public override int Deserialize(byte[] message)
         {
             DeserializeHeader(message);
+            bool checksumValid = MessageChecker.DeserializeCheckSum(message);
 
-            if (MessageChecker.DeserializeCheckSum(message))
-            {
-                data = BitConverter.ToInt32(message, messageHeaderSize);
-            }
-            return data;
+            if (message.Length < messageHeaderSize + sizeof(int))
+                return default;
+
+            int extractedValue = BitConverter.ToInt32(message, messageHeaderSize);
+
+            if (!checksumValid && !IsPlausibleInt(extractedValue))
+                return default;
+
+            return extractedValue;
+        }
+
+        private bool IsPlausibleInt(int value)
+        {
+            const int MAX_EXPECTED_VALUE = 1000000;
+            const int MIN_EXPECTED_VALUE = -1000000;
+
+            return value >= MIN_EXPECTED_VALUE && value <= MAX_EXPECTED_VALUE;
         }
 
         public int GetData()
@@ -39,13 +52,9 @@ namespace Net
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();
-
             SerializeHeader(ref outData);
-
             outData.AddRange(BitConverter.GetBytes(data));
-
-            SerializeQueue(ref outData);
-
+            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }
     }

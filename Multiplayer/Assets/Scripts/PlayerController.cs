@@ -116,7 +116,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(11)] public ulong myULong = 1;
     //[NetVariable(12)] public byte myByte = 1;
     //[NetVariable(13)] public sbyte mySByte = 1;
-    [NetVariable(14)] public List<int> testList;
+    //[NetVariable(14)] public List<int> testList;
     //[NetVariable(15)] public TestingClass testing = new();
     //[NetVariable(16)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
     //[NetVariable(17)] public int[] myArray = new int[2];
@@ -442,9 +442,9 @@ public class PlayerController : MonoBehaviour, INetObj
         }
         //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
 
-        testList.Add(1);
-        testList.Add(2);
-        testList.Add(3);
+        //testList.Add(1);
+        //testList.Add(2);
+        //testList.Add(3);
         //myArray[0] = 1;
         //myArray[1] = 2;
         //

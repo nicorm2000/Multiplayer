@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -159,10 +158,37 @@ namespace Net
             }
 
             // Handle collections
-            if (typeof(IEnumerable).IsAssignableFrom(fieldType) && !typeof(string).IsAssignableFrom(fieldType))
+            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
             {
-                debug += "Handling collection type\n";
-                HandleCollectionRead(info, obj, attribute, idRoute, fieldValue, fieldType, debug);
+                IEnumerable collection = (IEnumerable)fieldValue;
+                int count = GetCollectionCount(collection);
+
+                // Always send current size with collection elements
+                int index = 0;
+                foreach (var item in collection)
+                {
+                    List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
+                    {
+                        new RouteInfo(
+                            route: attribute.VariableId,
+                            collectionKey: index++,
+                            collectionSize: count,
+                            elementType: item?.GetType() ?? GetElementType(fieldType))
+                    };
+
+                    ProcessValue(item, currentRoute, attribute);
+                }
+
+                if (count == 0)
+                {
+                    idRoute.Add(new RouteInfo(
+                        attribute.VariableId,
+                        collectionKey: -1,
+                        collectionSize: 0,
+                        elementType: GetElementType(fieldType)));
+
+                    SendPackage(NullOrEmpty.Empty, attribute, idRoute);
+                }
                 return;
             }
 
@@ -171,37 +197,6 @@ namespace Net
             idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
             //consoleDebugger?.Invoke(debug);
             Inspect(fieldType, fieldValue, idRoute);
-        }
-
-        private void HandleCollectionRead(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, object fieldValue, Type fieldType, string debug)
-        {
-            IEnumerable collection = (IEnumerable)fieldValue;
-            int count = GetCollectionCount(collection);
-            Type elementType = GetElementType(fieldType);
-            debug += $"Collection Count: {count}, Element Type: {elementType?.Name ?? "null"}\n";
-
-            if (count == 0)
-            {
-                debug += "Empty collection\n";
-                idRoute.Add(RouteInfo.CreateForCollection(attribute.VariableId, index: 0, size: 0, elementType));
-
-                //consoleDebugger?.Invoke(debug);
-                SendPackage(fieldValue == null ? NullOrEmpty.Null : NullOrEmpty.Empty, attribute, idRoute);
-                return;
-            }
-
-            debug += "Processing collection items:\n";
-            int index = 0;
-            foreach (object? item in collection)
-            {
-                List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
-                {
-                    RouteInfo.CreateForCollection(attribute.VariableId, index++, count, item?.GetType() ?? elementType)};
-                    debug += $"[{index - 1}] Value: {item ?? "null"}, Type: {item?.GetType()?.Name ?? "null"}\n";
-                    //consoleDebugger?.Invoke(debug);
-                    ProcessValue(item, currentRoute, attribute);
-                    debug = ""; // Reset debug for next item
-                }
         }
 
         public void SendPackage(object value, NetVariable attribute, List<RouteInfo> idRoute)
@@ -453,7 +448,7 @@ namespace Net
                 {
                     debug += "Proceeding with write operation\n";
                     //consoleDebugger?.Invoke(debug);
-                    var result = InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+                    object result = InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
                     debug += $"InspectWrite completed. Result: {result}\n";
                 }
                 else
@@ -616,7 +611,7 @@ namespace Net
             if (obj == null || idRoute.Count <= idToRead)
             {
                 debug += $"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n";
-                consoleDebugger?.Invoke(debug);
+                //consoleDebugger?.Invoke(debug);
                 return obj;
             }
 
@@ -673,77 +668,276 @@ namespace Net
 
         object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            string debug = $"WriteValue - Start\n";
-            debug += $"Field: {info.Name}, DeclaringType: {info.DeclaringType?.Name}, FieldType: {info.FieldType.Name}\n";
-            debug += $"Current Value: {info.GetValue(obj)}, New Value: {value}\n";
-            debug += $"Value Type: {value?.GetType()?.Name ?? "null"}\n";
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
+            object currentValue = info.GetValue(obj);
+
+            // Handle null assignments
+            if (value == null || value is NullOrEmpty.Null)
+            {
+                info.SetValue(obj, null);
+                return obj;
+            }
+
+            // Handle simple types
+            if (IsSimpleType(fieldType))
+            {
+                info.SetValue(obj, Convert.ChangeType(value, fieldType));
+                return obj;
+            }
+
+            // Handle collections - Using OLD code approach
+            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
+            {
+                // Get current collection size
+                int currentSize = (currentValue as ICollection)?.Count ?? 0;
+                int newSize = currentRoute.collectionSize;
+
+                // Create new array/collection with correct size
+                object newCollection;
+                if (fieldType.IsArray)
+                {
+                    newCollection = Array.CreateInstance(fieldType.GetElementType(), newSize);
+
+                    // Copy existing elements if available
+                    if (currentValue != null)
+                    {
+                        Array.Copy((Array)currentValue, (Array)newCollection, Math.Min(currentSize, newSize));
+                    }
+                }
+                else
+                {
+                    // For non-array collections, use OLD code's approach
+                    Type elementType = GetElementType(fieldType);
+                    object[] arrayCopy = new object[newSize];
+
+                    if (currentValue != null)
+                    {
+                        // Copy existing elements
+                        int i = 0;
+                        foreach (object? item in (IEnumerable)currentValue)
+                        {
+                            if (i >= newSize) break;
+                            arrayCopy[i++] = item;
+                        }
+
+                        // Fill remaining slots with default instances if needed
+                        for (; i < newSize; i++)
+                        {
+                            arrayCopy[i] = elementType.IsValueType ?
+                                Activator.CreateInstance(elementType) :
+                                null;
+                        }
+                    }
+
+                    // Convert to proper collection type
+                    if (fieldType.IsGenericType)
+                    {
+                        Type genericType = fieldType.GetGenericTypeDefinition();
+                        Type constructedType = genericType.MakeGenericType(elementType);
+                        newCollection = Activator.CreateInstance(constructedType);
+
+                        // Add elements
+                        MethodInfo addMethod = constructedType.GetMethod("Add");
+                        foreach (var item in arrayCopy)
+                        {
+                            addMethod.Invoke(newCollection, new[] { item });
+                        }
+                    }
+                    else
+                    {
+                        // Fallback for non-generic collections
+                        newCollection = arrayCopy;
+                    }
+                }
+
+                // Handle specific index operations
+                if (currentRoute.collectionKey >= 0 && currentRoute.collectionKey < newSize)
+                {
+                    if (idRoute.Count <= idToRead + 1) // Direct value assignment
+                    {
+                        if (fieldType.IsArray)
+                        {
+                            ((Array)newCollection).SetValue(value, currentRoute.collectionKey);
+                        }
+                        else if (newCollection is IList list)
+                        {
+                            list[currentRoute.collectionKey] = value;
+                        }
+                    }
+                    else // Nested object inspection
+                    {
+                        object element = fieldType.IsArray ?
+                            ((Array)newCollection).GetValue(currentRoute.collectionKey) :
+                            ((IList)newCollection)[currentRoute.collectionKey];
+
+                        if (element == null)
+                        {
+                            element = ConstructObject(GetElementType(fieldType));
+                            if (fieldType.IsArray)
+                            {
+                                ((Array)newCollection).SetValue(element, currentRoute.collectionKey);
+                            }
+                            else if (newCollection is IList list)
+                            {
+                                list[currentRoute.collectionKey] = element;
+                            }
+                        }
+                        InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
+                    }
+                }
+
+                info.SetValue(obj, newCollection);
+                return obj;
+            }
+
+            // Handle complex objects
+            if (currentValue == null)
+            {
+                currentValue = CreateInstance(fieldType);
+                info.SetValue(obj, currentValue);
+            }
+
+            if (idRoute.Count > idToRead + 1)
+            {
+                InspectWrite(fieldType, currentValue, idRoute, idToRead + 1, value);
+            }
+
+            return obj;
+        }
+
+        private object CreateEmptyCollection(Type collectionType)
+        {
+            if (collectionType.IsArray)
+            {
+                return Array.CreateInstance(collectionType.GetElementType(), 0);
+            }
+
+            if (collectionType.IsGenericType)
+            {
+                Type genericType = collectionType.GetGenericTypeDefinition();
+                Type elementType = collectionType.GetGenericArguments()[0];
+                return Activator.CreateInstance(genericType.MakeGenericType(elementType));
+            }
+
+            return Activator.CreateInstance(collectionType);
+        }
+
+        private object CreateCollectionInstance(Type collectionType, int size, Type elementType = null)
+        {
+            elementType ??= GetElementType(collectionType);
+
+            if (collectionType.IsArray)
+            {
+                return Array.CreateInstance(elementType, size);
+            }
+
+            // Handle generic collections
+            if (collectionType.IsGenericType)
+            {
+                Type genericType = collectionType.GetGenericTypeDefinition();
+                Type constructedType = genericType.MakeGenericType(elementType);
+                object instance = Activator.CreateInstance(constructedType);
+
+                // Pre-size collections that support it
+                if (instance is IList list && collectionType.GetProperty("Capacity") != null)
+                {
+                    collectionType.GetProperty("Capacity")?.SetValue(list, size);
+                }
+
+                return instance;
+            }
+
+            // Fallback for non-generic collections
+            return Activator.CreateInstance(collectionType);
+        }
+
+        private object CreateCollection(Type collectionType, int size)
+        {
+            size = Math.Max(0, size); // Ensure non-negative
+
+            if (collectionType.IsArray)
+            {
+                return Array.CreateInstance(collectionType.GetElementType(), size);
+            }
 
             try
             {
-                RouteInfo currentRoute = idRoute[idToRead];
-                Type fieldType = info.FieldType;
-                object currentValue = info.GetValue(obj);
+                var collection = Activator.CreateInstance(collectionType);
 
-                // Null assignment
-                if (value == null)
+                // Pre-size if possible (for List<T> etc)
+                if (collection is IList list && collection.GetType().GetProperty("Capacity") != null)
                 {
-                    debug += "Performing null assignment\n";
-                    info.SetValue(obj, null);
-                    //consoleDebugger?.Invoke(debug);
-                    return obj;
+                    list.GetType().GetProperty("Capacity")?.SetValue(list, size);
                 }
 
-                // Simple type handling
-                if (IsSimpleType(fieldType))
-                {
-                    debug += "Handling simple type\n";
-                    try
-                    {
-                        object convertedValue = Convert.ChangeType(value, fieldType);
-                        info.SetValue(obj, convertedValue);
-                        debug += $"Successfully set to: {convertedValue}\n";
-                        consoleDebugger?.Invoke(debug);
-                        return obj;
-                    }
-                    catch (Exception ex)
-                    {
-                        debug += $"Conversion failed: {ex.Message}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        return obj;
-                    }
-                }
-
-                // Collection handling
-                if (typeof(IEnumerable).IsAssignableFrom(fieldType))
-                {
-                    debug += "Handling collection type\n";
-                    //consoleDebugger?.Invoke(debug);
-                    return HandleCollectionWrite(info, obj, currentValue, idRoute, idToRead, value);
-                }
-
-                // Complex object handling
-                debug += "Handling complex object\n";
-                if (currentValue == null)
-                {
-                    debug += "Creating new instance\n";
-                    currentValue = CreateInstance(fieldType);
-                    info.SetValue(obj, currentValue);
-                }
-
-                if (idRoute.Count > idToRead + 1)
-                {
-                    debug += "Recursing into object\n";
-                    //consoleDebugger?.Invoke(debug);
-                    InspectWrite(fieldType, currentValue, idRoute, idToRead + 1, value);
-                }
+                return collection;
             }
-            catch (Exception ex)
+            catch
             {
-                debug += $"WriteValue error: {ex.Message}\n{ex.StackTrace}";
+                // Fallback for interfaces
+                if (collectionType.IsGenericType &&
+                    collectionType.GetGenericTypeDefinition() == typeof(IList<>))
+                {
+                    Type elementType = collectionType.GetGenericArguments()[0];
+                    return Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+                }
+                return FormatterServices.GetUninitializedObject(collectionType);
+            }
+        }
+
+        private object CreateResizedCollection(Type collectionType, object currentCollection, int newSize)
+        {
+            newSize = Math.Max(0, newSize); // Ensure non-negative
+
+            // For arrays
+            if (collectionType.IsArray)
+            {
+                Array newArray = Array.CreateInstance(collectionType.GetElementType(), newSize);
+                if (currentCollection is Array oldArray)
+                {
+                    Array.Copy(oldArray, newArray, Math.Min(oldArray.Length, newSize));
+                }
+                return newArray;
             }
 
-            //consoleDebugger?.Invoke(debug);
-            return obj;
+            // For other collections
+            object newCollection = Activator.CreateInstance(collectionType) ??
+                                 FormatterServices.GetUninitializedObject(collectionType);
+
+            // Copy elements if possible
+            if (currentCollection is IEnumerable oldElements && newCollection is IList newList)
+            {
+                int i = 0;
+                foreach (object? item in oldElements)
+                {
+                    if (i >= newSize) break;
+                    if (i < newList.Count)
+                        newList[i] = item;
+                    else
+                        newList.Add(item);
+                    i++;
+                }
+
+                // Truncate if needed (for lists that support it)
+                while (newList.Count > newSize)
+                {
+                    newList.RemoveAt(newList.Count - 1);
+                }
+            }
+
+            return newCollection;
+        }
+
+        private Action<object, int, object> GetIndexSetter(Type collectionType)
+        {
+            // Look for set_Item method on the collection type
+            MethodInfo method = collectionType.GetMethod("set_Item") ?? collectionType.GetMethod("Set");
+            if (method != null)
+            {
+                return (instance, index, value) => method.Invoke(instance, new[] { index, value });
+            }
+            return null;
         }
 
         private bool IsSimpleType(Type type)
@@ -874,31 +1068,6 @@ namespace Net
                     break;
                 }
                 currentIndex++;
-            }
-        }
-
-        private object CreateCollectionInstance(Type collectionType, int size)
-        {
-            if (collectionType.IsArray)
-            {
-                return Array.CreateInstance(collectionType.GetElementType(), Math.Max(size, 0));
-            }
-
-            try
-            {
-                return Activator.CreateInstance(collectionType) ??
-                       FormatterServices.GetUninitializedObject(collectionType);
-            }
-            catch
-            {
-                // Fallback to List<T> for interfaces
-                if (collectionType.IsInterface && collectionType.IsGenericType &&
-                    collectionType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                {
-                    Type elementType = collectionType.GetGenericArguments()[0];
-                    return Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
-                }
-                return FormatterServices.GetUninitializedObject(collectionType);
             }
         }
 

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Network_Lib")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b5117b949ddc8fd62e7e016f87bc186874dd514d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+594817ad953a2e7a8a378fa962f3b54d718387c7")]
 [assembly: System.Reflection.AssemblyProductAttribute("Network_Lib")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Network_Lib")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

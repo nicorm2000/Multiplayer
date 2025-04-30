@@ -50,6 +50,7 @@ namespace Net
                         if (netExtensionMethod != null)
                         {
                             extensionMethods.TryAdd(netExtensionMethod.extensionMethod, methodInfo);
+                            consoleDebugger?.Invoke($"Registered extension for: {netExtensionMethod.extensionMethod.Name}");
                         }
                     }
                 }
@@ -563,7 +564,7 @@ namespace Net
                         debug += $"Current field value: {info.GetValue(obj)}\n";
                         //consoleDebugger?.Invoke(debug);
 
-                        var result = WriteValue(info, obj, attributes, idRoute, idToRead, value);
+                        object result = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
                         //consoleDebugger?.Invoke(debug);
                         return result;
@@ -579,7 +580,7 @@ namespace Net
 
                     if (fields is List<(FieldInfo, NetVariable)> values)
                     {
-                        foreach (var field in values)
+                        foreach ((FieldInfo, NetVariable) field in values)
                         {
                             if (field.Item2.VariableId == currentRoute.route)
                             {
@@ -682,7 +683,7 @@ namespace Net
             // Handle simple types
             if (IsSimpleType(fieldType))
             {
-                info.SetValue(obj, Convert.ChangeType(value, fieldType));
+                info.SetValue(obj, value);
                 return obj;
             }
 
@@ -724,9 +725,7 @@ namespace Net
                         // Fill remaining slots with default instances if needed
                         for (; i < newSize; i++)
                         {
-                            arrayCopy[i] = elementType.IsValueType ?
-                                Activator.CreateInstance(elementType) :
-                                null;
+                            arrayCopy[i] = elementType.IsValueType ? Activator.CreateInstance(elementType) : null;
                         }
                     }
 
@@ -767,9 +766,7 @@ namespace Net
                     }
                     else // Nested object inspection
                     {
-                        object element = fieldType.IsArray ?
-                            ((Array)newCollection).GetValue(currentRoute.collectionKey) :
-                            ((IList)newCollection)[currentRoute.collectionKey];
+                        object element = fieldType.IsArray ? ((Array)newCollection).GetValue(currentRoute.collectionKey) : ((IList)newCollection)[currentRoute.collectionKey];
 
                         if (element == null)
                         {
@@ -792,17 +789,17 @@ namespace Net
             }
 
             // Handle complex objects
-            if (currentValue == null)
+            object objReference = info.GetValue(obj);
+            if (objReference == null)
             {
-                currentValue = CreateInstance(fieldType);
-                info.SetValue(obj, currentValue);
+                objReference = ConstructObject(info.FieldType);
+            }
+            else if (idRoute.Count > idToRead + 1)
+            {
+                InspectWrite(info.FieldType, objReference, idRoute, idToRead + 1, value);
             }
 
-            if (idRoute.Count > idToRead + 1)
-            {
-                InspectWrite(fieldType, currentValue, idRoute, idToRead + 1, value);
-            }
-
+            info.SetValue(obj, objReference);
             return obj;
         }
 
@@ -942,7 +939,7 @@ namespace Net
 
         private bool IsSimpleType(Type type)
         {
-            return (type.IsValueType && type.IsPrimitive) || type == typeof(string) || type.IsEnum || type == typeof(decimal);
+            return (type.IsValueType && type.IsPrimitive) || type == typeof(string) || type.IsEnum;
         }
 
         private object CreateInstance(Type type)

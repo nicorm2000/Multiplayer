@@ -26,8 +26,11 @@ namespace Network_Lib.BasicMessages
         {
             DeserializeHeader(message);
 
-            if (!MessageChecker.DeserializeCheckSum(message))
-                return (0, new List<(string, string)>());
+            int readPosition = messageHeaderSize;
+
+            bool checksumValid = MessageChecker.DeserializeCheckSum(message);
+
+            messageHeaderSize = readPosition;
 
             if (message.Length < messageHeaderSize + sizeof(int))
                 return (0, new List<(string, string)>());
@@ -41,7 +44,7 @@ namespace Network_Lib.BasicMessages
             int paramCount = BitConverter.ToInt32(message, messageHeaderSize);
             messageHeaderSize += sizeof(int);
 
-            var parameters = new List<(string, string)>();
+            List<(string, string)> parameters = new List<(string, string)>();
             for (int i = 0; i < paramCount; i++)
             {
                 if (message.Length < messageHeaderSize + sizeof(int))
@@ -56,7 +59,31 @@ namespace Network_Lib.BasicMessages
                 }
             }
 
+            if (!checksumValid && !IsPlausibleMethodData(methodId, parameters))
+            {
+                return (0, new List<(string, string)>());
+            }
+
             return (methodId, parameters);
+        }
+
+        private bool IsPlausibleMethodData(int methodId, List<(string type, string value)> parameters)
+        {
+            if (methodId < 0) return false;
+
+            const int MAX_PARAMS = 20;
+            if (parameters.Count > MAX_PARAMS) return false;
+
+            foreach ((string type, string value) param in parameters)
+            {
+                if (string.IsNullOrEmpty(param.type) || string.IsNullOrEmpty(param.value))
+                    return false;
+
+                if (param.type.Length > 256 || param.value.Length > 1024)
+                    return false;
+            }
+
+            return true;
         }
 
         public (int, List<(string, string)>) GetData()
@@ -70,6 +97,7 @@ namespace Network_Lib.BasicMessages
             SerializeHeader(ref outData);
 
             outData.AddRange(BitConverter.GetBytes(data.Item1));
+
             outData.AddRange(BitConverter.GetBytes(data.Item2.Count));
 
             foreach ((string type, string value) in data.Item2)
@@ -78,7 +106,10 @@ namespace Network_Lib.BasicMessages
                 outData.AddRange(MessageChecker.SerializeString(value.ToCharArray()));
             }
 
-            outData.AddRange(MessageChecker.SerializeCheckSum(outData));
+            byte[] checksum = MessageChecker.SerializeCheckSum(outData);
+
+            outData.AddRange(checksum);
+
             return outData.ToArray();
         }
     }

@@ -1,6 +1,8 @@
-using Net;
+﻿using Net;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour, INetObj
@@ -179,7 +181,7 @@ public class PlayerController : MonoBehaviour, INetObj
         //    testingClass4 = null;
         //}
     }
-#endregion
+    #endregion
     #region DECIMAL
     //[ContextMenu("Add Decimal")]
     //private void AddDecimal()
@@ -192,7 +194,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //{
     //    myDecimal -= 1;
     //}
-#endregion
+    #endregion
     #region DICTIONARY
     //[ContextMenu("Initialize Dictionary")]
     //private void InitializeDictionary()
@@ -278,11 +280,14 @@ public class PlayerController : MonoBehaviour, INetObj
     //{
     //    if (arrayTest != null)
     //    {
-    //        int x = UnityEngine.Random.Range(0, 3);
-    //        int y = UnityEngine.Random.Range(0, 3);
+    //        int x = UnityEngine.Random.Range(0, arrayTest.twoDArray.GetLength(0));
+    //        int y = UnityEngine.Random.Range(0, arrayTest.twoDArray.GetLength(1));
+    //
     //        int oldValue = arrayTest.twoDArray[x, y];
     //        arrayTest.twoDArray[x, y] = UnityEngine.Random.Range(100, 1000);
-    //        Debug.Log($"Client {clientID} Updated 2D[{x},{y}] {oldValue}->{arrayTest.twoDArray[x, y]}");
+    //
+    //        Debug.Log($"<color=yellow>Client {clientID} Updated 2D[{x},{y}] {oldValue}→{arrayTest.twoDArray[x, y]}</color>\n" +
+    //                 ArrayVisualizer.VisualizeArray(arrayTest.twoDArray, new int[] { x, y }));
     //    }
     //}
     //
@@ -291,14 +296,16 @@ public class PlayerController : MonoBehaviour, INetObj
     //{
     //    if (arrayTest != null)
     //    {
-    //        int a = UnityEngine.Random.Range(0, 2);
-    //        int b = UnityEngine.Random.Range(0, 2);
-    //        int c = UnityEngine.Random.Range(0, 2);
-    //        int d = UnityEngine.Random.Range(0, 2);
-    //        int e = UnityEngine.Random.Range(0, 2);
-    //        int oldValue = arrayTest.fiveDArray[a, b, c, d, e];
-    //        arrayTest.fiveDArray[a, b, c, d, e] = UnityEngine.Random.Range(10000, 20000);
-    //        Debug.Log($"Client {clientID} Updated 5D[{a},{b},{c},{d},{e}] {oldValue}->{arrayTest.fiveDArray[a, b, c, d, e]}");
+    //        int[] indices = new int[5];
+    //        for (int i = 0; i < 5; i++)
+    //            indices[i] = UnityEngine.Random.Range(0, arrayTest.fiveDArray.GetLength(i));
+    //
+    //        int oldValue = (int)arrayTest.fiveDArray.GetValue(indices);
+    //        int newValue = UnityEngine.Random.Range(10000, 20000);
+    //        arrayTest.fiveDArray.SetValue(newValue, indices);
+    //
+    //        Debug.Log($"<color=yellow>Client {clientID} Updated 5D[{string.Join(",", indices)}] {oldValue}→{newValue}</color>\n" +
+    //                 ArrayVisualizer.VisualizeArray(arrayTest.fiveDArray, indices));
     //    }
     //}
     //
@@ -334,13 +341,26 @@ public class PlayerController : MonoBehaviour, INetObj
     //    }
     //}
     //
-    //[ContextMenu("Print Array Indices")]
-    //private void PrintArrayIndices()
+    //[ContextMenu("Print Array Visualizations")]
+    //private void PrintArrayVisualizations()
     //{
     //    if (arrayTest != null)
     //    {
-    //        Debug.Log($"Client {clientID} 2D Array Rank: {arrayTest.twoDArray.Rank}, Dimensions: {string.Join("x", Enumerable.Range(0, arrayTest.twoDArray.Rank).Select(d => arrayTest.twoDArray.GetLength(d)))}");
-    //        Debug.Log($"Client {clientID} 5D Array Rank: {arrayTest.fiveDArray.Rank}, Dimensions: {string.Join("x", Enumerable.Range(0, arrayTest.fiveDArray.Rank).Select(d => arrayTest.fiveDArray.GetLength(d)))}");
+    //        Debug.Log($"<color=cyan><b>Client {clientID} 2D Array:</b></color>\n" +
+    //                 ArrayVisualizer.VisualizeArray(arrayTest.twoDArray));
+    //
+    //        Debug.Log($"<color=cyan><b>Client {clientID} 5D Array:</b></color>\n" +
+    //                 ArrayVisualizer.VisualizeArray(arrayTest.fiveDArray));
+    //    }
+    //}
+    //
+    //[ContextMenu("Print 5D Array Visualization")]
+    //private void Print5DArrayVisualization()
+    //{
+    //    if (arrayTest != null)
+    //    {
+    //        Debug.Log($"Client {clientID} 5D Array Visualization:\n" +
+    //                 ArrayVisualizer.VisualizeMultiDimensionalArray(arrayTest.fiveDArray));
     //    }
     //}
     #endregion
@@ -508,38 +528,7 @@ public class PlayerController : MonoBehaviour, INetObj
         #region MULTIDIMENSIONALARRAYS
         //if (arrayTest != null)
         //{
-        //    Debug.Log($"Client {clientID} 2D Array:");
-        //    for (int i = 0; i < 3; i++)
-        //    {
-        //        Debug.Log(string.Join(" ",
-        //            Enumerable.Range(0, 3)
-        //                     .Select(j => arrayTest.twoDArray[i, j].ToString().PadLeft(3))));
-        //    }
-        //
-        //    Debug.Log($"Client {clientID} 5D Array Slices:");
-        //
-        //    for (int depth = 0; depth < 2; depth++)
-        //    {
-        //        Debug.Log($"Slice at depth {depth}:");
-        //        for (int i = 0; i < 2; i++)
-        //        {
-        //            var row = new System.Text.StringBuilder();
-        //            for (int j = 0; j < 2; j++)
-        //            {
-        //                int val = arrayTest.fiveDArray[depth, i, j, 0, 0];
-        //                row.Append(val.ToString().PadLeft(5));
-        //            }
-        //            Debug.Log(row.ToString());
-        //        }
-        //    }
-        //
-        //    Debug.Log("5D Array Diagonal:");
-        //    string diagonal = "";
-        //    for (int i = 0; i < 2; i++)
-        //    {
-        //        diagonal += arrayTest.fiveDArray[i, i, i, i, i].ToString() + " ";
-        //    }
-        //    Debug.Log(diagonal);
+        //    Debug.Log($"Client {clientID} Arrays are NOT NULL");
         //}
         //else
         //{
@@ -588,5 +577,157 @@ public class PlayerController : MonoBehaviour, INetObj
     public NetObj GetNetObj()
     {
         return netObj;
+    }
+
+    private int[] GetRandomIndices(Array array)
+    {
+        int[] indices = new int[array.Rank];
+        for (int i = 0; i < array.Rank; i++)
+            indices[i] = UnityEngine.Random.Range(0, array.GetLength(i));
+        return indices;
+    }
+
+    private string Visualize5DSlice(Array array, int[] changedIndices)
+    {
+        StringBuilder sb = new StringBuilder();
+        int[] sliceIndices = new int[5];
+
+        // Fixed dimensions 3,4 (last two) to show 2D slice
+        for (int i = 0; i < array.GetLength(3); i++)
+        {
+            for (int j = 0; j < array.GetLength(4); j++)
+            {
+                changedIndices.CopyTo(sliceIndices, 0);
+                sliceIndices[3] = i;
+                sliceIndices[4] = j;
+
+                object val = array.GetValue(sliceIndices);
+                sb.Append($"{val}".PadLeft(8));
+
+                // Highlight changed value
+                if (i == changedIndices[3] && j == changedIndices[4])
+                    sb.Append("*");
+                else
+                    sb.Append(" ");
+            }
+            sb.AppendLine();
+        }
+        return sb.ToString();
+    }
+}
+
+public static class ArrayVisualizer
+{
+    public static string VisualizeArray(Array array, int[] highlightIndices = null)
+    {
+        if (array == null) return "<color=red>NULL</color>";
+
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine($"<b>Array Type:</b> {array.GetType().GetElementType().Name}[{string.Join(",", GetDimensions(array))}]");
+
+        // Handle 1D and 2D arrays with pretty formatting
+        if (array.Rank <= 2)
+        {
+            sb.AppendLine(VisualizeLowDimensionArray(array, highlightIndices));
+        }
+        else // Handle 3D+ arrays with smart slicing
+        {
+            sb.AppendLine(VisualizeHighDimensionArray(array, highlightIndices));
+        }
+
+        return sb.ToString();
+    }
+
+    private static string VisualizeLowDimensionArray(Array array, int[] highlightIndices)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        if (array.Rank == 1)
+        {
+            sb.Append("[ ");
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                AppendValue(sb, array.GetValue(i), highlightIndices != null && highlightIndices[0] == i);
+                if (i < array.GetLength(0) - 1) sb.Append(", ");
+            }
+            sb.Append(" ]");
+        }
+        else // Rank == 2
+        {
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                sb.Append("[ ");
+                for (int j = 0; j < array.GetLength(1); j++)
+                {
+                    bool isHighlighted = highlightIndices != null &&
+                                       highlightIndices[0] == i &&
+                                       highlightIndices[1] == j;
+                    AppendValue(sb, array.GetValue(i, j), isHighlighted);
+                    if (j < array.GetLength(1) - 1) sb.Append(", ");
+                }
+                sb.AppendLine(" ]");
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static string VisualizeHighDimensionArray(Array array, int[] highlightIndices)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        if (highlightIndices != null)
+        {
+            // Show 2D slice containing the highlighted value
+            int fixedDims = array.Rank - 2;
+            sb.AppendLine($"<b>Slice at {GetIndicesString(highlightIndices.Take(fixedDims).ToArray())}:</b>");
+
+            int[] sliceIndices = new int[array.Rank];
+            Array.Copy(highlightIndices, sliceIndices, fixedDims);
+
+            for (int i = 0; i < array.GetLength(fixedDims); i++)
+            {
+                sb.Append("[ ");
+                for (int j = 0; j < array.GetLength(fixedDims + 1); j++)
+                {
+                    sliceIndices[fixedDims] = i;
+                    sliceIndices[fixedDims + 1] = j;
+
+                    bool isHighlighted = highlightIndices[fixedDims] == i &&
+                                       highlightIndices[fixedDims + 1] == j;
+                    AppendValue(sb, array.GetValue(sliceIndices), isHighlighted);
+
+                    if (j < array.GetLength(fixedDims + 1) - 1) sb.Append(", ");
+                }
+                sb.AppendLine(" ]");
+            }
+        }
+
+        // Show metadata
+        sb.AppendLine($"<b>Total Elements:</b> {array.Length}");
+        sb.AppendLine($"<b>Dimensions:</b> {string.Join("×", GetDimensions(array))}");
+
+        return sb.ToString();
+    }
+
+    private static void AppendValue(StringBuilder sb, object value, bool highlight)
+    {
+        if (highlight)
+            sb.Append($"<color=green><b>{value}</b></color>");
+        else
+            sb.Append(value);
+    }
+
+    private static string GetIndicesString(int[] indices)
+    {
+        return string.Join(",", indices.Select((i, dim) => $"dim{dim + 1}={i}"));
+    }
+
+    private static int[] GetDimensions(Array array)
+    {
+        int[] dims = new int[array.Rank];
+        for (int i = 0; i < array.Rank; i++)
+            dims[i] = array.GetLength(i);
+        return dims;
     }
 }

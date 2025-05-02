@@ -145,6 +145,7 @@ public class Server : NetworkEntity
             case MessageType.Ulong:
             case MessageType.Empty:
             case MessageType.Method:
+            case MessageType.Enum:
             case MessageType.Null:
             case MessageType.Ushort:
 

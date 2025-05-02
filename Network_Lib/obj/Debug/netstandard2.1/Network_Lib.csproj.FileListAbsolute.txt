@@ -15,6 +15,6 @@ C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_L
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.AssemblyInfoInputs.cache
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.AssemblyInfo.cs
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.csproj.CoreCompileInputs.cache
+C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.sourcelink.json
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.dll
 C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.pdb
-C:\Users\Nico\Desktop\Multiplayer\Network_Lib\obj\Debug\netstandard2.1\Network_Lib.sourcelink.json

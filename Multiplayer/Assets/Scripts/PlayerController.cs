@@ -140,7 +140,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(33)] private DictionaryTestClass dictionaryTest;
     //[NetVariable(34)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
     //[NetVariable(35)] private IntCollection _customCollection = new IntCollection();
-    //[NetVariable(36)] public TestEnum enumField = TestEnum.Default;
+    [NetVariable(36)] public TestEnum enumField;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -461,7 +461,7 @@ public class PlayerController : MonoBehaviour, INetObj
             Camera.main.gameObject.GetComponent<CameraOrbit>().SetFollowObject(cameraPivot);
         }
         //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
-
+        enumField = TestEnum.Special;
         //testList.Add(1);
         //testList.Add(2);
         //testList.Add(3);

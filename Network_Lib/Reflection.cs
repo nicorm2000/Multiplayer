@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -251,6 +252,15 @@ namespace Net
                 return;
             }
 
+            if (value is Enum enumValue)
+            {
+                debug += "Sending Enum package\n";
+                consoleDebugger?.Invoke(debug);
+                NetEnumMessage enumMessage = new NetEnumMessage(attribute.MessagePriority, enumValue, idRoute);
+                networkEntity.SendMessage(enumMessage.Serialize());
+                return;
+            }
+
             Type packageType = value.GetType();
             debug += $"Looking for message type for {packageType.Name}\n";
 
@@ -412,6 +422,14 @@ namespace Net
                     debug += $"Data: {netBoolMessage.GetData()}, Route: {string.Join("->", netBoolMessage.GetMessageRoute().Select(r => r.route))}\n";
                     //consoleDebugger?.Invoke(debug);
                     VariableMapping(netBoolMessage.GetMessageRoute(), netBoolMessage.GetData());
+                    break;
+
+                case MessageType.Enum:
+                    debug += "Processing Enum message\n";
+                    NetEnumMessage netEnumMessage = new NetEnumMessage(data);
+                    Enum enumValue = netEnumMessage.GetData();
+                    debug += $"Enum: {enumValue.GetType().Name}.{enumValue}, Route: {string.Join("->", netEnumMessage.GetMessageRoute().Select(r => r.route))}\n";
+                    VariableMapping(netEnumMessage.GetMessageRoute(), enumValue);
                     break;
 
                 case MessageType.Null:

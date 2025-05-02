@@ -144,7 +144,11 @@ namespace Net
         {
             if (_elementType == null) return string.Empty;
 
-            if (_elementType.IsArray)
+            if (_elementType.IsEnum)
+            {
+                return $"enum|{_elementType.AssemblyQualifiedName}";
+            }
+            else if (_elementType.IsArray)
             {
                 int rank = _elementType.GetArrayRank();
                 return rank > 1 ? $"{_elementType.GetElementType()?.AssemblyQualifiedName}[{new string(',', rank - 1)}]" : _elementType.AssemblyQualifiedName;
@@ -159,7 +163,12 @@ namespace Net
 
             try
             {
-                if (signature.Contains("[")) // Special multi dimensional array handling
+                if (signature.StartsWith("enum|"))
+                {
+                    string enumTypeName = signature.Substring(5);
+                    return Type.GetType(enumTypeName);
+                }
+                else if(signature.Contains("[")) // Special multi dimensional array handling
                 {
                     int bracketIndex = signature.IndexOf('[');
                     string baseType = signature.Substring(0, bracketIndex);

@@ -32,6 +32,7 @@ namespace Net
         Null = -85,
         Empty = -84,
         Method = -83,
+        Enum = -82,
 
         Instance = -10,
         InstanceRequest = -9,

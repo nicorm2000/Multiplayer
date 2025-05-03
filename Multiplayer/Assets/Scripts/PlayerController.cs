@@ -137,10 +137,10 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(30)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
     //[NetVariable(31)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(32)] public Vector3Int MyVector3Int = new (0,0,0);
-    //[NetVariable(33)] private DictionaryTestClass dictionaryTest;
+    [NetVariable(33)] private DictionaryTestClass dictionaryTest;
     //[NetVariable(34)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
     //[NetVariable(35)] private IntCollection _customCollection = new IntCollection();
-    [NetVariable(36)] public TestEnum enumField;
+    //[NetVariable(36)] public TestEnum enumField;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -196,69 +196,69 @@ public class PlayerController : MonoBehaviour, INetObj
     //}
     #endregion
     #region DICTIONARY
-    //[ContextMenu("Initialize Dictionary")]
-    //private void InitializeDictionary()
-    //{
-    //    dictionaryTest = new DictionaryTestClass();
-    //    Debug.Log($"Client {clientID} Dictionary initialized with {dictionaryTest.testDictionary.Count} entries");
-    //}
-    //
-    //[ContextMenu("Add Dictionary Entry")]
-    //private void AddDictionaryEntry()
-    //{
-    //    if (dictionaryTest == null)
-    //    {
-    //        dictionaryTest = new DictionaryTestClass();
-    //    }
-    //
-    //    int newKey = dictionaryTest.testDictionary.Keys.Max() + 1;
-    //    string newValue = $"Entry {newKey} (Client {clientID})";
-    //    dictionaryTest.testDictionary.Add(newKey, newValue);
-    //    Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
-    //}
-    //
-    //[ContextMenu("Remove Last Dictionary Entry")]
-    //private void RemoveDictionaryEntry()
-    //{
-    //    if (dictionaryTest?.testDictionary.Count > 0)
-    //    {
-    //        int lastKey = dictionaryTest.testDictionary.Keys.Max();
-    //        string removedValue = dictionaryTest.testDictionary[lastKey];
-    //        dictionaryTest.testDictionary.Remove(lastKey);
-    //        Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
-    //    }
-    //}
-    //
-    //[ContextMenu("Update Random Dictionary Value")]
-    //private void UpdateRandomDictionaryValue()
-    //{
-    //    if (dictionaryTest?.testDictionary.Count > 0)
-    //    {
-    //        int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
-    //        //int randomKey2 = UnityEngine.Random.Range(0, 1000);
-    //        string oldValue = dictionaryTest.testDictionary[randomKey];
-    //        string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
-    //        dictionaryTest.testDictionary[randomKey] = newValue;
-    //        Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
-    //    }
-    //}
-    //
-    //[ContextMenu("Clear Dictionary")]
-    //private void ClearDictionary()
-    //{
-    //    if (dictionaryTest != null)
-    //    {
-    //        dictionaryTest.testDictionary.Clear();
-    //        Debug.Log($"Client {clientID} cleared dictionary");
-    //    }
-    //}
-    //
-    //[ContextMenu("Set Dictionary to Null")]
-    //private void NullDictionary()
-    //{
-    //    dictionaryTest = null;
-    //    Debug.Log($"Client {clientID} set dictionary to NULL");
-    //}
+    [ContextMenu("Initialize Dictionary")]
+    private void InitializeDictionary()
+    {
+        dictionaryTest = new DictionaryTestClass();
+        Debug.Log($"Client {clientID} Dictionary initialized with {dictionaryTest.testDictionary.Count} entries");
+    }
+    
+    [ContextMenu("Add Dictionary Entry")]
+    private void AddDictionaryEntry()
+    {
+        if (dictionaryTest == null)
+        {
+            dictionaryTest = new DictionaryTestClass();
+        }
+    
+        int newKey = dictionaryTest.testDictionary.Keys.Max() + 1;
+        string newValue = $"Entry {newKey} (Client {clientID})";
+        dictionaryTest.testDictionary.Add(newKey, newValue);
+        Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
+    }
+    
+    [ContextMenu("Remove Last Dictionary Entry")]
+    private void RemoveDictionaryEntry()
+    {
+        if (dictionaryTest?.testDictionary.Count > 0)
+        {
+            int lastKey = dictionaryTest.testDictionary.Keys.Max();
+            string removedValue = dictionaryTest.testDictionary[lastKey];
+            dictionaryTest.testDictionary.Remove(lastKey);
+            Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
+        }
+    }
+    
+    [ContextMenu("Update Random Dictionary Value")]
+    private void UpdateRandomDictionaryValue()
+    {
+        if (dictionaryTest?.testDictionary.Count > 0)
+        {
+            int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
+            //int randomKey2 = UnityEngine.Random.Range(0, 1000);
+            string oldValue = dictionaryTest.testDictionary[randomKey];
+            string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
+            dictionaryTest.testDictionary[randomKey] = newValue;
+            Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
+        }
+    }
+    
+    [ContextMenu("Clear Dictionary")]
+    private void ClearDictionary()
+    {
+        if (dictionaryTest != null)
+        {
+            dictionaryTest.testDictionary.Clear();
+            Debug.Log($"Client {clientID} cleared dictionary");
+        }
+    }
+    
+    [ContextMenu("Set Dictionary to Null")]
+    private void NullDictionary()
+    {
+        dictionaryTest = null;
+        Debug.Log($"Client {clientID} set dictionary to NULL");
+    }
     #endregion
     #region MULTIDIMENSIONALARRAYS
     //[ContextMenu("Initialize Arrays")]
@@ -461,7 +461,7 @@ public class PlayerController : MonoBehaviour, INetObj
             Camera.main.gameObject.GetComponent<CameraOrbit>().SetFollowObject(cameraPivot);
         }
         //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
-        enumField = TestEnum.Special;
+        //enumField = TestEnum.Special;
         //testList.Add(1);
         //testList.Add(2);
         //testList.Add(3);
@@ -511,19 +511,19 @@ public class PlayerController : MonoBehaviour, INetObj
         #endregion
         //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
         #region DICTIONARY
-        //if (dictionaryTest != null)
-        //{
-        //    string dictContents = $"Client {clientID} Dictionary Contents:\n";
-        //    foreach (var kvp in dictionaryTest.testDictionary)
-        //    {
-        //        dictContents += $"[{kvp.Key}] = {kvp.Value}\n";
-        //    }
-        //    Debug.Log(dictContents);
-        //}
-        //else
-        //{
-        //    Debug.Log($"Client {clientID} Dictionary is NULL");
-        //}
+        if (dictionaryTest != null)
+        {
+            string dictContents = $"Client {clientID} Dictionary Contents:\n";
+            foreach (var kvp in dictionaryTest.testDictionary)
+            {
+                dictContents += $"[{kvp.Key}] = {kvp.Value}\n";
+            }
+            Debug.Log(dictContents);
+        }
+        else
+        {
+            Debug.Log($"Client {clientID} Dictionary is NULL");
+        }
         #endregion
         #region MULTIDIMENSIONALARRAYS
         //if (arrayTest != null)

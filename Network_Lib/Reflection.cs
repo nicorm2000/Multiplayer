@@ -186,6 +186,40 @@ namespace Net
                         ProcessValue(element, currentRoute, attribute);
                     }
                 }
+                else if (typeof(IDictionary).IsAssignableFrom(fieldType))
+                {
+                    // Handle dictionary
+                    IDictionary dictionary = (IDictionary)fieldValue;
+                    Type valueType = fieldType.GetGenericArguments()[1];
+
+                    foreach (DictionaryEntry entry in dictionary)
+                    {
+                        int keyHash = GetStableKeyHash(entry.Key);
+                        debug += $"Processing dictionary entry - Key: {entry.Key} (Hash: {keyHash}), Value: {entry.Value}\n";
+
+                        List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
+                        {
+                            RouteInfo.CreateForDictionary(
+                                attribute.VariableId,
+                                keyHash,
+                                valueType)
+                        };
+
+                        consoleDebugger?.Invoke(debug);
+                        ProcessValue(entry.Value, currentRoute, attribute);
+                    }
+
+                    if (dictionary.Count == 0)
+                    {
+                        idRoute.Add(RouteInfo.CreateForDictionary(
+                            attribute.VariableId,
+                            -1, // No key
+                            valueType));
+
+                        SendPackage(NullOrEmpty.Empty, attribute, idRoute);
+                    }
+                    return;
+                }
                 else
                 {
                     IEnumerable collection = (IEnumerable)fieldValue;
@@ -196,13 +230,13 @@ namespace Net
                     foreach (var item in collection)
                     {
                         List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
-                    {
-                        new RouteInfo(
-                            route: attribute.VariableId,
-                            collectionKey: index++,
-                            collectionSize: count,
-                            elementType: item?.GetType() ?? GetElementType(fieldType))
-                    };
+                        {
+                            new RouteInfo(
+                                route: attribute.VariableId,
+                                collectionKey: index++,
+                                collectionSize: count,
+                                elementType: item?.GetType() ?? GetElementType(fieldType))
+                        };
 
                         ProcessValue(item, currentRoute, attribute);
                     }
@@ -226,6 +260,30 @@ namespace Net
             idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
             //consoleDebugger?.Invoke(debug);
             Inspect(fieldType, fieldValue, idRoute);
+        }
+
+        private object GetKeyIdentifier(object key)
+        {
+            // For simple types that can be serialized, use the actual value
+            if (key is int || key is string || key is float ||
+                key is bool || key.GetType().IsEnum)
+            {
+                return key;
+            }
+            // Fallback to hash code for complex types
+            return key.GetHashCode();
+        }
+
+        private int GetStableKeyHash(object key)
+        {
+            // For types that can be reliably hashed
+            if (key is string strKey) return strKey.GetHashCode();
+            if (key is int intKey) return intKey;
+            if (key is float floatKey) return floatKey.GetHashCode();
+            if (key.GetType().IsEnum) return (int)key;
+
+            // Fallback to standard hash code
+            return key.GetHashCode();
         }
 
         public void SendPackage(object value, NetVariable attribute, List<RouteInfo> idRoute)
@@ -459,7 +517,7 @@ namespace Net
 
                 default:
                     debug += $"Unhandled message type: {messageType}\n";
-                    //consoleDebugger?.Invoke(debug);
+                    consoleDebugger?.Invoke(debug);
                     break;
             }
         }
@@ -475,7 +533,7 @@ namespace Net
                 if (route == null || route.Count == 0)
                 {
                     debug += "Empty route, aborting\n";
-                    //consoleDebugger?.Invoke(debug);
+                    consoleDebugger?.Invoke(debug);
                     return;
                 }
 
@@ -483,7 +541,7 @@ namespace Net
                 if (objectRoot == null)
                 {
                     debug += $"No INetObj found for ID: {route[0].route}\n";
-                    //consoleDebugger?.Invoke(debug);
+                    consoleDebugger?.Invoke(debug);
                     return;
                 }
 
@@ -493,7 +551,7 @@ namespace Net
                 if (objectRoot.GetOwnerID() != networkEntity.clientID)
                 {
                     debug += "Proceeding with write operation\n";
-                    //consoleDebugger?.Invoke(debug);
+                    consoleDebugger?.Invoke(debug);
                     object result = InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
                     debug += $"InspectWrite completed. Result: {result}\n";
                 }
@@ -507,7 +565,7 @@ namespace Net
                 debug += $"VariableMapping error: {ex.Message}\n{ex.StackTrace}";
             }
 
-            //consoleDebugger?.Invoke(debug);
+            consoleDebugger?.Invoke(debug);
         }
 
         void VariableMappingNullException(List<RouteInfo> route, object variableValue)
@@ -538,6 +596,21 @@ namespace Net
                 debug += "Processing write operation for null exception\n";
                 //consoleDebugger?.Invoke(debug);
                 _ = InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+            }
+
+            if (objectRoot.GetOwnerID() != networkEntity.clientID)
+            {
+                debug += "Processing write operation for null exception\n";
+                //consoleDebugger?.Invoke(debug);
+                if (route.Count > 1 && route[1].IsDictionary)
+                {
+                    // For dictionaries, set to empty dictionary rather than null
+                    _ = InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+                }
+                else
+                {
+                    _ = InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+                }
             }
         }
 
@@ -585,14 +658,14 @@ namespace Net
                 if (obj == null)
                 {
                     debug += "Target object is null\n";
-                    //consoleDebugger?.Invoke(debug);
+                    consoleDebugger?.Invoke(debug);
                     return null;
                 }
 
                 if (idRoute.Count <= idToRead)
                 {
                     debug += "Route exhausted without finding target\n";
-                    //consoleDebugger?.Invoke(debug);
+                    consoleDebugger?.Invoke(debug);
                     return obj;
                 }
 
@@ -607,11 +680,11 @@ namespace Net
                     {
                         debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
                         debug += $"Current field value: {info.GetValue(obj)}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
 
                         object result = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         return result;
                     }
                 }
@@ -644,7 +717,7 @@ namespace Net
                 debug += $"InspectWrite error: {ex.Message}\n{ex.StackTrace}";
             }
 
-            //consoleDebugger?.Invoke(debug);
+            consoleDebugger?.Invoke(debug);
             return obj;
         }
 
@@ -787,6 +860,10 @@ namespace Net
                         }
                     }
                 }
+                else if (currentRoute.IsDictionary)
+                {
+                    return HandleDictionaryWrite(info, obj, attribute, idRoute, idToRead, value);
+                }
                 else
                 {
                     // For non-array collections, use OLD code's approach
@@ -884,6 +961,77 @@ namespace Net
             return obj;
         }
 
+        private object HandleDictionaryWrite(FieldInfo info, object obj, NetVariable attribute,
+                                   List<RouteInfo> idRoute, int idToRead, object value)
+        {
+            string debug = "HandleDictionaryWrite - ";
+            debug += $"Field: {info.Name}, Current Route Index: {idToRead}\n";
+
+            RouteInfo currentRoute = idRoute[idToRead];
+            debug += $"RouteInfo: {currentRoute}\n";
+            Type fieldType = info.FieldType;
+            Type[] genericArgs = fieldType.GetGenericArguments();
+            Type valueType = genericArgs[1];
+            IDictionary dictionary = (IDictionary)info.GetValue(obj);
+            if (dictionary == null)
+            {
+                debug += "Creating new dictionary instance\n";
+                dictionary = (IDictionary)Activator.CreateInstance(info.FieldType);
+            }
+
+            debug += $"Looking for key with hash: {currentRoute.collectionKey}\n";
+            debug += $"Current dictionary keys: {string.Join(", ", dictionary.Keys.Cast<object>().Select(k => $"{k}(hash:{GetStableKeyHash(k)})"))}\n";
+
+            object matchingKey = FindMatchingKey(dictionary, currentRoute.collectionKey);
+            debug += matchingKey != null
+                ? $"Found matching key: {matchingKey}\n"
+                : "No matching key found!\n";
+
+            if (matchingKey != null)
+            {
+                if (idRoute.Count <= idToRead + 1)
+                {
+                    debug += $"Directly setting value: {value}\n";
+                    dictionary[matchingKey] = value;
+                }
+                else
+                {
+                    debug += $"Nested inspection for value\n";
+                    object element = dictionary[matchingKey] ?? ConstructObject(valueType);
+                    dictionary[matchingKey] = element;
+                    InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
+                }
+            }
+
+            info.SetValue(obj, dictionary);
+            debug += $"Final dictionary state: {string.Join(", ", dictionary.Keys.Cast<object>().Select(k => $"{k}={dictionary[k]}"))}\n";
+
+            consoleDebugger?.Invoke(debug);
+            return obj;
+        }
+
+        private object FindMatchingKey(IDictionary dictionary, int keyHash)
+        {
+            foreach (object key in dictionary.Keys)
+            {
+                if (GetStableKeyHash(key) == keyHash)
+                    return key;
+            }
+            return null;
+        }
+
+        private object FindKeyByHash(IDictionary dictionary, int keyHash)
+        {
+            foreach (object key in dictionary.Keys)
+            {
+                if (key.GetHashCode() == keyHash)
+                {
+                    return key;
+                }
+            }
+            return null;
+        }
+
         private bool IsSimpleType(Type type)
         {
             return (type.IsValueType && type.IsPrimitive) || type == typeof(string) || type.IsEnum;
@@ -934,12 +1082,19 @@ namespace Net
 
         private object HandleDictionaryNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            RouteInfo currentRoute = idRoute[idToRead]; // Create empty dictionary
+            RouteInfo currentRoute = idRoute[idToRead];
+            Type fieldType = info.FieldType;
 
-            Type dictType = typeof(Dictionary<,>).MakeGenericType(typeof(object), currentRoute.ElementType ?? typeof(object)); // Create empty dictionary correct type
-            IDictionary emptyDict = (IDictionary)Activator.CreateInstance(dictType);
+            if (currentRoute.IsDictionary)
+            {
+                // Create empty dictionary of the correct type
+                Type[] genericArgs = fieldType.GetGenericArguments();
+                Type dictType = typeof(Dictionary<,>).MakeGenericType(genericArgs[0], genericArgs[1]);
+                IDictionary emptyDict = (IDictionary)Activator.CreateInstance(dictType);
+                info.SetValue(obj, emptyDict);
+                return obj;
+            }
 
-            info.SetValue(obj, emptyDict);
             return obj;
         }
 
@@ -1000,6 +1155,13 @@ namespace Net
                 debug += "Sending NULL package\n";
                 //consoleDebugger?.Invoke(debug);
                 SendPackage(NullOrEmpty.Null, attribute, route);
+                return;
+            }
+
+            if (value is DictionaryEntry dictEntry)
+            {
+                debug += "Processing DictionaryEntry\n";
+                ProcessValue(dictEntry.Value, route, attribute);
                 return;
             }
 

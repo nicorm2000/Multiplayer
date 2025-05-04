@@ -205,18 +205,21 @@ namespace Net
                                 valueType)
                         };
 
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         ProcessValue(entry.Value, currentRoute, attribute);
                     }
 
                     if (dictionary.Count == 0)
                     {
-                        idRoute.Add(RouteInfo.CreateForDictionary(
-                            attribute.VariableId,
-                            -1, // No key
-                            valueType));
-
-                        SendPackage(NullOrEmpty.Empty, attribute, idRoute);
+                        List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
+                        {
+                            new RouteInfo(
+                                route: attribute.VariableId,
+                                collectionKey: 0, // Use 0 instead of -1 for empty dict
+                                collectionSize: 0,
+                                elementType: valueType)
+                        };
+                        SendPackage(NullOrEmpty.Empty, attribute, currentRoute);
                     }
                     return;
                 }
@@ -517,7 +520,7 @@ namespace Net
 
                 default:
                     debug += $"Unhandled message type: {messageType}\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     break;
             }
         }
@@ -533,7 +536,7 @@ namespace Net
                 if (route == null || route.Count == 0)
                 {
                     debug += "Empty route, aborting\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     return;
                 }
 
@@ -541,7 +544,7 @@ namespace Net
                 if (objectRoot == null)
                 {
                     debug += $"No INetObj found for ID: {route[0].route}\n";
-                    consoleDebugger?.Invoke(debug);
+                    ///consoleDebugger?.Invoke(debug);
                     return;
                 }
 
@@ -551,7 +554,7 @@ namespace Net
                 if (objectRoot.GetOwnerID() != networkEntity.clientID)
                 {
                     debug += "Proceeding with write operation\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     object result = InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
                     debug += $"InspectWrite completed. Result: {result}\n";
                 }
@@ -565,7 +568,7 @@ namespace Net
                 debug += $"VariableMapping error: {ex.Message}\n{ex.StackTrace}";
             }
 
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
         }
 
         void VariableMappingNullException(List<RouteInfo> route, object variableValue)
@@ -602,15 +605,7 @@ namespace Net
             {
                 debug += "Processing write operation for null exception\n";
                 //consoleDebugger?.Invoke(debug);
-                if (route.Count > 1 && route[1].IsDictionary)
-                {
-                    // For dictionaries, set to empty dictionary rather than null
-                    _ = InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
-                }
-                else
-                {
-                    _ = InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
-                }
+                _ = InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             }
         }
 
@@ -639,10 +634,10 @@ namespace Net
 
             if (objectRoot.GetOwnerID() != networkEntity.clientID)
             {
-                debug += "Processing write operation for empty value\n";
-                //consoleDebugger?.Invoke(debug);
+                debug += "Processing empty collection\n";
                 _ = InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             }
+            consoleDebugger?.Invoke(debug);
         }
 
         public object InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
@@ -665,7 +660,7 @@ namespace Net
                 if (idRoute.Count <= idToRead)
                 {
                     debug += "Route exhausted without finding target\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     return obj;
                 }
 
@@ -680,11 +675,11 @@ namespace Net
                     {
                         debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
                         debug += $"Current field value: {info.GetValue(obj)}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
 
                         object result = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         return result;
                     }
                 }
@@ -762,7 +757,7 @@ namespace Net
             if (obj == null || idRoute.Count <= idToRead)
             {
                 debug += $"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n";
-                //consoleDebugger?.Invoke(debug);
+                consoleDebugger?.Invoke(debug);
                 return obj;
             }
 
@@ -775,13 +770,13 @@ namespace Net
                 if (attributes != null && attributes.VariableId == currentRoute.route)
                 {
                     debug += $"Found matching field: {info.Name}, VariableId: {attributes.VariableId}\n";
-                    //consoleDebugger?.Invoke(debug);
+                    consoleDebugger?.Invoke(debug);
                     return WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
                 }
             }
 
             debug += "No matching field found\n";
-            //consoleDebugger?.Invoke(debug);
+            consoleDebugger?.Invoke(debug);
             return obj;
         }
 
@@ -961,8 +956,7 @@ namespace Net
             return obj;
         }
 
-        private object HandleDictionaryWrite(FieldInfo info, object obj, NetVariable attribute,
-                                   List<RouteInfo> idRoute, int idToRead, object value)
+        private object HandleDictionaryWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
             string debug = "HandleDictionaryWrite - ";
             debug += $"Field: {info.Name}, Current Route Index: {idToRead}\n";
@@ -973,6 +967,7 @@ namespace Net
             Type[] genericArgs = fieldType.GetGenericArguments();
             Type valueType = genericArgs[1];
             IDictionary dictionary = (IDictionary)info.GetValue(obj);
+
             if (dictionary == null)
             {
                 debug += "Creating new dictionary instance\n";
@@ -1020,18 +1015,6 @@ namespace Net
             return null;
         }
 
-        private object FindKeyByHash(IDictionary dictionary, int keyHash)
-        {
-            foreach (object key in dictionary.Keys)
-            {
-                if (key.GetHashCode() == keyHash)
-                {
-                    return key;
-                }
-            }
-            return null;
-        }
-
         private bool IsSimpleType(Type type)
         {
             return (type.IsValueType && type.IsPrimitive) || type == typeof(string) || type.IsEnum;
@@ -1039,20 +1022,68 @@ namespace Net
 
         object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
+            consoleDebugger?.Invoke($"WriteValueNullException - Field: {info.Name}, Type: {info.FieldType}, Value: {value}");
+
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
 
-            if ((fieldType.IsValueType && fieldType.IsPrimitive) || fieldType == typeof(string) || fieldType.IsEnum) // Simple cases
+            // Handle simple types
+            if ((fieldType.IsValueType && fieldType.IsPrimitive) || fieldType == typeof(string) || fieldType.IsEnum)
             {
                 info.SetValue(obj, null);
                 return obj;
             }
 
-            if (typeof(IEnumerable).IsAssignableFrom(fieldType))
+            bool isEmpty = value is NullOrEmpty.Empty || (value?.ToString() == "Empty");
+
+            if (isEmpty)
             {
-                return HandleCollectionNullException(info, obj, attribute, idRoute, idToRead, value);
+                consoleDebugger?.Invoke("Processing EMPTY state");
+
+                object currentValue = info.GetValue(obj);
+
+                // Handle collections generically
+                if (currentValue is IEnumerable enumerable && currentValue != null)
+                {
+                    consoleDebugger?.Invoke("Processing collection");
+
+                    // Try to find and invoke Clear() method dynamically
+                    MethodInfo clearMethod = currentValue.GetType().GetMethod("Clear");
+                    if (clearMethod != null)
+                    {
+                        consoleDebugger?.Invoke("Invoking Clear()");
+                        clearMethod.Invoke(currentValue, null);
+                    }
+                    else
+                    {
+                        // Fallback for collections without Clear()
+                        consoleDebugger?.Invoke("No Clear() found - creating new instance");
+                        currentValue = FormatterServices.GetUninitializedObject(info.FieldType);
+                        info.SetValue(obj, currentValue);
+                    }
+                }
+                else if (currentValue == null)
+                {
+                    consoleDebugger?.Invoke("Creating new empty instance");
+                    currentValue = FormatterServices.GetUninitializedObject(info.FieldType);
+                    info.SetValue(obj, currentValue);
+                }
+
+                // Recursively process all NetVariable fields
+                foreach (FieldInfo field in info.FieldType.GetFields(bindingFlags))
+                {
+                    var fieldAttr = field.GetCustomAttribute<NetVariable>();
+                    if (fieldAttr != null)
+                    {
+                        WriteValueNullException(field, currentValue, fieldAttr,
+                            new List<RouteInfo>(idRoute) { RouteInfo.CreateForProperty(fieldAttr.VariableId) },
+                            idToRead + 1, value);
+                    }
+                }
+                return obj;
             }
 
+            // Default null handling
             info.SetValue(obj, null);
             return obj;
         }
@@ -1085,14 +1116,31 @@ namespace Net
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
 
+            consoleDebugger?.Invoke("First if");
             if (currentRoute.IsDictionary)
             {
-                // Create empty dictionary of the correct type
-                Type[] genericArgs = fieldType.GetGenericArguments();
-                Type dictType = typeof(Dictionary<,>).MakeGenericType(genericArgs[0], genericArgs[1]);
-                IDictionary emptyDict = (IDictionary)Activator.CreateInstance(dictType);
-                info.SetValue(obj, emptyDict);
-                return obj;
+                consoleDebugger?.Invoke("Second if");
+                // Handle empty dictionary case
+                if (value is NullOrEmpty.Empty)
+                {
+                    consoleDebugger?.Invoke("Processing EMPTY dictionary");
+
+                    // Get current dictionary without clearing if exists
+                    IDictionary currentDict = (IDictionary)info.GetValue(obj);
+                    if (currentDict == null)
+                    {
+                        consoleDebugger?.Invoke("Creating new empty dictionary");
+                        Type[] genericArgs = fieldType.GetGenericArguments();
+                        Type dictType = typeof(Dictionary<,>).MakeGenericType(genericArgs[0], genericArgs[1]);
+                        currentDict = (IDictionary)Activator.CreateInstance(dictType);
+                        info.SetValue(obj, currentDict);
+                    }
+                    return obj;
+                }
+
+                // Original null case handling
+                consoleDebugger?.Invoke("Processing NULL dictionary");
+                info.SetValue(obj, null);
             }
 
             return obj;
@@ -1158,10 +1206,27 @@ namespace Net
                 return;
             }
 
-            if (value is DictionaryEntry dictEntry)
+            if (value is IDictionary dict && dict.Count == 0)
             {
-                debug += "Processing DictionaryEntry\n";
-                ProcessValue(dictEntry.Value, route, attribute);
+                // Ensure we preserve dictionary type information
+                RouteInfo lastRoute = route.Last();
+                if (!lastRoute.IsDictionary && route.Count > 1)
+                {
+                    lastRoute = route[route.Count - 2];
+                }
+
+                if (lastRoute.IsDictionary)
+                {
+                    // Create new route info with proper dictionary flags
+                    RouteInfo dictRoute = RouteInfo.CreateForDictionary(
+                        lastRoute.route,
+                        -1, // No specific key
+                        lastRoute.ElementType ?? typeof(object));
+
+                    route[route.Count - 1] = dictRoute;
+                }
+
+                SendPackage(NullOrEmpty.Empty, attribute, route);
                 return;
             }
 

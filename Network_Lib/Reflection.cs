@@ -194,15 +194,9 @@ namespace Net
 
                     foreach (DictionaryEntry entry in dictionary)
                     {
-                        int keyHash = GetStableKeyHash(entry.Key);
-                        debug += $"Processing dictionary entry - Key: {entry.Key} (Hash: {keyHash}), Value: {entry.Value}\n";
-
                         List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
                         {
-                            RouteInfo.CreateForDictionary(
-                                attribute.VariableId,
-                                keyHash,
-                                valueType)
+                            RouteInfo.CreateForDictionary(attribute.VariableId, GetStableKeyHash(entry.Key), valueType)
                         };
 
                         //consoleDebugger?.Invoke(debug);
@@ -637,7 +631,7 @@ namespace Net
                 debug += "Processing empty collection\n";
                 _ = InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             }
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
         }
 
         public object InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
@@ -712,7 +706,7 @@ namespace Net
                 debug += $"InspectWrite error: {ex.Message}\n{ex.StackTrace}";
             }
 
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
             return obj;
         }
 
@@ -757,7 +751,7 @@ namespace Net
             if (obj == null || idRoute.Count <= idToRead)
             {
                 debug += $"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n";
-                consoleDebugger?.Invoke(debug);
+                //consoleDebugger?.Invoke(debug);
                 return obj;
             }
 
@@ -770,13 +764,13 @@ namespace Net
                 if (attributes != null && attributes.VariableId == currentRoute.route)
                 {
                     debug += $"Found matching field: {info.Name}, VariableId: {attributes.VariableId}\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     return WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
                 }
             }
 
             debug += "No matching field found\n";
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
             return obj;
         }
 
@@ -982,20 +976,24 @@ namespace Net
                 ? $"Found matching key: {matchingKey}\n"
                 : "No matching key found!\n";
 
-            if (matchingKey != null)
+            if (idRoute.Count <= idToRead + 1)
             {
-                if (idRoute.Count <= idToRead + 1)
+                debug += $"Directly setting value: {value}\n";
+                if (matchingKey != null)
                 {
-                    debug += $"Directly setting value: {value}\n";
                     dictionary[matchingKey] = value;
                 }
                 else
                 {
-                    debug += $"Nested inspection for value\n";
-                    object element = dictionary[matchingKey] ?? ConstructObject(valueType);
-                    dictionary[matchingKey] = element;
-                    InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
+                    dictionary[currentRoute.collectionKey] = value;
                 }
+            }
+            else
+            {
+                debug += $"Nested inspection for value\n";
+                object element = dictionary[matchingKey] ?? ConstructObject(valueType);
+                dictionary[matchingKey] = element;
+                InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
             }
 
             info.SetValue(obj, dictionary);
@@ -1072,7 +1070,7 @@ namespace Net
                 // Recursively process all NetVariable fields
                 foreach (FieldInfo field in info.FieldType.GetFields(bindingFlags))
                 {
-                    var fieldAttr = field.GetCustomAttribute<NetVariable>();
+                    NetVariable fieldAttr = field.GetCustomAttribute<NetVariable>();
                     if (fieldAttr != null)
                     {
                         WriteValueNullException(field, currentValue, fieldAttr,
@@ -1085,110 +1083,6 @@ namespace Net
 
             // Default null handling
             info.SetValue(obj, null);
-            return obj;
-        }
-
-        private object HandleCollectionNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
-        {
-            RouteInfo currentRoute = idRoute[idToRead];
-            Type fieldType = info.FieldType;
-
-            if (currentRoute.IsDictionary)
-            {
-                return HandleDictionaryNullException(info, obj, attribute, idRoute, idToRead, value);
-            }
-
-            if (currentRoute.IsMultiDimensionalArray)
-            {
-                return HandleMultiDimensionalArrayNullException(info, obj, attribute, idRoute, idToRead, value);
-            }
-
-            if (currentRoute.IsJaggedArray)
-            {
-                return HandleJaggedArrayNullException(info, obj, attribute, idRoute, idToRead, value);
-            }
-
-            return HandleRegularCollectionNullException(info, obj, attribute, idRoute, idToRead, value);
-        }
-
-        private object HandleDictionaryNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
-        {
-            RouteInfo currentRoute = idRoute[idToRead];
-            Type fieldType = info.FieldType;
-
-            consoleDebugger?.Invoke("First if");
-            if (currentRoute.IsDictionary)
-            {
-                consoleDebugger?.Invoke("Second if");
-                // Handle empty dictionary case
-                if (value is NullOrEmpty.Empty)
-                {
-                    consoleDebugger?.Invoke("Processing EMPTY dictionary");
-
-                    // Get current dictionary without clearing if exists
-                    IDictionary currentDict = (IDictionary)info.GetValue(obj);
-                    if (currentDict == null)
-                    {
-                        consoleDebugger?.Invoke("Creating new empty dictionary");
-                        Type[] genericArgs = fieldType.GetGenericArguments();
-                        Type dictType = typeof(Dictionary<,>).MakeGenericType(genericArgs[0], genericArgs[1]);
-                        currentDict = (IDictionary)Activator.CreateInstance(dictType);
-                        info.SetValue(obj, currentDict);
-                    }
-                    return obj;
-                }
-
-                // Original null case handling
-                consoleDebugger?.Invoke("Processing NULL dictionary");
-                info.SetValue(obj, null);
-            }
-
-            return obj;
-        }
-
-        private object HandleMultiDimensionalArrayNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
-        {
-            RouteInfo currentRoute = idRoute[idToRead];
-
-            Array emptyArray = Array.CreateInstance(currentRoute.ElementType ?? typeof(object), currentRoute.Dimensions.Length > 0 ? currentRoute.Dimensions : new[] { 0 }); // Correct dimensions empty array
-
-            info.SetValue(obj, emptyArray);
-            return obj;
-        }
-
-        private object HandleJaggedArrayNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
-        {
-            RouteInfo currentRoute = idRoute[idToRead];
-
-            Array emptyJaggedArray = Array.CreateInstance(currentRoute.ElementType?.MakeArrayType() ?? typeof(object).MakeArrayType(), currentRoute.Dimensions.Length > 0 ? currentRoute.Dimensions[0] : 0); // Empty jagged array
-
-            info.SetValue(obj, emptyJaggedArray);
-            return obj;
-        }
-
-        private object HandleRegularCollectionNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
-        {
-            RouteInfo currentRoute = idRoute[idToRead];
-            Type fieldType = info.FieldType;
-
-            object emptyCollection;
-
-            if (fieldType.IsArray)
-            {
-                emptyCollection = Array.CreateInstance(currentRoute.ElementType ?? typeof(object), 0); // Empty array
-            }
-            else if (fieldType.IsGenericType)
-            {
-                Type collectionType = fieldType.GetGenericTypeDefinition().MakeGenericType(currentRoute.ElementType ?? typeof(object)); // Generic empty collection
-                emptyCollection = Activator.CreateInstance(collectionType);
-            }
-            else
-            {
-                Type listType = typeof(List<>).MakeGenericType(currentRoute.ElementType ?? typeof(object)); // Empty list by default
-                emptyCollection = Activator.CreateInstance(listType);
-            }
-
-            info.SetValue(obj, emptyCollection);
             return obj;
         }
 

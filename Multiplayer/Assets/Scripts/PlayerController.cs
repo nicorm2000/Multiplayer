@@ -202,7 +202,7 @@ public class PlayerController : MonoBehaviour, INetObj
         dictionaryTest = new DictionaryTestClass();
         Debug.Log($"Client {clientID} Dictionary initialized with {dictionaryTest.testDictionary.Count} entries");
     }
-    
+
     [ContextMenu("Add Dictionary Entry")]
     private void AddDictionaryEntry()
     {
@@ -210,13 +210,13 @@ public class PlayerController : MonoBehaviour, INetObj
         {
             dictionaryTest = new DictionaryTestClass();
         }
-    
+
         int newKey = dictionaryTest.testDictionary.Keys.Max() + 1;
         string newValue = $"Entry {newKey} (Client {clientID})";
         dictionaryTest.testDictionary.Add(newKey, newValue);
         Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
     }
-    
+
     [ContextMenu("Remove Last Dictionary Entry")]
     private void RemoveDictionaryEntry()
     {
@@ -228,7 +228,7 @@ public class PlayerController : MonoBehaviour, INetObj
             Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
         }
     }
-    
+
     [ContextMenu("Update Random Dictionary Value")]
     private void UpdateRandomDictionaryValue()
     {
@@ -242,7 +242,7 @@ public class PlayerController : MonoBehaviour, INetObj
             Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
         }
     }
-    
+
     [ContextMenu("Clear Dictionary")]
     private void ClearDictionary()
     {
@@ -252,7 +252,7 @@ public class PlayerController : MonoBehaviour, INetObj
             Debug.Log($"Client {clientID} cleared dictionary (now has {dictionaryTest.testDictionary.Count} entries)");
         }
     }
-    
+
     [ContextMenu("Set Dictionary to Null")]
     private void NullDictionary()
     {
@@ -471,6 +471,22 @@ public class PlayerController : MonoBehaviour, INetObj
 
     private void Update()
     {
+        #region LIST
+        //if (Input.GetKeyDown(KeyCode.Space))
+        //{
+        //    testList = null;
+        //}
+        //else if (Input.GetKeyDown(KeyCode.A))
+        //{
+        //    if (testList == null)
+        //    {
+        //        testList = new();
+        //        testList.Add(1);
+        //        testList.Add(2);
+        //        testList.Add(3);
+        //    }
+        //}
+        #endregion
         #region CLASS
         //if (Input.GetKeyDown(KeyCode.P))
         //{

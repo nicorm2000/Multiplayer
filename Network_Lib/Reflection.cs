@@ -187,36 +187,52 @@ namespace Net
                 }
                 else if (typeof(IDictionary).IsAssignableFrom(fieldType))
                 {
-                    debug += "\n--- DICTIONARY INSPECTION ---\n";
                     IDictionary dictionary = (IDictionary)fieldValue;
                     Type valueType = fieldType.GetGenericArguments()[1];
 
                     // Track changes
                     List<object> currentKeys = dictionary.Keys.Cast<object>().ToList();
-                    debug += ($"Current Keys: {string.Join(",", currentKeys)}");
+                    debug += ($"Current Keys: {string.Join(",", currentKeys)}\n");
 
-                    // Check for removals
+                    // Check for removals FIRST
                     if (_previousDictionaryStates.TryGetValue(dictionary, out var previousKeys))
                     {
                         List<object> removedKeys = previousKeys.Keys.Except(currentKeys).ToList();
-                        debug += ($"Removed Keys: {(removedKeys.Any() ? string.Join(",", removedKeys) : "none")}");
+                        debug += ($"Removed Keys: {(removedKeys.Any() ? string.Join(",", removedKeys) : "none")}\n");
 
-                        foreach (object? key in removedKeys)
+                        // Process removals FIRST and RETURN
+                        if (removedKeys.Any())
                         {
-                            List<RouteInfo> removeRoute = new List<RouteInfo>(idRoute)
+                            foreach (object? key in removedKeys)
                             {
-                                RouteInfo.CreateForDictionary(attribute.VariableId, previousKeys[key], valueType)
-                            };
-                            debug += ($"Sending Remove for Key: {key} (Hash: {previousKeys[key]})");
-                            SendPackage(NullOrEmpty.Remove, attribute, removeRoute);
+                                int keyHash = GetStableKeyHash(key);
+                                debug += ($"Sending Remove for Key: {key} (Hash: {keyHash})\n");
+
+                                List<RouteInfo> removeRoute = new List<RouteInfo>(idRoute)
+                                {
+                                    RouteInfo.CreateForDictionary(attribute.VariableId, keyHash, valueType)
+                                };
+
+                                // Create and send dedicated Remove message
+                                NetRemoveMessage removeMessage = new NetRemoveMessage(
+                                    attribute.MessagePriority,
+                                    keyHash,
+                                    removeRoute);
+
+                                byte[] serialized = removeMessage.Serialize();
+                                consoleDebugger?.Invoke($"Sending Remove - Full Data: {BitConverter.ToString(serialized)}");
+                                networkEntity.SendMessage(serialized);
+                            }
+
+                            // Update state and RETURN after processing removals
+                            _previousDictionaryStates[dictionary] = currentKeys.ToDictionary(k => k, GetStableKeyHash);
+                            debug += ("--- REMOVALS PROCESSED ---");
+                            consoleDebugger?.Invoke(debug.ToString());
+                            return;
                         }
                     }
 
-                    // Update state
-                    _previousDictionaryStates[dictionary] = currentKeys.ToDictionary(k => k, GetStableKeyHash);
-                    debug += ($"Stored Key Hashes: {string.Join(",", currentKeys.Select(k => GetStableKeyHash(k)))}");
-
-                    // Process current values
+                    // Only process current values if no removals occurred
                     foreach (DictionaryEntry entry in dictionary)
                     {
                         ProcessValue(entry.Value, new List<RouteInfo>(idRoute)
@@ -224,6 +240,18 @@ namespace Net
                             RouteInfo.CreateForDictionary(attribute.VariableId, GetStableKeyHash(entry.Key), valueType)
                         }, attribute);
                     }
+
+                    // Handle empty dictionary
+                    if (dictionary.Count == 0)
+                    {
+                        SendPackage(NullOrEmpty.Empty, attribute, new List<RouteInfo>(idRoute)
+                        {
+                            RouteInfo.CreateForDictionary(attribute.VariableId, -1, valueType)
+                        });
+                    }
+
+                    // Update state
+                    _previousDictionaryStates[dictionary] = currentKeys.ToDictionary(k => k, GetStableKeyHash);
 
                     debug += ("--- INSPECTION COMPLETE ---");
                     consoleDebugger?.Invoke(debug.ToString());
@@ -319,27 +347,14 @@ namespace Net
 
             if (value is NullOrEmpty.Remove)
             {
-                debug += "Preparing REMOVE message";
-                int keyHash = idRoute.Last().collectionKey;
-                debug += $"Creating NetRemoveMessage with keyHash: {keyHash}";
-
-                NetRemoveMessage netRemoveMessage = new NetRemoveMessage(attribute.MessagePriority, keyHash, idRoute);
-                byte[] rawData = netRemoveMessage.Serialize();
-
-                debug += $"Serialized data ({rawData.Length} bytes): {BitConverter.ToString(rawData)}";
-                debug += "Sending through networkEntity...";
-
-                try
-                {
-                    networkEntity.SendMessage(rawData);
-                    debug += "SendMessage completed without exceptions";
-                }
-                catch (Exception ex)
-                {
-                    debug += $"SendMessage ERROR: {ex.Message}";
-                }
-
+                debug += "Sending RemoveMessage\n";
                 consoleDebugger?.Invoke(debug);
+                int keyHash = idRoute.Last().collectionKey;
+                NetRemoveMessage netRemoveMessage = new NetRemoveMessage(attribute.MessagePriority, keyHash, idRoute);
+                byte[] serialized = netRemoveMessage.Serialize();
+                consoleDebugger?.Invoke($"Sending Remove - KeyHash: {keyHash}, Data: {BitConverter.ToString(serialized)}");
+                networkEntity.SendMessage(serialized);
+                return;
             }
 
             if (value is Enum enumValue)
@@ -372,7 +387,7 @@ namespace Net
                                 {
                                     var message = (ParentBaseMessage)ctor.Invoke(parameters);
                                     debug += $"Message created successfully. Serializing...\n";
-                                    consoleDebugger?.Invoke(debug);
+                                    //consoleDebugger?.Invoke(debug);
                                     networkEntity.SendMessage(message.Serialize());
                                     return;
                                 }
@@ -391,35 +406,39 @@ namespace Net
             }
 
             debug += $"No suitable message type found for {packageType.Name}\n";
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
         }
 
         public void OnReceivedReflectionMessage(byte[] data, IPEndPoint ip)
         {
             try
             {
+                //consoleDebugger?.Invoke($"Received {data.Length} bytes: {BitConverter.ToString(data)}");
+                //int rawType = BitConverter.ToInt32(data, 0);
+                //consoleDebugger?.Invoke($"First 4 bytes: {rawType} ({(MessageType)rawType})");
+
                 string debug = "OnReceivedReflectionMessage - ";
-                // Verify minimum length
-                if (data == null || data.Length < 4)
-                {
-                    consoleDebugger?.Invoke("ERROR: Message too short");
-                    return;
-                }
+                //// Verify minimum length
+                //if (data == null || data.Length < 4)
+                //{
+                //    consoleDebugger?.Invoke("ERROR: Message too short");
+                //    return;
+                //}
 
                 // Directly read message type from first 4 bytes
                 //MessageType messageType = (MessageType)BitConverter.ToInt32(data, 0);
                 MessageType messageType = MessageChecker.CheckMessageType(data);
-                consoleDebugger?.Invoke($"Received MessageType: {messageType}");
-                consoleDebugger?.Invoke($"\nRAW DATA RECEIVED ({data?.Length ?? 0} bytes): {BitConverter.ToString(data ?? new byte[0])}");
+                //consoleDebugger?.Invoke($"Received MessageType: {messageType}");
+                //consoleDebugger?.Invoke($"\nRAW DATA RECEIVED ({data?.Length ?? 0} bytes): {BitConverter.ToString(data ?? new byte[0])}");
                 debug += $"Message Type: {messageType}\n";
 
-                switch (MessageChecker.CheckMessageType(data))
+                switch (messageType)
                 {
                     case MessageType.Ulong:
                         debug += "Processing Ulong message\n";
                         NetULongMessage netULongMessage = new NetULongMessage(data);
                         debug += $"Data: {netULongMessage.GetData()}, Route: {string.Join("->", netULongMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netULongMessage.GetMessageRoute(), netULongMessage.GetData());
                         break;
 
@@ -427,7 +446,7 @@ namespace Net
                         debug += "Processing Uint message\n";
                         NetUIntMessage netUIntMessage = new NetUIntMessage(data);
                         debug += $"Data: {netUIntMessage.GetData()}, Route: {string.Join("->", netUIntMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netUIntMessage.GetMessageRoute(), netUIntMessage.GetData());
                         break;
 
@@ -435,7 +454,7 @@ namespace Net
                         debug += "Processing Ushort message\n";
                         NetUShortMessage netUShortMessage = new NetUShortMessage(data);
                         debug += $"Data: {netUShortMessage.GetData()}, Route: {string.Join("->", netUShortMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netUShortMessage.GetMessageRoute(), netUShortMessage.GetData());
                         break;
 
@@ -443,7 +462,7 @@ namespace Net
                         debug += "Processing String message\n";
                         NetStringMessage netStringMessage = new NetStringMessage(data);
                         debug += $"Data: {netStringMessage.GetData()}, Route: {string.Join("->", netStringMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
                         break;
 
@@ -451,7 +470,7 @@ namespace Net
                         debug += "Processing Short message\n";
                         NetShortMessage netShortMessage = new NetShortMessage(data);
                         debug += $"Data: {netShortMessage.GetData()}, Route: {string.Join("->", netShortMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netShortMessage.GetMessageRoute(), netShortMessage.GetData());
                         break;
 
@@ -459,7 +478,7 @@ namespace Net
                         debug += "Processing Sbyte message\n";
                         NetSByteMessage netSByteMessage = new NetSByteMessage(data);
                         debug += $"Data: {netSByteMessage.GetData()}, Route: {string.Join("->", netSByteMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netSByteMessage.GetMessageRoute(), netSByteMessage.GetData());
                         break;
 
@@ -467,7 +486,7 @@ namespace Net
                         debug += "Processing Long message\n";
                         NetLongMessage netLongMessage = new NetLongMessage(data);
                         debug += $"Data: {netLongMessage.GetData()}, Route: {string.Join("->", netLongMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netLongMessage.GetMessageRoute(), netLongMessage.GetData());
                         break;
 
@@ -483,7 +502,7 @@ namespace Net
                         debug += "Processing Float message\n";
                         NetFloatMessage netFloatMessage = new NetFloatMessage(data);
                         debug += $"Data: {netFloatMessage.GetData()}, Route: {string.Join("->", netFloatMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netFloatMessage.GetMessageRoute(), netFloatMessage.GetData());
                         break;
 
@@ -491,7 +510,7 @@ namespace Net
                         debug += "Processing Double message\n";
                         NetDoubleMessage netDoubleMessage = new NetDoubleMessage(data);
                         debug += $"Data: {netDoubleMessage.GetData()}, Route: {string.Join("->", netDoubleMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netDoubleMessage.GetMessageRoute(), netDoubleMessage.GetData());
                         break;
 
@@ -499,7 +518,7 @@ namespace Net
                         debug += "Processing Decimal message\n";
                         NetDecimalMessage netDecimalMessage = new NetDecimalMessage(data);
                         debug += $"Data: {netDecimalMessage.GetData()}, Route: {string.Join("->", netDecimalMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netDecimalMessage.GetMessageRoute(), netDecimalMessage.GetData());
                         break;
 
@@ -507,7 +526,7 @@ namespace Net
                         debug += "Processing Char message\n";
                         NetCharMessage netCharMessage = new NetCharMessage(data);
                         debug += $"Data: {netCharMessage.GetData()}, Route: {string.Join("->", netCharMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netCharMessage.GetMessageRoute(), netCharMessage.GetData());
                         break;
 
@@ -515,7 +534,7 @@ namespace Net
                         debug += "Processing Byte message\n";
                         NetByteMessage netByteMessage = new NetByteMessage(data);
                         debug += $"Data: {netByteMessage.GetData()}, Route: {string.Join("->", netByteMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netByteMessage.GetMessageRoute(), netByteMessage.GetData());
                         break;
 
@@ -523,7 +542,7 @@ namespace Net
                         debug += "Processing Bool message\n";
                         NetBoolMessage netBoolMessage = new NetBoolMessage(data);
                         debug += $"Data: {netBoolMessage.GetData()}, Route: {string.Join("->", netBoolMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netBoolMessage.GetMessageRoute(), netBoolMessage.GetData());
                         break;
 
@@ -539,7 +558,7 @@ namespace Net
                         debug += "Processing Empty message\n";
                         NetEmptyMessage netEmptyMessage = new NetEmptyMessage(data);
                         debug += $"Data: {netEmptyMessage.GetData()}, Route: {string.Join("->", netEmptyMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMappingEmpty(netEmptyMessage.GetMessageRoute(), netEmptyMessage.GetData());
                         break;
 
@@ -548,7 +567,7 @@ namespace Net
                         NetMethodMessage netMethodMessage = new NetMethodMessage(data);
                         var methodData = netMethodMessage.GetData();
                         debug += $"Method: {methodData.Item1}, Args: {string.Join(", ", methodData.Item2)}, Route: {netMethodMessage.GetMessageRoute()[0].route}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         InvokeReflectionMethod(methodData.Item1, methodData.Item2, netMethodMessage.GetMessageRoute()[0].route);
                         break;
 
@@ -585,6 +604,7 @@ namespace Net
             string debug = $"VariableMapping - Start\n";
             debug += $"Type: {variableValue?.GetType()?.Name ?? "null"}, Value: {variableValue}\n";
             debug += $"Route: {string.Join("->", route.Select(r => r.route))}\n";
+            debug += $"Is Remove: {variableValue is NullOrEmpty.Remove}\n";
 
             try
             {
@@ -599,7 +619,7 @@ namespace Net
                 if (objectRoot == null)
                 {
                     debug += $"No INetObj found for ID: {route[0].route}\n";
-                    ///consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     return;
                 }
 
@@ -699,7 +719,7 @@ namespace Net
         {
             string debug = $"InspectWrite - Start\n";
             debug += $"Target Type: {type.Name}, Current Value: {obj}\n";
-            debug += $"New Value: {value} (Type: {value?.GetType()?.Name ?? "null"})\n";
+            debug += $"New Value: {value.ToString()} (Type: {value?.GetType()?.Name ?? "null"})\n";
             debug += $"Route Position: {idToRead}/{idRoute.Count}\n";
             debug += $"Full Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
 
@@ -708,7 +728,7 @@ namespace Net
                 if (obj == null)
                 {
                     debug += "Target object is null\n";
-                    consoleDebugger?.Invoke(debug);
+                    //consoleDebugger?.Invoke(debug);
                     return null;
                 }
 
@@ -837,6 +857,9 @@ namespace Net
 
         object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
+            consoleDebugger?.Invoke($"WriteValue - Field: {info.Name}, ValueType: {value?.GetType().Name}");
+            consoleDebugger?.Invoke($"Value is Remove: {value is Remove}");
+
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
             object currentValue = info.GetValue(obj);
@@ -855,44 +878,36 @@ namespace Net
                 return obj;
             }
 
-            if (value is NullOrEmpty.Remove)
+            if (value is Remove removeData)
             {
-                StringBuilder debug = new StringBuilder("\n--- DICTIONARY REMOVE OPERATION ---\n");
-                IDictionary? dictionary = (IDictionary)info.GetValue(obj);
+                consoleDebugger?.Invoke("\n--- DICTIONARY REMOVE OPERATION ---\n");
 
-                debug.AppendLine($"Target Field: {info.Name} | Current Keys: {(dictionary == null ? "null" : string.Join(",", dictionary.Keys.Cast<object>()))}");
-                debug.AppendLine($"Route: {string.Join("->", idRoute.Select(r => $"{r.route}[{r.collectionKey}]"))}");
-
-                if (dictionary == null)
+                // Get the field value
+                object fieldValue = info.GetValue(obj);
+                if (fieldValue == null)
                 {
-                    debug.AppendLine("ERROR: Dictionary is null");
-                    consoleDebugger?.Invoke(debug.ToString());
+                    consoleDebugger?.Invoke("ERROR: Field value is null");
                     return obj;
                 }
 
-                int targetHash = idRoute.Last().collectionKey;
-                debug.AppendLine($"Searching for key with hash: {targetHash}");
-
-                bool found = false;
-                foreach (object key in dictionary.Keys)
+                // Check if this is the dictionary field or a container
+                if (typeof(IDictionary).IsAssignableFrom(info.FieldType))
                 {
-                    int currentHash = GetStableKeyHash(key);
-                    if (currentHash == targetHash)
-                    {
-                        debug.AppendLine($"FOUND KEY: {key} (Hash: {currentHash}) - REMOVING");
-                        dictionary.Remove(key);
-                        found = true;
-                        break;
-                    }
-                    debug.AppendLine($"Checked: {key} (Hash: {currentHash})");
+                    // Direct dictionary case
+                    return HandleDictionaryRemove(info, obj, removeData.KeyHash);
                 }
+                else
+                {
+                    // Nested case - need to continue inspection
+                    consoleDebugger?.Invoke($"Field {info.Name} is a container, inspecting deeper...");
 
-                if (!found) debug.AppendLine("WARNING: No matching key found");
-                debug.AppendLine($"Final Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
-                debug.AppendLine("--- REMOVE OPERATION COMPLETE ---");
+                    // Create new route for the nested path
+                    List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
+                    newRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
 
-                consoleDebugger?.Invoke(debug.ToString());
-                return obj;
+                    // Continue inspection with the nested object
+                    return InspectWrite(fieldValue.GetType(), fieldValue, newRoute, idToRead + 1, value);
+                }
             }
 
             // Handle collections - Using OLD code approach
@@ -1051,29 +1066,39 @@ namespace Net
             return obj;
         }
 
-        private object HandleDictionaryRemove(FieldInfo info, object obj, List<RouteInfo> idRoute)
+        private object HandleDictionaryRemove(FieldInfo info, object obj, int keyHash)
         {
-            RouteInfo lastRoute = idRoute.Last();
             IDictionary dictionary = (IDictionary)info.GetValue(obj);
+            if (dictionary == null)
+            {
+                consoleDebugger?.Invoke("ERROR: Dictionary is null");
+                return obj;
+            }
 
-            if (dictionary == null) return obj;
+            consoleDebugger?.Invoke($"Target Dictionary: {info.Name} | Current Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
+            consoleDebugger?.Invoke($"Searching for key with hash: {keyHash}");
 
-            // Find key by hash
-            object keyToRemove = null;
+            bool found = false;
             foreach (object key in dictionary.Keys)
             {
-                if (GetStableKeyHash(key) == lastRoute.collectionKey)
+                int currentHash = GetStableKeyHash(key);
+                if (currentHash == keyHash)
                 {
-                    keyToRemove = key;
+                    consoleDebugger?.Invoke($"FOUND KEY: {key} (Hash: {currentHash}) - REMOVING");
+                    dictionary.Remove(key);
+                    found = true;
+
+                    // Update previous state if tracking
+                    if (_previousDictionaryStates.TryGetValue(dictionary, out var state))
+                    {
+                        state.Remove(key);
+                    }
                     break;
                 }
             }
 
-            if (keyToRemove != null)
-            {
-                dictionary.Remove(keyToRemove);
-            }
-
+            if (!found) consoleDebugger?.Invoke("WARNING: No matching key found");
+            consoleDebugger?.Invoke($"Final Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
             return obj;
         }
 
@@ -1147,7 +1172,7 @@ namespace Net
 
         object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            consoleDebugger?.Invoke($"WriteValueNullException - Field: {info.Name}, Type: {info.FieldType}, Value: {value}");
+            //consoleDebugger?.Invoke($"WriteValueNullException - Field: {info.Name}, Type: {info.FieldType}, Value: {value}");
 
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;

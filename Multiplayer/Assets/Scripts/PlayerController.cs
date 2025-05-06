@@ -206,15 +206,31 @@ public class PlayerController : MonoBehaviour, INetObj
     [ContextMenu("Add Dictionary Entry")]
     private void AddDictionaryEntry()
     {
-        if (dictionaryTest == null)
+        try
         {
-            dictionaryTest = new DictionaryTestClass();
-        }
+            // Initialize if null
+            if (dictionaryTest == null)
+            {
+                dictionaryTest = new DictionaryTestClass();
+            }
 
-        int newKey = dictionaryTest.testDictionary.Keys.Max() + 1;
-        string newValue = $"Entry {newKey} (Client {clientID})";
-        dictionaryTest.testDictionary.Add(newKey, newValue);
-        Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
+            // Safe key generation
+            int newKey = dictionaryTest.testDictionary.Count > 0 ?
+                       dictionaryTest.testDictionary.Keys.Max() + 1 :
+                       1;
+
+            string newValue = $"Entry {newKey} (Client {clientID})";
+            dictionaryTest.testDictionary.Add(newKey, newValue);
+
+            Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error adding dictionary entry: {ex}");
+
+            // Fallback to key 1 if empty
+            dictionaryTest.testDictionary.Add(1, $"Fallback Entry (Client {clientID})");
+        }
     }
 
     [ContextMenu("Remove Last Dictionary Entry")]

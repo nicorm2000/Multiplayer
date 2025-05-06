@@ -143,10 +143,11 @@ public class Server : NetworkEntity
             case MessageType.String:
             case MessageType.Uint:
             case MessageType.Ulong:
+            case MessageType.Remove:
             case MessageType.Empty:
+            case MessageType.Null:
             case MessageType.Method:
             case MessageType.Enum:
-            case MessageType.Null:
             case MessageType.Ushort:
 
                 BroadcastPlayerPosition(ipToId[ip], data);

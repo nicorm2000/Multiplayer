@@ -94,9 +94,6 @@ public class PlayerController : MonoBehaviour, INetObj
         public void Reverse() => customCollectionItems.Reverse();
     }
 
-    [Serializable]
-    public class IntCollection : CustomCollection<int> { }
-
     public enum TestEnum
     {
         Default = 0,
@@ -137,9 +134,9 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(30)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
     //[NetVariable(31)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(32)] public Vector3Int MyVector3Int = new (0,0,0);
-    [NetVariable(33)] private DictionaryTestClass dictionaryTest;
+    //[NetVariable(33)] private DictionaryTestClass dictionaryTest;
     //[NetVariable(34)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
-    //[NetVariable(35)] private IntCollection _customCollection = new IntCollection();
+    [NetVariable(35)] private CustomCollection<int> _customCollection;
     //[NetVariable(36)] public TestEnum enumField;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
@@ -196,87 +193,87 @@ public class PlayerController : MonoBehaviour, INetObj
     //}
     #endregion
     #region DICTIONARY
-    [ContextMenu("Initialize Dictionary")]
-    private void InitializeDictionary()
-    {
-        dictionaryTest = new DictionaryTestClass();
-        Debug.Log($"Client {clientID} Dictionary initialized with {dictionaryTest.testDictionary.Count} entries");
-    }
-
-    [ContextMenu("Add Dictionary Entry")]
-    private void AddDictionaryEntry()
-    {
-        try
-        {
-            // Initialize if null
-            if (dictionaryTest == null)
-            {
-                dictionaryTest = new DictionaryTestClass();
-            }
-
-            // Safe key generation
-            int newKey = dictionaryTest.testDictionary.Count > 0 ?
-                       dictionaryTest.testDictionary.Keys.Max() + 1 :
-                       1;
-
-            string newValue = $"Entry {newKey} (Client {clientID})";
-            dictionaryTest.testDictionary.Add(newKey, newValue);
-
-            Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Error adding dictionary entry: {ex}");
-
-            // Fallback to key 1 if empty
-            dictionaryTest.testDictionary.Add(1, $"Fallback Entry (Client {clientID})");
-        }
-    }
-
-    [ContextMenu("Remove Last Dictionary Entry")]
-    private void RemoveDictionaryEntry()
-    {
-        if (dictionaryTest?.testDictionary.Count > 0)
-        {
-            int lastKey = dictionaryTest.testDictionary.Keys.Max();
-            string removedValue = dictionaryTest.testDictionary[lastKey];
-            dictionaryTest.testDictionary.Remove(lastKey);
-            Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
-        }
-    }
-
-    [ContextMenu("Update Random Dictionary Value")]
-    private void UpdateRandomDictionaryValue()
-    {
-        if (dictionaryTest?.testDictionary.Count > 0)
-        {
-            int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
-            //int randomKey2 = UnityEngine.Random.Range(0, 1000);
-            string oldValue = dictionaryTest.testDictionary[randomKey];
-            string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
-            dictionaryTest.testDictionary[randomKey] = newValue;
-            Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
-        }
-    }
-
-    [ContextMenu("Clear Dictionary")]
-    private void ClearDictionary()
-    {
-        if (dictionaryTest != null)
-        {
-            dictionaryTest.testDictionary.Clear();
-            Debug.Log($"Client {clientID} cleared dictionary (now has {dictionaryTest.testDictionary.Count} entries)");
-        }
-    }
-
-    [ContextMenu("Set Dictionary to Null")]
-    private void NullDictionary()
-    {
-        dictionaryTest = null;
-        Debug.Log($"Client {clientID} set dictionary to NULL");
-    }
-    #endregion
-    #region MULTIDIMENSIONALARRAYS
+    //[ContextMenu("Initialize Dictionary")]
+    //private void InitializeDictionary()
+    //{
+    //    dictionaryTest = new DictionaryTestClass();
+    //    Debug.Log($"Client {clientID} Dictionary initialized with {dictionaryTest.testDictionary.Count} entries");
+    //}
+    //
+    //[ContextMenu("Add Dictionary Entry")]
+    //private void AddDictionaryEntry()
+    //{
+    //    try
+    //    {
+    //        // Initialize if null
+    //        if (dictionaryTest == null)
+    //        {
+    //            dictionaryTest = new DictionaryTestClass();
+    //        }
+    //
+    //        // Safe key generation
+    //        int newKey = dictionaryTest.testDictionary.Count > 0 ?
+    //                   dictionaryTest.testDictionary.Keys.Max() + 1 :
+    //                   1;
+    //
+    //        string newValue = $"Entry {newKey} (Client {clientID})";
+    //        dictionaryTest.testDictionary.Add(newKey, newValue);
+    //
+    //        Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Debug.LogError($"Error adding dictionary entry: {ex}");
+    //
+    //        // Fallback to key 1 if empty
+    //        dictionaryTest.testDictionary.Add(1, $"Fallback Entry (Client {clientID})");
+    //    }
+    //}
+    //
+    //[ContextMenu("Remove Last Dictionary Entry")]
+    //private void RemoveDictionaryEntry()
+    //{
+    //    if (dictionaryTest?.testDictionary.Count > 0)
+    //    {
+    //        int lastKey = dictionaryTest.testDictionary.Keys.Max();
+    //        string removedValue = dictionaryTest.testDictionary[lastKey];
+    //        dictionaryTest.testDictionary.Remove(lastKey);
+    //        Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Update Random Dictionary Value")]
+    //private void UpdateRandomDictionaryValue()
+    //{
+    //    if (dictionaryTest?.testDictionary.Count > 0)
+    //    {
+    //        int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
+    //        //int randomKey2 = UnityEngine.Random.Range(0, 1000);
+    //        string oldValue = dictionaryTest.testDictionary[randomKey];
+    //        string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
+    //        dictionaryTest.testDictionary[randomKey] = newValue;
+    //        Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Clear Dictionary")]
+    //private void ClearDictionary()
+    //{
+    //    if (dictionaryTest != null)
+    //    {
+    //        dictionaryTest.testDictionary.Clear();
+    //        Debug.Log($"Client {clientID} cleared dictionary (now has {dictionaryTest.testDictionary.Count} entries)");
+    //    }
+    //}
+    //
+    //[ContextMenu("Set Dictionary to Null")]
+    //private void NullDictionary()
+    //{
+    //    dictionaryTest = null;
+    //    Debug.Log($"Client {clientID} set dictionary to NULL");
+    //}
+    //#endregion
+    //#region MULTIDIMENSIONALARRAYS
     //[ContextMenu("Initialize Arrays")]
     //private void InitializeArrays()
     //{
@@ -371,92 +368,92 @@ public class PlayerController : MonoBehaviour, INetObj
     //}
     #endregion
     #region CUSTOM COLLECTION
-    //[ContextMenu("Initialize Collection")]
-    //private void InitializeCollection()
-    //{
-    //    _customCollection = new IntCollection();
-    //    _customCollection.Add(10);
-    //    _customCollection.Add(20);
-    //    _customCollection.Add(30);
-    //    Debug.Log($"Client {clientID} Initialized collection with 3 values");
-    //}
-    //
-    //[ContextMenu("Add Random Value")]
-    //private void AddRandomValue()
-    //{
-    //    if (_customCollection == null)
-    //    {
-    //        _customCollection = new IntCollection();
-    //    }
-    //
-    //    int newValue = UnityEngine.Random.Range(100, 1000);
-    //    _customCollection.Add(newValue);
-    //    Debug.Log($"Client {clientID} Added value: {newValue}");
-    //}
-    //
-    //[ContextMenu("Insert Random Value")]
-    //private void InsertRandomValue()
-    //{
-    //    if (_customCollection != null && _customCollection.Count > 0)
-    //    {
-    //        int index = UnityEngine.Random.Range(0, _customCollection.Count);
-    //        int newValue = UnityEngine.Random.Range(100, 1000);
-    //        _customCollection.Insert(index, newValue);
-    //        Debug.Log($"Client {clientID} Inserted {newValue} at index {index}");
-    //    }
-    //}
-    //
-    //[ContextMenu("Remove Random Item")]
-    //private void RemoveRandomItem()
-    //{
-    //    if (_customCollection != null && _customCollection.Count > 0)
-    //    {
-    //        int index = UnityEngine.Random.Range(0, _customCollection.Count);
-    //        int removedValue = _customCollection[index];
-    //        _customCollection.RemoveAt(index);
-    //        Debug.Log($"Client {clientID} Removed value {removedValue} from index {index}");
-    //    }
-    //}
-    //
-    //[ContextMenu("Reverse Collection")]
-    //private void ReverseCollection()
-    //{
-    //    if (_customCollection != null && _customCollection.Count > 1)
-    //    {
-    //        _customCollection.Reverse();
-    //        Debug.Log($"Client {clientID} Reversed collection order");
-    //    }
-    //}
-    //
-    //[ContextMenu("Clear Collection")]
-    //private void ClearCollection()
-    //{
-    //    if (_customCollection != null)
-    //    {
-    //        _customCollection.Clear();
-    //        Debug.Log($"Client {clientID} Cleared collection");
-    //    }
-    //}
-    //
-    //[ContextMenu("Null Collection")]
-    //private void NullCollection()
-    //{
-    //    _customCollection = null;
-    //    Debug.Log($"Client {clientID} Set collection to NULL");
-    //}
-    //
-    //[ContextMenu("Print Collection Info")]
-    //private void PrintCollectionInfo()
-    //{
-    //    if (_customCollection != null)
-    //    {
-    //        Debug.Log($"Client {clientID} Collection Count: {_customCollection.Count}");
-    //    }
-    //    else
-    //    {
-    //        Debug.Log($"Client {clientID} Collection is NULL");
-    //    }
-    //}
+    [ContextMenu("Initialize Collection")]
+    private void InitializeCollection()
+    {
+        _customCollection = new CustomCollection<int>();
+        _customCollection.Add(10);
+        _customCollection.Add(20);
+        _customCollection.Add(30);
+        Debug.Log($"Client {clientID} Initialized collection with 3 values");
+    }
+    
+    [ContextMenu("Add Random Value")]
+    private void AddRandomValue()
+    {
+        if (_customCollection == null)
+        {
+            _customCollection = new CustomCollection<int>();
+        }
+    
+        int newValue = UnityEngine.Random.Range(100, 1000);
+        _customCollection.Add(newValue);
+        Debug.Log($"Client {clientID} Added value: {newValue}");
+    }
+    
+    [ContextMenu("Insert Random Value")]
+    private void InsertRandomValue()
+    {
+        if (_customCollection != null && _customCollection.Count > 0)
+        {
+            int index = UnityEngine.Random.Range(0, _customCollection.Count);
+            int newValue = UnityEngine.Random.Range(100, 1000);
+            _customCollection.Insert(index, newValue);
+            Debug.Log($"Client {clientID} Inserted {newValue} at index {index}");
+        }
+    }
+    
+    [ContextMenu("Remove Random Item")]
+    private void RemoveRandomItem()
+    {
+        if (_customCollection != null && _customCollection.Count > 0)
+        {
+            int index = UnityEngine.Random.Range(0, _customCollection.Count);
+            int removedValue = _customCollection[index];
+            _customCollection.RemoveAt(index);
+            Debug.Log($"Client {clientID} Removed value {removedValue} from index {index}");
+        }
+    }
+    
+    [ContextMenu("Reverse Collection")]
+    private void ReverseCollection()
+    {
+        if (_customCollection != null && _customCollection.Count > 1)
+        {
+            _customCollection.Reverse();
+            Debug.Log($"Client {clientID} Reversed collection order");
+        }
+    }
+    
+    [ContextMenu("Clear Collection")]
+    private void ClearCollection()
+    {
+        if (_customCollection != null)
+        {
+            _customCollection.Clear();
+            Debug.Log($"Client {clientID} Cleared collection");
+        }
+    }
+    
+    [ContextMenu("Null Collection")]
+    private void NullCollection()
+    {
+        _customCollection = null;
+        Debug.Log($"Client {clientID} Set collection to NULL");
+    }
+    
+    [ContextMenu("Print Collection Info")]
+    private void PrintCollectionInfo()
+    {
+        if (_customCollection != null)
+        {
+            Debug.Log($"Client {clientID} Collection Count: {_customCollection.Count}");
+        }
+        else
+        {
+            Debug.Log($"Client {clientID} Collection is NULL");
+        }
+    }
     #endregion
 
     private void Start()
@@ -533,19 +530,19 @@ public class PlayerController : MonoBehaviour, INetObj
         #endregion
         //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
         #region DICTIONARY
-        if (dictionaryTest != null)
-        {
-            string dictContents = $"Client {clientID} Dictionary Contents:\n";
-            foreach (var kvp in dictionaryTest.testDictionary)
-            {
-                dictContents += $"[{kvp.Key}] = {kvp.Value}\n";
-            }
-            Debug.Log(dictContents);
-        }
-        else
-        {
-            Debug.Log($"Client {clientID} Dictionary is NULL");
-        }
+        //if (dictionaryTest != null)
+        //{
+        //    string dictContents = $"Client {clientID} Dictionary Contents:\n";
+        //    foreach (var kvp in dictionaryTest.testDictionary)
+        //    {
+        //        dictContents += $"[{kvp.Key}] = {kvp.Value}\n";
+        //    }
+        //    Debug.Log(dictContents);
+        //}
+        //else
+        //{
+        //    Debug.Log($"Client {clientID} Dictionary is NULL");
+        //}
         #endregion
         #region MULTIDIMENSIONALARRAYS
         //if (arrayTest != null)
@@ -558,18 +555,18 @@ public class PlayerController : MonoBehaviour, INetObj
         //}
         #endregion
         #region CUSTOM COLLECTION
-        //if (_customCollection != null)
-        //{
-        //    Debug.Log($"Client {clientID} Collection Contents:");
-        //    for (int i = 0; i < _customCollection.Count; i++)
-        //    {
-        //        Debug.Log($"[{i}] = {_customCollection[i]}");
-        //    }
-        //}
-        //else if (_customCollection == null)
-        //{
-        //    Debug.Log($"Client {clientID} Collection is NULL");
-        //}
+        if (_customCollection != null)
+        {
+            Debug.Log($"Client {clientID} Collection Contents:");
+            for (int i = 0; i < _customCollection.Count; i++)
+            {
+                Debug.Log($"[{i}] = {_customCollection[i]}");
+            }
+        }
+        else if (_customCollection == null)
+        {
+            Debug.Log($"Client {clientID} Collection is NULL");
+        }
         #endregion
 
         if (health <= 0)

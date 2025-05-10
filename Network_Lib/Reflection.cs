@@ -765,13 +765,13 @@ namespace Net
                     NetVariable attributes = info.GetCustomAttribute<NetVariable>();
                     if (attributes != null && attributes.VariableId == currentRoute.route)
                     {
-                        debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
-                        debug += $"Current field value: {info.GetValue(obj)}\n";
+                        //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
+                        //debug += $"Current field value: {info.GetValue(obj)}\n";
                         //consoleDebugger?.Invoke(debug);
-
                         object result = WriteValue(info, obj, attributes, idRoute, idToRead, value);
-                        debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        //debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
+                        debug += $"Final field value after WriteValue: {info.GetValue(obj)}\n";
+                        consoleDebugger?.Invoke(debug);
                         return result;
                     }
                 }
@@ -880,7 +880,7 @@ namespace Net
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
             object currentValue = info.GetValue(obj);
-
+            consoleDebugger?.Invoke($"[WriteValue START] Field: {info.Name}, Type: {info.FieldType}, Incoming Value: {value}, Route: {string.Join("->", idRoute.Select(r => r.route))}");
             // Handle null assignments
             if (value == null || value is NullOrEmpty.Null)
             {
@@ -891,6 +891,7 @@ namespace Net
             // Handle simple types
             if (IsSimpleType(fieldType))
             {
+                consoleDebugger?.Invoke($"WriteValue: Setting field '{info.Name}' on '{obj.GetType().Name}' to '{value}' (Type: {value?.GetType()?.Name})");
                 info.SetValue(obj, value);
                 return obj;
             }
@@ -930,6 +931,7 @@ namespace Net
             // Handle collections - Using OLD code approach
             if (typeof(IEnumerable).IsAssignableFrom(fieldType))
             {
+                consoleDebugger?.Invoke($"[WriteValue] Attempting to assign collection element at index {currentRoute.collectionKey} with value: {value}");
                 // Get current collection size
                 int currentSize = (currentValue as ICollection)?.Count ?? 0;
                 int newSize = currentRoute.collectionSize;
@@ -988,6 +990,11 @@ namespace Net
                 }
                 else
                 {
+                    if (TrySetCollectionIndexValue(currentValue, currentRoute.collectionKey, value))
+                    {
+                        return obj;
+                    }
+
                     // For non-array collections, use OLD code's approach
                     Type elementType = GetElementType(fieldType);
                     object[] arrayCopy = new object[newSize];
@@ -1082,6 +1089,36 @@ namespace Net
             info.SetValue(obj, objReference);
             return obj;
         }
+
+        private bool TrySetCollectionIndexValue(object collection, int index, object value)
+        {
+            if (collection == null || index < 0)
+                return false;
+
+            Type type = collection.GetType();
+            PropertyInfo indexer = type.GetProperty("Item");
+
+            if (indexer != null && indexer.CanWrite)
+            {
+                try
+                {
+                    indexer.SetValue(collection, value, new object[] { index });
+                    consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Successfully set index {index} to value {value} on type {type.Name}");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Failed to set index {index}: {ex.Message}");
+                }
+            }
+            else
+            {
+                consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] No writable indexer found on type {type.Name}");
+            }
+
+            return false;
+        }
+
 
         private object HandleDictionaryRemove(FieldInfo info, object obj, int keyHash)
         {

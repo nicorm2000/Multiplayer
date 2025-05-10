@@ -1,5 +1,6 @@
 ﻿using Net;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -94,6 +95,69 @@ public class PlayerController : MonoBehaviour, INetObj
         public void Reverse() => customCollectionItems.Reverse();
     }
 
+    [Serializable]
+    public class CustomCollection2<T> : IEnumerable<T>, IEnumerable
+    {
+        [NetVariable(0)] private List<T> customCollectionItems = new List<T>();
+        public int Count => customCollectionItems.Count;
+        public T this[int index]
+        {
+            get => customCollectionItems[index];
+            set => customCollectionItems[index] = value;
+        }
+        public void Add(T item) => customCollectionItems.Add(item);
+        public void Insert(int index, T item) => customCollectionItems.Insert(index, item);
+        public void RemoveAt(int index) => customCollectionItems.RemoveAt(index);
+        public void Clear() => customCollectionItems.Clear();
+        public void Reverse() => customCollectionItems.Reverse();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => customCollectionItems.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)customCollectionItems).GetEnumerator();
+    }
+
+
+    [Serializable]
+    public class CustomCollection3<T> : ICollection
+    {
+        [NetVariable(0)] private List<T> customCollectionItems = new List<T>();
+        public int Count => customCollectionItems.Count;
+        public bool IsSynchronized => false;
+        public object SyncRoot => this;
+        public T this[int index]
+        {
+            get => customCollectionItems[index];
+            set => customCollectionItems[index] = value;
+        }
+        public void Add(T item) => customCollectionItems.Add(item);
+        public void Insert(int index, T item) => customCollectionItems.Insert(index, item);
+        public void RemoveAt(int index) => customCollectionItems.RemoveAt(index);
+        public void Clear() => customCollectionItems.Clear();
+        public void Reverse() => customCollectionItems.Reverse();
+        public void CopyTo(Array array, int index)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (index < 0)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            if (array.Rank > 1)
+                throw new ArgumentException("Array is multidimensional.");
+            if (index >= array.Length)
+                throw new ArgumentException("Index is equal to or greater than the length of array.");
+            if (Count > array.Length - index)
+                throw new ArgumentException("The number of elements in the source collection is greater than the available space from index to the end of the destination array.");
+
+            try
+            {
+                Array.Copy(customCollectionItems.ToArray(), 0, array, index, Count);
+            }
+            catch (ArrayTypeMismatchException)
+            {
+                throw new ArgumentException("Invalid array type.");
+            }
+        }
+        public IEnumerator GetEnumerator() => customCollectionItems.GetEnumerator();
+        public IEnumerator<T> GetTypedEnumerator() => customCollectionItems.GetEnumerator();
+    }
+
     public enum TestEnum
     {
         Default = 0,
@@ -137,6 +201,8 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(33)] private DictionaryTestClass dictionaryTest;
     //[NetVariable(34)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
     [NetVariable(35)] private CustomCollection<int> _customCollection;
+    [NetVariable(36)] private CustomCollection2<string> _customCollection2;
+    [NetVariable(37)] private CustomCollection3<int> _customCollection3;
     //[NetVariable(36)] public TestEnum enumField;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
@@ -371,9 +437,9 @@ public class PlayerController : MonoBehaviour, INetObj
     [ContextMenu("Initialize Collection")]
     private void InitializeCollection()
     {
-        _customCollection = new CustomCollection<int>();
-        _customCollection.Add(10);
-        _customCollection.Add(20);
+       _customCollection = new CustomCollection<int>();
+       _customCollection.Add(10);
+       _customCollection.Add(20);
         _customCollection.Add(30);
         Debug.Log($"Client {clientID} Initialized collection with 3 values");
     }
@@ -555,15 +621,15 @@ public class PlayerController : MonoBehaviour, INetObj
         //}
         #endregion
         #region CUSTOM COLLECTION
-        if (_customCollection != null)
+        if (_customCollection2 != null)
         {
             Debug.Log($"Client {clientID} Collection Contents:");
-            for (int i = 0; i < _customCollection.Count; i++)
+            for (int i = 0; i < _customCollection2.Count; i++)
             {
-                Debug.Log($"[{i}] = {_customCollection[i]}");
+                Debug.Log($"[{i}] = {_customCollection2[i]}");
             }
         }
-        else if (_customCollection == null)
+        else if (_customCollection2 == null)
         {
             Debug.Log($"Client {clientID} Collection is NULL");
         }

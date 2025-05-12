@@ -23,7 +23,6 @@ public class PlayerController : MonoBehaviour, INetObj
     {
         [NetVariable(0)] public int testInt = 0;
     }
-
     [Serializable]
     private class TestingClass4
     {
@@ -36,7 +35,7 @@ public class PlayerController : MonoBehaviour, INetObj
             this.testIntClass2 = testingClass2;
         }
     }
-
+    [Serializable]
     public struct TestingStruct
     {
         [NetVariable(0)] public int testInt;
@@ -179,31 +178,31 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(11)] public ulong myULong = 1;
     //[NetVariable(12)] public byte myByte = 1;
     //[NetVariable(13)] public sbyte mySByte = 1;
-    //[NetVariable(14)] public List<int> testList;
-    //[NetVariable(15)] public TestingClass testing = new();
-    //[NetVariable(16)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    //[NetVariable(17)] public int[] myArray = new int[2];
-    //[NetVariable(18)] TestingClass4 testingClass4;
-    //[NetVariable(19)] public List<TestingClass3> jajaxd = null;
-    //[NetVariable(20)] public TestingClass3 testingclass3 = new();
-    //[NetVariable(21)] public Vector2 MyVector2 = Vector2.zero;
-    //[NetVariable(22)] public Vector3 MyVector3 = Vector3.zero;
-    //[NetVariable(23)] public Vector4 MyVector4 = Vector4.zero;
-    //[NetVariable(24)] public Quaternion MyQuaternion = new(0f, 0f, 0f, 1f);
-    //[NetVariable(25)] public Color MyColor = new(1f,0.5f,0f,1f);
-    //[NetVariable(26)] public Color32 MyColor32 = new(0, 0, 0, 255);
-    //[NetVariable(27)] public Rect MyRect = new(0, 0, 1, 1);
-    //[NetVariable(28)] public Bounds MyBounds = new(Vector3.zero, Vector3.one);
-    //[NetVariable(29)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
-    //[NetVariable(30)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
-    //[NetVariable(31)] public Vector2Int MyVector2Int = new (0,0);
-    //[NetVariable(32)] public Vector3Int MyVector3Int = new (0,0,0);
-    //[NetVariable(33)] private DictionaryTestClass dictionaryTest;
-    //[NetVariable(34)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
-    [NetVariable(35)] private CustomCollection<int> _customCollection;
-    [NetVariable(36)] private CustomCollection2<string> _customCollection2;
-    [NetVariable(37)] private CustomCollection3<int> _customCollection3;
-    //[NetVariable(36)] public TestEnum enumField;
+    //[NetVariable(14)] public TestEnum enumField;
+    //[NetVariable(15)] public List<int> testList;
+    //[NetVariable(16)] public TestingClass testing = new();
+    //[NetVariable(17)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
+    //[NetVariable(18)] public int[] myArray = new int[2];
+    //[NetVariable(19)] TestingClass4 testingClass4;
+    //[NetVariable(20)] public List<TestingClass3> jajaxd = null;
+    //[NetVariable(21)] public TestingClass3 testingclass3 = new();
+    //[NetVariable(22)] public Vector2 MyVector2 = Vector2.zero;
+    //[NetVariable(23)] public Vector3 MyVector3 = Vector3.zero;
+    //[NetVariable(24)] public Vector4 MyVector4 = Vector4.zero;
+    //[NetVariable(25)] public Quaternion MyQuaternion = new(0f, 0f, 0f, 1f);
+    //[NetVariable(26)] public Color MyColor = new(1f,0.5f,0f,1f);
+    //[NetVariable(27)] public Color32 MyColor32 = new(0, 0, 0, 255);
+    //[NetVariable(28)] public Rect MyRect = new(0, 0, 1, 1);
+    //[NetVariable(29)] public Bounds MyBounds = new(Vector3.zero, Vector3.one);
+    //[NetVariable(30)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
+    //[NetVariable(31)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
+    //[NetVariable(32)] public Vector2Int MyVector2Int = new (0,0);
+    //[NetVariable(33)] public Vector3Int MyVector3Int = new (0,0,0);
+    //[NetVariable(34)] private DictionaryTestClass dictionaryTest;
+    //[NetVariable(35)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
+    //[NetVariable(36)] private CustomCollection<int> _customCollection;
+    //[NetVariable(37)] private CustomCollection2<string> _customCollection2;
+    //[NetVariable(38)] private CustomCollection3<TestingClass3> _customCollection3;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -227,23 +226,23 @@ public class PlayerController : MonoBehaviour, INetObj
     //void SetEnumSpecial() => enumField = TestEnum.Special;
     #endregion
     #region CLASS
-    [ContextMenu("Create TestingClass4")]
-    private void TestCreator()
-    {
-        //if (testingClass4 == null)
-        //{
-        //    testingClass4 = new TestingClass4(testing4ConstructorInt, testing4ConstructorClass);
-        //}
-    }
-
-    [ContextMenu("Destroy TestingClass4")]
-    private void TestDestroyer()
-    {
-        //if (testingClass4 != null)
-        //{
-        //    testingClass4 = null;
-        //}
-    }
+    //[ContextMenu("Create TestingClass4")]
+    //private void TestCreator()
+    //{
+    //    if (testingClass4 == null)
+    //    {
+    //        testingClass4 = new TestingClass4(testing4ConstructorInt, testing4ConstructorClass);
+    //    }
+    //}
+    //
+    //[ContextMenu("Destroy TestingClass4")]
+    //private void TestDestroyer()
+    //{
+    //    if (testingClass4 != null)
+    //    {
+    //        testingClass4 = null;
+    //    }
+    //}
     #endregion
     #region DECIMAL
     //[ContextMenu("Add Decimal")]
@@ -434,92 +433,276 @@ public class PlayerController : MonoBehaviour, INetObj
     //}
     #endregion
     #region CUSTOM COLLECTION
-    [ContextMenu("Initialize Collection")]
-    private void InitializeCollection()
-    {
-       _customCollection = new CustomCollection<int>();
-       _customCollection.Add(10);
-       _customCollection.Add(20);
-        _customCollection.Add(30);
-        Debug.Log($"Client {clientID} Initialized collection with 3 values");
-    }
-    
-    [ContextMenu("Add Random Value")]
-    private void AddRandomValue()
-    {
-        if (_customCollection == null)
-        {
-            _customCollection = new CustomCollection<int>();
-        }
-    
-        int newValue = UnityEngine.Random.Range(100, 1000);
-        _customCollection.Add(newValue);
-        Debug.Log($"Client {clientID} Added value: {newValue}");
-    }
-    
-    [ContextMenu("Insert Random Value")]
-    private void InsertRandomValue()
-    {
-        if (_customCollection != null && _customCollection.Count > 0)
-        {
-            int index = UnityEngine.Random.Range(0, _customCollection.Count);
-            int newValue = UnityEngine.Random.Range(100, 1000);
-            _customCollection.Insert(index, newValue);
-            Debug.Log($"Client {clientID} Inserted {newValue} at index {index}");
-        }
-    }
-    
-    [ContextMenu("Remove Random Item")]
-    private void RemoveRandomItem()
-    {
-        if (_customCollection != null && _customCollection.Count > 0)
-        {
-            int index = UnityEngine.Random.Range(0, _customCollection.Count);
-            int removedValue = _customCollection[index];
-            _customCollection.RemoveAt(index);
-            Debug.Log($"Client {clientID} Removed value {removedValue} from index {index}");
-        }
-    }
-    
-    [ContextMenu("Reverse Collection")]
-    private void ReverseCollection()
-    {
-        if (_customCollection != null && _customCollection.Count > 1)
-        {
-            _customCollection.Reverse();
-            Debug.Log($"Client {clientID} Reversed collection order");
-        }
-    }
-    
-    [ContextMenu("Clear Collection")]
-    private void ClearCollection()
-    {
-        if (_customCollection != null)
-        {
-            _customCollection.Clear();
-            Debug.Log($"Client {clientID} Cleared collection");
-        }
-    }
-    
-    [ContextMenu("Null Collection")]
-    private void NullCollection()
-    {
-        _customCollection = null;
-        Debug.Log($"Client {clientID} Set collection to NULL");
-    }
-    
-    [ContextMenu("Print Collection Info")]
-    private void PrintCollectionInfo()
-    {
-        if (_customCollection != null)
-        {
-            Debug.Log($"Client {clientID} Collection Count: {_customCollection.Count}");
-        }
-        else
-        {
-            Debug.Log($"Client {clientID} Collection is NULL");
-        }
-    }
+    //[ContextMenu("Initialize Collection")]
+    //private void InitializeCollection()
+    //{
+    //   _customCollection = new CustomCollection<int>();
+    //   _customCollection.Add(10);
+    //   _customCollection.Add(20);
+    //    _customCollection.Add(30);
+    //    Debug.Log($"Client {clientID} Initialized collection with 3 values");
+    //}
+    //
+    //[ContextMenu("Add Random Value")]
+    //private void AddRandomValue()
+    //{
+    //    if (_customCollection == null)
+    //    {
+    //        _customCollection = new CustomCollection<int>();
+    //    }
+    //
+    //    int newValue = UnityEngine.Random.Range(100, 1000);
+    //    _customCollection.Add(newValue);
+    //    Debug.Log($"Client {clientID} Added value: {newValue}");
+    //}
+    //
+    //[ContextMenu("Insert Random Value")]
+    //private void InsertRandomValue()
+    //{
+    //    if (_customCollection != null && _customCollection.Count > 0)
+    //    {
+    //        int index = UnityEngine.Random.Range(0, _customCollection.Count);
+    //        int newValue = UnityEngine.Random.Range(100, 1000);
+    //        _customCollection.Insert(index, newValue);
+    //        Debug.Log($"Client {clientID} Inserted {newValue} at index {index}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Remove Random Item")]
+    //private void RemoveRandomItem()
+    //{
+    //    if (_customCollection != null && _customCollection.Count > 0)
+    //    {
+    //        int index = UnityEngine.Random.Range(0, _customCollection.Count);
+    //        int removedValue = _customCollection[index];
+    //        _customCollection.RemoveAt(index);
+    //        Debug.Log($"Client {clientID} Removed value {removedValue} from index {index}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Reverse Collection")]
+    //private void ReverseCollection()
+    //{
+    //    if (_customCollection != null && _customCollection.Count > 1)
+    //    {
+    //        _customCollection.Reverse();
+    //        Debug.Log($"Client {clientID} Reversed collection order");
+    //    }
+    //}
+    //
+    //[ContextMenu("Clear Collection")]
+    //private void ClearCollection()
+    //{
+    //    if (_customCollection != null)
+    //    {
+    //        _customCollection.Clear();
+    //        Debug.Log($"Client {clientID} Cleared collection");
+    //    }
+    //}
+    //
+    //[ContextMenu("Null Collection")]
+    //private void NullCollection()
+    //{
+    //    _customCollection = null;
+    //    Debug.Log($"Client {clientID} Set collection to NULL");
+    //}
+    //
+    //[ContextMenu("Print Collection Info")]
+    //private void PrintCollectionInfo()
+    //{
+    //    if (_customCollection != null)
+    //    {
+    //        Debug.Log($"Client {clientID} Collection Count: {_customCollection.Count}");
+    //    }
+    //    else
+    //    {
+    //        Debug.Log($"Client {clientID} Collection is NULL");
+    //    }
+    //}
+    #endregion
+    #region CUSTOM COLLECTION 2 (STRING)
+    //[ContextMenu("Initialize Collection 2")]
+    //private void InitializeCollection2()
+    //{
+    //    _customCollection2 = new CustomCollection2<string>();
+    //    _customCollection2.Add("apple");
+    //    _customCollection2.Add("banana");
+    //    _customCollection2.Add("cherry");
+    //    Debug.Log($"Client {clientID} Initialized string collection with 3 values");
+    //}
+    //
+    //[ContextMenu("Add Random String")]
+    //private void AddRandomString()
+    //{
+    //    if (_customCollection2 == null)
+    //    {
+    //        _customCollection2 = new CustomCollection2<string>();
+    //    }
+    //
+    //    string[] randomWords = { "dog", "cat", "bird", "fish", "tree", "car", "house", "sun" };
+    //    string newValue = randomWords[UnityEngine.Random.Range(0, randomWords.Length)];
+    //    _customCollection2.Add(newValue);
+    //    Debug.Log($"Client {clientID} Added string: {newValue}");
+    //}
+    //
+    //[ContextMenu("Insert Random String")]
+    //private void InsertRandomString()
+    //{
+    //    if (_customCollection2 != null && _customCollection2.Count > 0)
+    //    {
+    //        int index = UnityEngine.Random.Range(0, _customCollection2.Count);
+    //        string[] randomWords = { "red", "green", "blue", "yellow", "black", "white" };
+    //        string newValue = randomWords[UnityEngine.Random.Range(0, randomWords.Length)];
+    //        _customCollection2.Insert(index, newValue);
+    //        Debug.Log($"Client {clientID} Inserted {newValue} at index {index}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Remove Random String")]
+    //private void RemoveRandomString()
+    //{
+    //    if (_customCollection2 != null && _customCollection2.Count > 0)
+    //    {
+    //        int index = UnityEngine.Random.Range(0, _customCollection2.Count);
+    //        string removedValue = _customCollection2[index];
+    //        _customCollection2.RemoveAt(index);
+    //        Debug.Log($"Client {clientID} Removed string {removedValue} from index {index}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Reverse String Collection")]
+    //private void ReverseStringCollection()
+    //{
+    //    if (_customCollection2 != null && _customCollection2.Count > 1)
+    //    {
+    //        _customCollection2.Reverse();
+    //        Debug.Log($"Client {clientID} Reversed string collection order");
+    //    }
+    //}
+    //
+    //[ContextMenu("Clear String Collection")]
+    //private void ClearStringCollection()
+    //{
+    //    if (_customCollection2 != null)
+    //    {
+    //        _customCollection2.Clear();
+    //        Debug.Log($"Client {clientID} Cleared string collection");
+    //    }
+    //}
+    //
+    //[ContextMenu("Null String Collection")]
+    //private void NullStringCollection()
+    //{
+    //    _customCollection2 = null;
+    //    Debug.Log($"Client {clientID} Set string collection to NULL");
+    //}
+    //
+    //[ContextMenu("Print String Collection Info")]
+    //private void PrintStringCollectionInfo()
+    //{
+    //    if (_customCollection2 != null)
+    //    {
+    //        Debug.Log($"Client {clientID} String Collection Count: {_customCollection2.Count}");
+    //    }
+    //    else
+    //    {
+    //        Debug.Log($"Client {clientID} String Collection is NULL");
+    //    }
+    //}
+    #endregion
+    #region CUSTOM COLLECTION 3 (TESTINGCLASS3)
+    //[ContextMenu("Initialize Collection 3")]
+    //private void InitializeCollection3()
+    //{
+    //    _customCollection3 = new CustomCollection3<TestingClass3>();
+    //    _customCollection3.Add(new TestingClass3() { testInt = 100 });
+    //    _customCollection3.Add(new TestingClass3() { testInt = 200 });
+    //    _customCollection3.Add(new TestingClass3() { testInt = 300 });
+    //    Debug.Log($"Client {clientID} Initialized TestingClass3 collection with 3 values");
+    //}
+    //
+    //[ContextMenu("Add Random TestingClass3")]
+    //private void AddRandomTestingClass3()
+    //{
+    //    if (_customCollection3 == null)
+    //    {
+    //        _customCollection3 = new CustomCollection3<TestingClass3>();
+    //    }
+    //
+    //    TestingClass3 newValue = new TestingClass3()
+    //    {
+    //        testInt = UnityEngine.Random.Range(1000, 10000)
+    //    };
+    //    _customCollection3.Add(newValue);
+    //    Debug.Log($"Client {clientID} Added TestingClass3 with value: {newValue.testInt}");
+    //}
+    //
+    //[ContextMenu("Insert Random TestingClass3")]
+    //private void InsertRandomTestingClass3()
+    //{
+    //    if (_customCollection3 != null && _customCollection3.Count > 0)
+    //    {
+    //        int index = UnityEngine.Random.Range(0, _customCollection3.Count);
+    //        TestingClass3 newValue = new TestingClass3()
+    //        {
+    //            testInt = UnityEngine.Random.Range(500, 1500)
+    //        };
+    //        _customCollection3.Insert(index, newValue);
+    //        Debug.Log($"Client {clientID} Inserted TestingClass3 with value {newValue.testInt} at index {index}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Remove Random TestingClass3")]
+    //private void RemoveRandomTestingClass3()
+    //{
+    //    if (_customCollection3 != null && _customCollection3.Count > 0)
+    //    {
+    //        int index = UnityEngine.Random.Range(0, _customCollection3.Count);
+    //        TestingClass3 removedValue = _customCollection3[index];
+    //        _customCollection3.RemoveAt(index);
+    //        Debug.Log($"Client {clientID} Removed TestingClass3 with value {removedValue.testInt} from index {index}");
+    //    }
+    //}
+    //
+    //[ContextMenu("Reverse TestingClass3 Collection")]
+    //private void ReverseTestingClass3Collection()
+    //{
+    //    if (_customCollection3 != null && _customCollection3.Count > 1)
+    //    {
+    //        _customCollection3.Reverse();
+    //        Debug.Log($"Client {clientID} Reversed TestingClass3 collection order");
+    //    }
+    //}
+    //
+    //[ContextMenu("Clear TestingClass3 Collection")]
+    //private void ClearTestingClass3Collection()
+    //{
+    //    if (_customCollection3 != null)
+    //    {
+    //        _customCollection3.Clear();
+    //        Debug.Log($"Client {clientID} Cleared TestingClass3 collection");
+    //    }
+    //}
+    //
+    //[ContextMenu("Null TestingClass3 Collection")]
+    //private void NullTestingClass3Collection()
+    //{
+    //    _customCollection3 = null;
+    //    Debug.Log($"Client {clientID} Set TestingClass3 collection to NULL");
+    //}
+    //
+    //[ContextMenu("Print TestingClass3 Collection Info")]
+    //private void PrintTestingClass3CollectionInfo()
+    //{
+    //    if (_customCollection3 != null)
+    //    {
+    //        Debug.Log($"Client {clientID} TestingClass3 Collection Count: {_customCollection3.Count}");
+    //    }
+    //    else
+    //    {
+    //        Debug.Log($"Client {clientID} TestingClass3 Collection is NULL");
+    //    }
+    //}
     #endregion
 
     private void Start()
@@ -550,6 +733,7 @@ public class PlayerController : MonoBehaviour, INetObj
 
     private void Update()
     {
+        //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
         #region LIST
         //if (Input.GetKeyDown(KeyCode.Space))
         //{
@@ -588,13 +772,19 @@ public class PlayerController : MonoBehaviour, INetObj
         #region PLANE
         //if (Input.GetKeyDown(KeyCode.M))
         //{
-        //    MyPlane.normal += new Vector3 (1,0,1);
-        //    MyPlane.distance += 2.67f;
-        //    Debug.Log("Normal:" + MyPlane.normal);
-        //    Debug.Log("Distance:" + MyPlane.distance);
+        //    Plane temp = MyPlane;
+        //    temp.normal += new Vector3(1, 0, 1);
+        //    temp.distance += 2.67f;
+        //    MyPlane = temp;
+        //    Debug.Log("Normal: " + MyPlane.normal);
+        //    Debug.Log("Distance: " + MyPlane.distance);
+        //}
+        //if (MyPlane.normal != null && MyPlane.distance != null)
+        //{
+        //    Debug.Log("Normal: " + MyPlane.normal);
+        //    Debug.Log("Distance: " + MyPlane.distance);
         //}
         #endregion
-        //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
         #region DICTIONARY
         //if (dictionaryTest != null)
         //{
@@ -621,20 +811,48 @@ public class PlayerController : MonoBehaviour, INetObj
         //}
         #endregion
         #region CUSTOM COLLECTION
-        if (_customCollection2 != null)
-        {
-            Debug.Log($"Client {clientID} Collection Contents:");
-            for (int i = 0; i < _customCollection2.Count; i++)
-            {
-                Debug.Log($"[{i}] = {_customCollection2[i]}");
-            }
-        }
-        else if (_customCollection2 == null)
-        {
-            Debug.Log($"Client {clientID} Collection is NULL");
-        }
+        //if (_customCollection != null)
+        //{
+        //    Debug.Log($"Client {clientID} Collection Contents:");
+        //    for (int i = 0; i < _customCollection.Count; i++)
+        //    {
+        //        Debug.Log($"[{i}] = {_customCollection[i]}");
+        //    }
+        //}
+        //else if (_customCollection == null)
+        //{
+        //    Debug.Log($"Client {clientID} Collection is NULL");
+        //}
         #endregion
-
+        #region CUSTOM COLLECTION 2
+        //if (_customCollection2 != null)
+        //{
+        //    Debug.Log($"Client {clientID} Printing _customCollection2 - Count: {_customCollection2.Count}");
+        //    Debug.Log($"Client {clientID} String Collection Contents:");
+        //    for (int i = 0; i < _customCollection2.Count; i++)
+        //    {
+        //        Debug.Log($"[{i}] = {_customCollection2[i]}");
+        //    }
+        //}
+        //else if (_customCollection2 == null)
+        //{
+        //    Debug.Log($"Client {clientID} String Collection is NULL");
+        //}
+        #endregion
+        #region CUSTOM COLLECTION 3
+        //if (_customCollection3 != null)
+        //{
+        //    Debug.Log($"Client {clientID} TestingClass3 Collection Contents:");
+        //    for (int i = 0; i < _customCollection3.Count; i++)
+        //    {
+        //        Debug.Log($"[{i}] = {_customCollection3[i].testInt}");
+        //    }
+        //}
+        //else if (_customCollection3 == null)
+        //{
+        //    Debug.Log($"Client {clientID} TestingClass3 Collection is NULL");
+        //}
+        #endregion
         if (health <= 0)
         {
             Debug.Log(clientID + " died");

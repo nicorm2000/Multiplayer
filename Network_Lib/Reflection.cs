@@ -3,12 +3,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Text;
 
 namespace Net
 {
@@ -30,6 +28,7 @@ namespace Net
 
         public Dictionary<Type, MethodInfo> extensionMethods = new Dictionary<Type, MethodInfo>();
         private Dictionary<object, Dictionary<object, int>> _previousDictionaryStates = new Dictionary<object, Dictionary<object, int>>();
+        private readonly Dictionary<object, int> _previousCollectionCounts = new Dictionary<object, int>();
         NetworkEntity networkEntity;
 
         public Reflection(NetworkEntity entity)
@@ -52,7 +51,7 @@ namespace Net
                         if (netExtensionMethod != null)
                         {
                             extensionMethods.TryAdd(netExtensionMethod.extensionMethod, methodInfo);
-                            consoleDebugger?.Invoke($"Registered extension for: {netExtensionMethod.extensionMethod.Name}");
+                            //consoleDebugger?.Invoke($"Registered extension for: {netExtensionMethod.extensionMethod.Name}");
                         }
                     }
                 }
@@ -147,9 +146,6 @@ namespace Net
                 return;
             }
 
-            debug += $"Field Value: {fieldValue}\n";
-            consoleDebugger?.Invoke(debug);
-
             // Handle simple types
             if ((fieldType.IsValueType && fieldType.IsPrimitive) || fieldType == typeof(string) || fieldType.IsEnum)
             {
@@ -158,8 +154,6 @@ namespace Net
                 SendPackage(fieldValue, attribute, idRoute);
                 return;
             }
-
-            consoleDebugger?.Invoke("typeof(IEnumerable).IsAssignableFrom(fieldType): " + typeof(IEnumerable).IsAssignableFrom(fieldType));
 
             // Handle collections
             if (typeof(IEnumerable).IsAssignableFrom(fieldType))
@@ -262,7 +256,7 @@ namespace Net
                 }
                 else
                 {
-                    consoleDebugger?.Invoke($"Processing as generic collection: {fieldType.Name}");
+                    //consoleDebugger?.Invoke($"Processing as generic collection: {fieldType.Name}");
 
                     IEnumerable collection = (IEnumerable)fieldValue;
                     int count = 0;
@@ -275,6 +269,41 @@ namespace Net
                         count++;
                     }
 
+                    int previousCount = -1;
+                    if (_previousCollectionCounts.TryGetValue(fieldValue, out previousCount))
+                    {
+                        if (previousCount > count)
+                        {
+                            int removedCount = previousCount - count;
+
+                            for (int i = 0; i < removedCount; i++)
+                            {
+                                int removedIndex = previousCount - i - 1;
+
+                                List<RouteInfo> removeRoute = new List<RouteInfo>(idRoute)
+                                {
+                                    RouteInfo.CreateForCollection(
+                                        routeId: attribute.VariableId,
+                                        index: removedIndex,
+                                        size: count,
+                                        elementType: GetElementType(fieldType))
+                                };
+
+                                NetRemoveMessage removeMessage = new NetRemoveMessage(
+                                    attribute.MessagePriority,
+                                    -1,
+                                    removeRoute);
+
+                                byte[] serialized = removeMessage.Serialize();
+                                consoleDebugger?.Invoke($"[ReadValue] Sending Remove for index {removedIndex} (count reduced) - Data: {BitConverter.ToString(serialized)}");
+                                networkEntity.SendMessage(serialized);
+                            }
+                        }
+                    }
+
+                    // Update count tracking
+                    _previousCollectionCounts[fieldValue] = count;
+
                     // Process items
                     enumerator = collection.GetEnumerator(); // Reset enumerator
                     while (enumerator.MoveNext())
@@ -282,23 +311,23 @@ namespace Net
                         object? item = enumerator.Current;
                         List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
                         {
-                            new RouteInfo(
-                                route: attribute.VariableId,
-                                collectionKey: index++,
-                                collectionSize: count,
+                            RouteInfo.CreateForCollection(
+                                routeId: attribute.VariableId,
+                                index: index++,
+                                size: count,
                                 elementType: item?.GetType() ?? GetElementType(fieldType))
                         };
 
-                        consoleDebugger?.Invoke($"Processing collection item [{index - 1}]: " +
-                                              $"Type: {item?.GetType()?.Name ?? "null"}, " +
-                                              $"Value: {item ?? "null"}");
+                        //consoleDebugger?.Invoke($"Processing collection item [{index - 1}]: " +
+                        //                      $"Type: {item?.GetType()?.Name ?? "null"}, " +
+                        //                      $"Value: {item ?? "null"}");
 
                         ProcessValue(item, currentRoute, attribute);
                     }
 
                     if (count == 0)
                     {
-                        consoleDebugger?.Invoke("Collection is empty");
+                        //consoleDebugger?.Invoke("Collection is empty");
                         idRoute.Add(new RouteInfo(
                             attribute.VariableId,
                             collectionKey: -1,
@@ -313,16 +342,6 @@ namespace Net
             debug += "Handling complex object type\n";
             idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
             Inspect(fieldType, fieldValue, idRoute);
-        }
-
-        private bool IsSupportedCollection(Type type)
-        {
-            if (type == null || type.IsArray || typeof(string) == type)
-                return false;
-
-            // Check for any IEnumerable that's not a dictionary
-            return typeof(IEnumerable).IsAssignableFrom(type) &&
-                   !typeof(IDictionary).IsAssignableFrom(type);
         }
 
         private int GetStableKeyHash(object key)
@@ -365,7 +384,7 @@ namespace Net
             if (value is NullOrEmpty.Remove)
             {
                 debug += "Sending RemoveMessage\n";
-                consoleDebugger?.Invoke(debug);
+                //consoleDebugger?.Invoke(debug);
                 int keyHash = idRoute.Last().collectionKey;
                 NetRemoveMessage netRemoveMessage = new NetRemoveMessage(attribute.MessagePriority, keyHash, idRoute);
                 byte[] serialized = netRemoveMessage.Serialize();
@@ -612,7 +631,7 @@ namespace Net
             }
             catch (Exception ex)
             {
-                consoleDebugger?.Invoke($"ERROR Processing Message: {ex.Message}");
+                //consoleDebugger?.Invoke($"ERROR Processing Message: {ex.Message}");
             }
         }
 
@@ -768,10 +787,11 @@ namespace Net
                         //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
                         //debug += $"Current field value: {info.GetValue(obj)}\n";
                         //consoleDebugger?.Invoke(debug);
+
                         object result = WriteValue(info, obj, attributes, idRoute, idToRead, value);
                         //debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
                         debug += $"Final field value after WriteValue: {info.GetValue(obj)}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         return result;
                     }
                 }
@@ -878,9 +898,10 @@ namespace Net
             //consoleDebugger?.Invoke($"Value is Remove: {value is Remove}");
 
             RouteInfo currentRoute = idRoute[idToRead];
+            //consoleDebugger?.Invoke($"[WriteValue] RouteInfo: {currentRoute} | IsCollection: {currentRoute.IsCollection}, collectionSize: {currentRoute.collectionSize}");
             Type fieldType = info.FieldType;
             object currentValue = info.GetValue(obj);
-            consoleDebugger?.Invoke($"[WriteValue START] Field: {info.Name}, Type: {info.FieldType}, Incoming Value: {value}, Route: {string.Join("->", idRoute.Select(r => r.route))}");
+            //consoleDebugger?.Invoke($"[WriteValue START] Field: {info.Name}, Type: {info.FieldType}, Incoming Value: {value}, Route: {string.Join("->", idRoute.Select(r => r.route))}");
             // Handle null assignments
             if (value == null || value is NullOrEmpty.Null)
             {
@@ -891,47 +912,47 @@ namespace Net
             // Handle simple types
             if (IsSimpleType(fieldType))
             {
-                consoleDebugger?.Invoke($"WriteValue: Setting field '{info.Name}' on '{obj.GetType().Name}' to '{value}' (Type: {value?.GetType()?.Name})");
+                //consoleDebugger?.Invoke($"WriteValue: Setting field '{info.Name}' on '{obj.GetType().Name}' to '{value}' (Type: {value?.GetType()?.Name})");
                 info.SetValue(obj, value);
                 return obj;
             }
 
             if (value is Remove removeData)
             {
-                //consoleDebugger?.Invoke("\n--- DICTIONARY REMOVE OPERATION ---\n");
-
-                // Get the field value
                 object fieldValue = info.GetValue(obj);
                 if (fieldValue == null)
-                {
-                    //consoleDebugger?.Invoke("ERROR: Field value is null");
                     return obj;
-                }
 
-                // Check if this is the dictionary field or a container
                 if (typeof(IDictionary).IsAssignableFrom(info.FieldType))
                 {
-                    // Direct dictionary case
                     return HandleDictionaryRemove(info, obj, removeData.KeyHash);
+                }
+                else if (typeof(IList).IsAssignableFrom(info.FieldType))
+                {
+                    var list = fieldValue as IList;
+                    if (list != null && currentRoute.collectionKey >= 0 && currentRoute.collectionKey < list.Count)
+                    {
+                        consoleDebugger?.Invoke($"[WriteValue] Removing item at index {currentRoute.collectionKey} from '{info.Name}'");
+                        list.RemoveAt(currentRoute.collectionKey);
+                    }
+                    else
+                    {
+                        consoleDebugger?.Invoke($"[WriteValue] Cannot remove at index {currentRoute.collectionKey} — out of bounds or invalid list");
+                    }
+                    return obj;
                 }
                 else
                 {
-                    // Nested case - need to continue inspection
-                    //consoleDebugger?.Invoke($"Field {info.Name} is a container, inspecting deeper...");
-
-                    // Create new route for the nested path
-                    List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
+                    // Nested case (like fields inside a class)
+                    var newRoute = new List<RouteInfo>(idRoute);
                     newRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
-
-                    // Continue inspection with the nested object
                     return InspectWrite(fieldValue.GetType(), fieldValue, newRoute, idToRead + 1, value);
                 }
             }
 
-            // Handle collections - Using OLD code approach
             if (typeof(IEnumerable).IsAssignableFrom(fieldType))
             {
-                consoleDebugger?.Invoke($"[WriteValue] Attempting to assign collection element at index {currentRoute.collectionKey} with value: {value}");
+                //consoleDebugger?.Invoke($"[WriteValue] Attempting to assign collection element at index {currentRoute.collectionKey} with value: {value}");
                 // Get current collection size
                 int currentSize = (currentValue as ICollection)?.Count ?? 0;
                 int newSize = currentRoute.collectionSize;
@@ -990,18 +1011,62 @@ namespace Net
                 }
                 else
                 {
-                    if (TrySetCollectionIndexValue(currentValue, currentRoute.collectionKey, value))
+                    if (currentValue == null)
                     {
+                        //consoleDebugger?.Invoke($"[WriteValue] Field '{info.Name}' is null on receiver. Attempting to construct new instance of {fieldType.Name}.");
+                        currentValue = ConstructObject(fieldType);
+                        info.SetValue(obj, currentValue);
+                    }
+
+                    // Always check if we need to prefill it
+                    if (currentRoute.IsCollection && (currentValue as ICollection)?.Count < currentRoute.collectionSize)
+                    {
+                        Type elementTypeToFill = GetElementType(fieldType) ?? typeof(object);
+                        MethodInfo addMethod = fieldType.GetMethod("Add");
+
+                        int currentCount = (currentValue as ICollection)?.Count ?? 0;
+                        int fillCount = currentRoute.collectionSize - currentCount;
+
+                        for (int i = 0; i < fillCount; i++)
+                        {
+                            object defaultValue = elementTypeToFill.IsValueType
+                                ? Activator.CreateInstance(elementTypeToFill)
+                                : null;
+
+                            addMethod?.Invoke(currentValue, new object[] { defaultValue });
+                        }
+
+                        //consoleDebugger?.Invoke($"[WriteValue] Pre-filled {fieldType.Name} with {fillCount} additional default elements (now has {currentRoute.collectionSize})");
+                    }
+
+                    if (idRoute.Count <= idToRead + 1)
+                    {
+                        if (TrySetCollectionIndexValue(currentValue, currentRoute.collectionKey, value))
+                        {
+                            return obj;
+                        }
+                    }
+                    else
+                    {
+                        // Intermediate write — need to go deeper
+                        object? nestedElement = TryGetCollectionIndexValue(currentValue, currentRoute.collectionKey);
+
+                        if (nestedElement == null)
+                        {
+                            Type nestedElementType = GetElementType(fieldType) ?? typeof(object);
+                            nestedElement = ConstructObject(nestedElementType);
+                            TrySetCollectionIndexValue(currentValue, currentRoute.collectionKey, nestedElement);
+                        }
+
+                        InspectWrite(nestedElement.GetType(), nestedElement, idRoute, idToRead + 1, value);
                         return obj;
                     }
 
-                    // For non-array collections, use OLD code's approach
                     Type elementType = GetElementType(fieldType);
                     object[] arrayCopy = new object[newSize];
 
                     if (currentValue != null)
                     {
-                        // Copy existing elements
                         int i = 0;
                         foreach (object? item in (IEnumerable)currentValue)
                         {
@@ -1009,12 +1074,13 @@ namespace Net
                             arrayCopy[i++] = item;
                         }
 
-                        // Fill remaining slots with default instances if needed
                         for (; i < newSize; i++)
                         {
                             arrayCopy[i] = elementType.IsValueType ? Activator.CreateInstance(elementType) : null;
                         }
                     }
+
+                    //consoleDebugger?.Invoke($"[WriteValue] Successfully constructed and assigned new {fieldType.Name} to field '{info.Name}'");
 
                     // Convert to proper collection type
                     if (fieldType.IsGenericType)
@@ -1023,7 +1089,6 @@ namespace Net
                         Type constructedType = genericType.MakeGenericType(elementType);
                         newCollection = Activator.CreateInstance(constructedType);
 
-                        // Add elements
                         MethodInfo addMethod = constructedType.GetMethod("Add");
                         foreach (object? item in arrayCopy)
                         {
@@ -1032,15 +1097,19 @@ namespace Net
                     }
                     else
                     {
-                        // Fallback for non-generic collections
                         newCollection = arrayCopy;
                     }
                 }
 
-                // Handle specific index operations
+                if (currentRoute.collectionKey < 0)
+                {
+                    consoleDebugger?.Invoke($"[WriteValue] ⚠️ Skipping write to invalid index {currentRoute.collectionKey} in collection '{info.Name}'");
+                    return obj;
+                }
+
                 if (currentRoute.collectionKey >= 0 && currentRoute.collectionKey < newSize)
                 {
-                    if (idRoute.Count <= idToRead + 1) // Direct value assignment
+                    if (idRoute.Count <= idToRead + 1)
                     {
                         if (fieldType.IsArray)
                         {
@@ -1051,9 +1120,17 @@ namespace Net
                             list[currentRoute.collectionKey] = value;
                         }
                     }
-                    else // Nested object inspection
+                    else
                     {
-                        object element = fieldType.IsArray ? ((Array)newCollection).GetValue(currentRoute.collectionKey) : ((IList)newCollection)[currentRoute.collectionKey];
+                        if (currentRoute.collectionKey < 0)
+                        {
+                            consoleDebugger?.Invoke($"[WriteValue] Skipping InspectWrite for invalid collectionKey {currentRoute.collectionKey} in '{info.Name}'");
+                            return obj;
+                        }
+
+                        object element = fieldType.IsArray
+                            ? ((Array)newCollection).GetValue(currentRoute.collectionKey)
+                            : ((IList)newCollection)[currentRoute.collectionKey];
 
                         if (element == null)
                         {
@@ -1067,6 +1144,7 @@ namespace Net
                                 list[currentRoute.collectionKey] = element;
                             }
                         }
+
                         InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
                     }
                 }
@@ -1090,35 +1168,90 @@ namespace Net
             return obj;
         }
 
+        private object? TryGetCollectionIndexValue(object collection, int index)
+        {
+            if (collection == null || index < 0)
+                return null;
+
+            Type type = collection.GetType();
+            PropertyInfo indexer = type.GetProperty("Item", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (indexer != null && indexer.CanRead)
+            {
+                try
+                {
+                    return indexer.GetValue(collection, new object[] { index });
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            if (collection is IList list && index < list.Count)
+            {
+                return list[index];
+            }
+
+            return null;
+        }
+
         private bool TrySetCollectionIndexValue(object collection, int index, object value)
         {
             if (collection == null || index < 0)
                 return false;
 
             Type type = collection.GetType();
-            PropertyInfo indexer = type.GetProperty("Item");
 
+            // 1. Try public or non-public indexer
+            PropertyInfo indexer = type.GetProperty("Item", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (indexer != null && indexer.CanWrite)
             {
                 try
                 {
                     indexer.SetValue(collection, value, new object[] { index });
-                    consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Successfully set index {index} to value {value} on type {type.Name}");
+                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Set via indexer [{index}] = {value} on {type.Name}");
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Failed to set index {index}: {ex.Message}");
+                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Indexer set failed: {ex.Message}");
                 }
             }
-            else
+
+            // 2. Try IList
+            if (collection is IList list && index < list.Count)
             {
-                consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] No writable indexer found on type {type.Name}");
+                try
+                {
+                    list[index] = value;
+                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Set via IList at index {index} to {value}");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] IList set failed: {ex.Message}");
+                }
             }
 
+            // 3. Try Insert(int, T)
+            MethodInfo? insertMethod = type.GetMethod("Insert", new[] { typeof(int), typeof(object) });
+            if (insertMethod != null)
+            {
+                try
+                {
+                    insertMethod.Invoke(collection, new object[] { index, value });
+                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Inserted value at index {index}");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Insert failed: {ex.Message}");
+                }
+            }
+
+            //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Failed to set index {index} on {type.Name}");
             return false;
         }
-
 
         private object HandleDictionaryRemove(FieldInfo info, object obj, int keyHash)
         {
@@ -1153,6 +1286,30 @@ namespace Net
 
             //if (!found) consoleDebugger?.Invoke("WARNING: No matching key found");
             //consoleDebugger?.Invoke($"Final Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
+            return obj;
+        }
+
+        private object HandleCollectionRemove(FieldInfo info, object obj, int index)
+        {
+            object fieldValue = info.GetValue(obj);
+            if (fieldValue == null) return obj;
+
+            Type type = fieldValue.GetType();
+            MethodInfo removeAt = type.GetMethod("RemoveAt", new[] { typeof(int) });
+
+            if (removeAt != null)
+            {
+                consoleDebugger?.Invoke($"[HandleCollectionRemove] Attempting to remove at index {index} in field '{info.Name}' of type {type.Name}");
+                removeAt.Invoke(fieldValue, new object[] { index });
+
+                int remaining = (fieldValue as ICollection)?.Count ?? -1;
+                consoleDebugger?.Invoke($"[HandleCollectionRemove] Removed. Remaining count: {remaining}");
+            }
+            else
+            {
+                consoleDebugger?.Invoke($"[HandleCollectionRemove] RemoveAt(int) not found on type {type.Name}");
+            }
+
             return obj;
         }
 
@@ -1205,7 +1362,7 @@ namespace Net
             info.SetValue(obj, dictionary);
             debug += $"Final dictionary state: {string.Join(", ", dictionary.Keys.Cast<object>().Select(k => $"{k}={dictionary[k]}"))}\n";
 
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
             return obj;
         }
 
@@ -1338,16 +1495,6 @@ namespace Net
                 //consoleDebugger?.Invoke(debug);
                 Inspect(valueType, value, route);
             }
-        }
-
-        private int GetCollectionCount(IEnumerable collection)
-        {
-            if (collection is ICollection coll) return coll.Count;
-
-            // Fallback for non-ICollection enumerables
-            int count = 0;
-            foreach (object? item in collection) count++;
-            return count;
         }
 
         private IEnumerable<int[]> GetArrayIndices(Array array)

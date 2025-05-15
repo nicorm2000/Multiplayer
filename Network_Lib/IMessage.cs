@@ -35,6 +35,7 @@ namespace Net
         Enum = -82,
         Remove = -81,
 
+        MatchMakerPlayerListUpdate = -11,
         Instance = -10,
         InstanceRequest = -9,
         Object = -8,

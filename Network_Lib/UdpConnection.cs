@@ -16,7 +16,7 @@ namespace Net
         private readonly UdpClient connection;
         private IReceiveData receiver = null;
         private Queue<DataReceived> dataReceivedQueue = new Queue<DataReceived>();
-
+        private bool isClosed = false;
         object handler = new object();
 
         public UdpConnection(int port, IReceiveData receiver = null)
@@ -40,7 +40,15 @@ namespace Net
 
         public void Close()
         {
-            connection.Close();
+            if (isClosed) return;
+
+            isClosed = true;
+
+            try
+            {
+                connection.Close();
+            }
+            catch (ObjectDisposedException) { }
         }
 
         public void FlushReceiveData()
@@ -71,22 +79,27 @@ namespace Net
             }
             finally
             {
-                lock (handler)
+                if (!isClosed)
                 {
-                    connection.BeginReceive(OnReceive, null);
+                    lock (handler)
+                    {
+                        connection.BeginReceive(OnReceive, null);
+                    }
 
+                    dataReceivedQueue.Enqueue(dataReceived);
                 }
-                dataReceivedQueue.Enqueue(dataReceived);
             }
         }
 
         public void Send(byte[] data)
         {
+            if (isClosed) return;
             connection.Send(data, data.Length);
         }
 
         public void Send(byte[] data, IPEndPoint ipEndpoint)
         {
+            if (isClosed) return;
             connection.Send(data, data.Length, ipEndpoint);
         }
 

@@ -32,6 +32,8 @@ public class Server : NetworkEntity
 
     public readonly Dictionary<IPEndPoint, int> ipToId = new();
 
+    private List<string> activePlayerNames = new();
+
     DateTime appStartTime;
 
     private int maxPlayersPerServer = 4;
@@ -80,6 +82,9 @@ public class Server : NetworkEntity
 
             ipToId[ip] = newClientID;
             clients.Add(newClientID, new Client(ip, newClientID, Convert.ToSingle((DateTime.UtcNow - appStartTime).TotalSeconds), clientName));
+            if (!activePlayerNames.Contains(clientName))
+                activePlayerNames.Add(clientName);
+            BroadcastPlayerListToMatchMaker();
             pingPong.AddClientForList(newClientID);
             OnNewPlayer?.Invoke(newClientID);
 
@@ -112,7 +117,12 @@ public class Server : NetworkEntity
             Console.WriteLine("Removing client: " + idToRemove);
             pingPong.RemoveClientForList(idToRemove);
             ipToId.Remove(clients[idToRemove].ipEndPoint);
+
+            string removedName = clients[idToRemove].clientName;
             clients.Remove(idToRemove);
+            activePlayerNames.Remove(removedName);
+
+            BroadcastPlayerListToMatchMaker();
         }
     }
 
@@ -233,10 +243,10 @@ public class Server : NetworkEntity
 
                 break;
 
-            //HACER ESTO
             case MessageType.MatchMakerIp:
 
                 matchmMakerIp = ip;
+                Console.WriteLine("[Server] Registered MatchMaker IP: " + ip);
 
                 break;
 
@@ -392,7 +402,10 @@ public class Server : NetworkEntity
     /// </summary>
     public override void OnApplicationQuit()
     {
-        // Notify all clients about the server's disconnection and close the server
+        Console.WriteLine("[Server] Application quitting — notifying MatchMaker");
+
+        BroadcastPlayerListToMatchMaker(); // Will be empty if all clients disconnected properly
+
         NetErrorMessage netErrorMessage = new("Lost Connection To Server");
         Broadcast(netErrorMessage.Serialize());
         CloseConnection();
@@ -403,19 +416,30 @@ public class Server : NetworkEntity
     /// </summary>
     public override void CloseConnection()
     {
-        // Notify all clients about their disconnection and remove them
+        List<byte[]> disconnectMessages = new();
         List<int> clientIdsToRemove = new(clients.Keys);
 
         foreach (int clientId in clientIdsToRemove)
         {
             NetIDMessage netDisconnection = new(MessagePriority.Default, clientId);
-            Broadcast(netDisconnection.Serialize());
+            disconnectMessages.Add(netDisconnection.Serialize());
+        }
+
+        foreach (int clientId in clientIdsToRemove)
+        {
             RemoveClient(clientId);
         }
 
+        foreach (byte[] message in disconnectMessages)
+        {
+            Broadcast(message);
+        }
+
+        BroadcastPlayerListToMatchMaker();
+        System.Threading.Thread.Sleep(100);
         connection.Close();
-        //      System.Diagnostics.Process.GetCurrentProcess().Kill;
     }
+
 
     /// <summary>
     /// Updates the position of a player based on received data.
@@ -476,5 +500,23 @@ public class Server : NetworkEntity
         {
             Broadcast(data, clients[id].ipEndPoint);
         }
+    }
+
+    private void BroadcastPlayerListToMatchMaker()
+    {
+        if (matchmMakerIp == null) return;
+
+        List<string> names = new();
+        foreach (Client client in clients.Values)
+        {
+            names.Add(client.clientName);
+        }
+
+        if (names.Count == 0)
+            Console.WriteLine("[Server] Sent empty player list to MatchMaker");
+
+        MatchMakerPlayerListUpdateMessage msg = new MatchMakerPlayerListUpdateMessage(MessagePriority.Default, names);
+        connection.Send(msg.Serialize(), matchmMakerIp);
+        Console.WriteLine("[Server] Sent player list to MatchMaker: " + string.Join(", ", names));
     }
 }

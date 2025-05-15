@@ -34,7 +34,7 @@ namespace Match_Maker
         }
 
         public readonly Dictionary<int, Client> clients = new();
-        //public Dictionary<int, List<Client>> totalClientsInServers = new();
+        private Dictionary<int, HashSet<string>> activeNamesByServer = new();
 
         public readonly Dictionary<IPEndPoint, int> ipToId = new();
 
@@ -118,14 +118,17 @@ namespace Match_Maker
             if (clients.ContainsKey(idToRemove))
             {
                 Console.WriteLine("Removing client: " + idToRemove);
+
+                string clientName = clients[idToRemove].clientName;
+
                 pingPong.RemoveClientForList(idToRemove);
                 ipToId.Remove(clients[idToRemove].ipEndPoint);
                 clients.Remove(idToRemove);
-                // Aca logica para sacar al player de la lista del matchmaker de nombres
-                //if ()
-                //{
-                //    totalClientsInServers[playerCounterTotalServers].Remove(idToRemove);
-                //}
+
+                foreach (HashSet<string> nameSet in activeNamesByServer.Values)
+                {
+                    nameSet.Remove(clientName);
+                }
 
                 CheckPlayerInLobby();
             }
@@ -189,6 +192,38 @@ namespace Match_Maker
                     CloseConnection();
 
                     break;
+
+                case MessageType.MatchMakerPlayerListUpdate:
+                    {
+                        MatchMakerPlayerListUpdateMessage updateMsg = new(data);
+                        int senderPort = ip.Port;
+
+                        Console.WriteLine("[MatchMaker] Received player list update from port " + senderPort + ":");
+                        foreach (string name in updateMsg.GetData())
+                        {
+                            Console.WriteLine(" - " + name);
+                        }
+
+                        if (!activeNamesByServer.ContainsKey(senderPort))
+                            activeNamesByServer[senderPort] = new HashSet<string>();
+
+                        HashSet<string> serverNameSet = activeNamesByServer[senderPort];
+
+                        serverNameSet.Clear();
+
+                        foreach (var name in updateMsg.GetData())
+                        {
+                            serverNameSet.Add(name);
+                        }
+
+                        Console.WriteLine("[MatchMaker] Current names in port " + senderPort + ":");
+                        foreach (string name in activeNamesByServer[senderPort])
+                        {
+                            Console.WriteLine(" -> " + name);
+                        }
+
+                        break;
+                    }
 
                 default:
                     break;
@@ -264,6 +299,8 @@ namespace Match_Maker
         /// <returns>True if the username is valid, false otherwise.</returns>
         bool CheckValidUserName(string userName, IPEndPoint ip)
         {
+            Console.WriteLine("[MatchMaker] Checking name: " + userName);
+
             bool hasUpperCase = false;
             bool hasLowerCase = false;
 
@@ -293,11 +330,22 @@ namespace Match_Maker
 
             foreach (int clientID in clients.Keys)
             {
-                //Chequea que sea o TODO minuscula o TODO mayuscula, dsp chequea qe no sea un nombre que este en uso
+                // Chequea que sea o TODO minuscula o TODO mayuscula, dsp chequea qe no sea un nombre que este en uso
                 if (userName == clients[clientID].clientName)
                 {
                     NetErrorMessage netInvalidUserName = new("Invalid User Name");
                     Broadcast(netInvalidUserName.Serialize(), ip);
+                    return false;
+                }
+            }
+
+            foreach (HashSet<string> nameSet in activeNamesByServer.Values)
+            {
+                if (nameSet.Contains(userName))
+                {
+                    NetErrorMessage netInvalidUserName = new("Username already in use in another match.");
+                    Broadcast(netInvalidUserName.Serialize(), ip);
+                    Console.WriteLine("[MatchMaker] Name is already taken in another match: " + userName);
                     return false;
                 }
             }
@@ -441,16 +489,22 @@ namespace Match_Maker
             serverPort++;
 
             serversApplicationRunnnig.Add(CreateServerProcess(serverPort));
-            //Sumar uno al server para que pase al otro
-            //totalClientsInServers.Add(serverNumber, new List<Client>());
-            //serverNumber++;
 
-            //MANDAR ESTO
-            //IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-            //
-            //serversIps[serverPort] = new IPEndPoint(ipAddress, serverPort);
-            //NetMatchMakerIP netErrorMessage = new("Handshake MatchMaker Server");
-            //Broadcast(netErrorMessage.Serialize(), serversIps[serverPort]);
+            serversApplicationRunnnig.Add(CreateServerProcess(serverPort));
+
+            // Give the server some time to initialize before sending the handshake
+            System.Threading.Thread.Sleep(200);
+
+            // Register server's IP and port
+            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+            IPEndPoint serverEndPoint = new(ipAddress, serverPort);
+            serversIps[serverPort] = serverEndPoint;
+
+            var msg = new MatchMakerIpMessage(MessagePriority.Default, ipAddress.ToString());
+            Broadcast(msg.Serialize(), serverEndPoint);
+
+            Console.WriteLine("[MatchMaker] Sent MatchMakerIp message to server at port " + serverPort);
+
             return serverPort;
         }
 

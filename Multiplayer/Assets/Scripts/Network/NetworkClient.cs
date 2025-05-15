@@ -328,11 +328,10 @@ public class NetworkClient : NetworkEntity
     /// <param name="data">The data to send.</param>
     public void SendToServer(byte[] data)
     {
+        if (connection == null) return;
+
         nondisposablesMessages?.AddSentMessages(data);
         connection.Send(data);
-
-        //  string s = "SEND = " + MessageChecker.CheckMessageType(data) + " - " + MessageChecker.CheckMessagePriority(data) + "[" + DateTime.UtcNow + "]";
-        //  Debug.Log(s);
     }
 
     /// <summary>

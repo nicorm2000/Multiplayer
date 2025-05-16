@@ -1,5 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Net;
+using System;
+
 namespace Game
 {
     public class bulletBehaviour : MonoBehaviour, INetObj
@@ -14,6 +16,31 @@ namespace Game
 
         NetworkManager nm;
 
+        private Action onEventA;
+        [NetEvent(0)]
+        public event Action OnEventA
+        {
+            add => onEventA += value;
+            remove => onEventA -= value;
+        }
+
+        private Action<int> onEventB;
+        [NetEvent(1)]
+        public event Action<int> OnEventB
+        {
+            add => onEventB += value;
+            remove => onEventB -= value;
+        }
+
+        private Action<string, float> shootTriggered;
+
+        [NetEvent(2, backingFieldName: "shootTriggered")]
+        public event Action<string, float> OnEventC
+        {
+            add => shootTriggered += value;
+            remove => shootTriggered -= value;
+        }
+
         private void Start()
         {
             nm = NetworkManager.Instance;
@@ -22,10 +49,18 @@ namespace Game
 
             velocityVector = transform.forward * velocity;
 
+            OnEventA += () => Debug.Log("C# Event: OnEventA triggered!");
+            OnEventB += (value) => Debug.Log($"C# Event: OnEventB({value}) triggered!");
+            OnEventC += (text, weight) => Debug.Log($"C# Event: OnEventC(\"{text}\", {weight}) triggered!");
+
             Debug.Log("Shoot Game");
             ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMR));
             ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRB), false);
             ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRI), 3);
+
+            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
+            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), 99);
+            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
         }
 
         [NetMethod(0)]

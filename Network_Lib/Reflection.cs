@@ -657,6 +657,16 @@ namespace Net
                         VariableMapping(netEnumMessage.GetMessageRoute(), netEnumMessage.GetData());
                         break;
 
+                    case MessageType.Event:
+                        debug += "Processing Event message\n";
+                        NetEventMessage netEventMessage = new NetEventMessage(data);
+                        (int, List<(string, string)>) eventData = netEventMessage.GetData();
+                        debug += $"Method: {eventData.Item1}, Args: {string.Join(", ", eventData.Item2)}, Route: {netEventMessage.GetMessageRoute()[0].route}\n";
+                        List<RouteInfo> route = netEventMessage.GetMessageRoute();
+                        //consoleDebugger?.Invoke(debug);
+                        InvokeCSharpEvent(eventData.Item1, eventData.Item2, route[0].route);
+                        break;
+
                     default:
                         debug += $"Unhandled message type: {messageType}\n";
                         //consoleDebugger?.Invoke(debug);
@@ -1832,8 +1842,139 @@ namespace Net
             }
             return objectToReturn;
         }
+        #endregion
+
+        #region Event Invocation
+        /// <summary>
+        /// Sends a C# event invocation message from the owner of a network object to all other clients.
+        /// </summary>
+        /// <param name="iNetObj">The network object that owns the event.</param>
+        /// <param name="eventName">The name of the event to invoke (e.g. "OnEventX").</param>
+        /// <param name="parameters">Optional parameters to serialize and send to listeners.</param>
+        public void SendCSharpEventMessage(INetObj iNetObj, string eventName, params object[] parameters)
+        {
+            if (iNetObj.GetOwnerID() != networkEntity.clientID)
+            {
+                consoleDebugger?.Invoke("[SendCSharpEventMessage] Skipped: not owner.");
+                return;
+            }
+
+            EventInfo eventInfo = iNetObj.GetType().GetEvent(eventName, bindingFlags);
+            if (eventInfo == null)
+            {
+                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Could not find event '{eventName}' on {iNetObj.GetType().Name}");
+                return;
+            }
+
+            NetEvent netEvent = eventInfo.GetCustomAttribute<NetEvent>();
+            if (netEvent == null)
+            {
+                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Missing [NetEvent] on event '{eventName}'");
+                return;
+            }
+
+            string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
+
+            FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
+
+            if (field == null)
+            {
+                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Could not find backing field '{backingFieldName}'");
+                return;
+            }
+
+            consoleDebugger?.Invoke($"[SendCSharpEventMessage] Found backing field '{backingFieldName}', sending event...");
+
+            // Serialize parameters
+            List<(string, string)> parametersList = new List<(string, string)>();
+            foreach (object param in parameters)
+            {
+                parametersList.Add((param.GetType().ToString(), param.ToString()));
+            }
+
+            (int EventId, List<(string, string)> parametersList) messageData = (netEvent.EventId, parametersList);
+            List<RouteInfo> idRoute = new List<RouteInfo>() { new RouteInfo(iNetObj.GetID()) };
+
+            NetEventMessage messageToSend = new NetEventMessage(netEvent.MessagePriority, messageData, idRoute);
+            networkEntity.SendMessage(messageToSend.Serialize());
+        }
+
+        /// <summary>
+        /// Invokes a previously declared C# event on a target network object by matching its event ID.
+        /// </summary>
+        /// <param name="eventId">The unique event ID specified in the NetEvent attribute.</param>
+        /// <param name="parameters">Serialized parameter values sent from the sender.</param>
+        /// <param name="objectId">The target network object ID whose event should be invoked.</param>
+        public void InvokeCSharpEvent(int eventId, List<(string, string)> parameters, int objectId)
+        {
+            foreach (INetObj netObj in NetObjFactory.NetObjects)
+            {
+                if (netObj.GetID() != objectId || netObj.GetOwnerID() == networkEntity.clientID)
+                    continue;
+
+                consoleDebugger?.Invoke($"[InvokeCSharpEvent] Matching object ID {objectId}");
+
+                Type targetType = netObj.GetType();
+                EventInfo[] events = targetType.GetEvents(bindingFlags);
+
+                foreach (EventInfo evt in events)
+                {
+                    NetEvent netEventAttr = evt.GetCustomAttribute<NetEvent>();
+                    consoleDebugger?.Invoke($"[InvokeCSharpEvent] Checking event {evt.Name}...");
+
+                    if (netEventAttr != null)
+                    {
+                        consoleDebugger?.Invoke($"[InvokeCSharpEvent] Found NetEvent with ID {netEventAttr.EventId}");
+                    }
+
+                    if (netEventAttr != null && netEventAttr.EventId == eventId)
+                    {
+                        string backingFieldName = netEventAttr.BackingFieldName ?? $"on{evt.Name.Substring(2)}";
+
+                        FieldInfo field = targetType.GetField(backingFieldName, bindingFlags);
+
+                        if (field == null)
+                        {
+                            consoleDebugger?.Invoke($"[InvokeCSharpEvent] Could not find backing field '{backingFieldName}'");
+                            return;
+                        }
+
+                        Delegate eventDelegate = field.GetValue(netObj) as Delegate;
+                        if (eventDelegate == null)
+                        {
+                            consoleDebugger?.Invoke($"[InvokeCSharpEvent] No subscribers for event '{evt.Name}'");
+                            return;
+                        }
+
+                        List<object> parsedParameters = new List<object>();
+                        ParameterInfo[] paramInfos = evt.EventHandlerType?.GetMethod("Invoke")?.GetParameters() ?? Array.Empty<ParameterInfo>();
+
+                        for (int i = 0; i < parameters.Count; i++)
+                        {
+                            string typeStr = parameters[i].Item1;
+                            string valueStr = parameters[i].Item2;
+
+                            Type type = Type.GetType(typeStr);
+                            TypeConverter converter = TypeDescriptor.GetConverter(type);
+                            object param = converter.ConvertFromInvariantString(valueStr);
+                            parsedParameters.Add(param);
+                        }
+
+                        foreach (Delegate handler in eventDelegate.GetInvocationList())
+                        {
+                            consoleDebugger?.Invoke($"[InvokeCSharpEvent] Invoking {evt.Name}...");
+                            handler.DynamicInvoke(parsedParameters.ToArray());
+                        }
+
+                        return;
+                    }
+                }
+
+                consoleDebugger?.Invoke($"[InvokeCSharpEvent] No matching event with ID {eventId} found.");
+            }
+        }
+        #endregion
     }
-    #endregion
 
     #region Attributes
     /// <summary>
@@ -1977,5 +2118,32 @@ namespace Net
             extensionMethod = type;
         }
     }
+
+    /// <summary>
+    /// Marks a C# event as network-synchronized. When invoked by the owner of the network object,
+    /// it will be triggered on all other clients that have subscribed to it.
+    /// </summary>
+    public class NetEvent : Attribute
+    {
+        public int EventId { get; }
+        public MessagePriority MessagePriority { get; }
+        public string? BackingFieldName { get; }
+
+        /// <summary>
+        /// Creates a new NetEvent attribute instance.
+        /// </summary>
+        /// <param name="eventId">Unique identifier for the event.</param>
+        /// <param name="priority">The priority of the network message.</param>
+        /// <param name="backingFieldName">
+        /// Optional backing field name (e.g. "onEventX"). If omitted, the system falls back to a convention.
+        /// </param>
+        public NetEvent(int eventId, MessagePriority priority = MessagePriority.Default, string? backingFieldName = null)
+        {
+            EventId = eventId;
+            MessagePriority = priority;
+            BackingFieldName = backingFieldName;
+        }
+    }
+
     #endregion
 }

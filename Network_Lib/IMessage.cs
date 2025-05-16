@@ -34,6 +34,7 @@ namespace Net
         Method = -83,
         Enum = -82,
         Remove = -81,
+        Event = -80,
 
         MatchMakerPlayerListUpdate = -11,
         Instance = -10,

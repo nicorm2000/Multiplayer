@@ -157,6 +157,7 @@ public class Server : NetworkEntity
             case MessageType.Empty:
             case MessageType.Null:
             case MessageType.Method:
+            case MessageType.Event:
             case MessageType.Enum:
             case MessageType.Ushort:
 

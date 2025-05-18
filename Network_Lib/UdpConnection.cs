@@ -21,10 +21,25 @@ namespace Net
 
         public UdpConnection(int port, IReceiveData receiver = null)
         {
-            connection = new UdpClient(port);
+            const int maxRetries = 3;
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    connection = new UdpClient(port);
+                    break;
+                }
+                catch (SocketException ex)
+                {
+                    Console.WriteLine($"[UdpConnection] Port bind failed (attempt {attempt}) on port {port}: {ex.Message}");
+                    if (attempt == maxRetries) throw;
+
+                    System.Threading.Thread.Sleep(50); // Wait a bit before retry
+                }
+            }
 
             this.receiver = receiver;
-
             connection.BeginReceive(OnReceive, null);
         }
 

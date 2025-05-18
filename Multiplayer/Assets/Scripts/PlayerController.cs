@@ -183,7 +183,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(16)] public TestingClass testing = new();
     //[NetVariable(17)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
     //[NetVariable(18)] public int[] myArray = new int[2];
-    //[NetVariable(19)] TestingClass4 testingClass4;
+    //[NetVariable(19)] public TestingClass4 testingClass4;
     //[NetVariable(20)] public List<TestingClass3> jajaxd = null;
     //[NetVariable(21)] public TestingClass3 testingclass3 = new();
     //[NetVariable(22)] public Vector2 MyVector2 = Vector2.zero;
@@ -198,11 +198,11 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(31)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
     //[NetVariable(32)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(33)] public Vector3Int MyVector3Int = new (0,0,0);
-    //[NetVariable(34)] private DictionaryTestClass dictionaryTest;
-    //[NetVariable(35)] private MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
-    //[NetVariable(36)] private CustomCollection<int> _customCollection;
-    //[NetVariable(37)] private CustomCollection2<string> _customCollection2;
-    //[NetVariable(38)] private CustomCollection3<TestingClass3> _customCollection3;
+    //[NetVariable(34)] public DictionaryTestClass dictionaryTest;
+    //[NetVariable(35)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
+    //[NetVariable(36)] public CustomCollection<int> _customCollection;
+    //[NetVariable(37)] public CustomCollection2<string> _customCollection2;
+    //[NetVariable(38)] public CustomCollection3<TestingClass3> _customCollection3;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;

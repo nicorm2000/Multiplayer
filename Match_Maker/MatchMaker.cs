@@ -35,7 +35,7 @@ namespace Match_Maker
 
         public readonly Dictionary<int, Client> clients = new();
         private Dictionary<int, HashSet<string>> activeNamesByServer = new();
-
+        private HashSet<int> usedPorts = new();
         public readonly Dictionary<IPEndPoint, int> ipToId = new();
 
         DateTime appStartTime;
@@ -486,11 +486,15 @@ namespace Match_Maker
 
         int CreateNewServer()
         {
-            serverPort++;
+            do
+            {
+                serverPort++;
+            } while (usedPorts.Contains(serverPort)); // find an unused port
 
-            serversApplicationRunnnig.Add(CreateServerProcess(serverPort));
+            usedPorts.Add(serverPort);
 
-            serversApplicationRunnnig.Add(CreateServerProcess(serverPort));
+            Process proc = CreateServerProcess(serverPort);
+            serversApplicationRunnnig.Add(proc);
 
             // Give the server some time to initialize before sending the handshake
             System.Threading.Thread.Sleep(200);

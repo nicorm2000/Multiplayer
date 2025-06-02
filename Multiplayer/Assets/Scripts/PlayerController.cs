@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
+[NetTRS(NetTRS.SYNC.DEFAULT)]
 public class PlayerController : MonoBehaviour, INetObj
 {
     [Serializable]
@@ -862,6 +863,8 @@ public class PlayerController : MonoBehaviour, INetObj
         }
     }
 
+    
+
     public void OnReciveDamage()
     {
         health--;
@@ -880,6 +883,16 @@ public class PlayerController : MonoBehaviour, INetObj
     public NetObj GetNetObj()
     {
         return netObj;
+    }
+
+    public TRS GetTRS()
+    {
+        return transform.TranslateTRS();
+    }
+
+    public void SetTRS(TRS trs, NetTRS.SYNC sync)
+    {
+        transform?.FromTRS(trs, sync);
     }
 }
 

@@ -35,6 +35,7 @@ namespace Net
         Enum = -82,
         Remove = -81,
         Event = -80,
+        TRS = -79,
 
         MatchMakerPlayerListUpdate = -11,
         Instance = -10,

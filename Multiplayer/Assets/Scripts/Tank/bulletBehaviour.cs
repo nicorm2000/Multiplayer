@@ -4,10 +4,11 @@ using System;
 
 namespace Game
 {
+    [NetTRS(NetTRS.SYNC.DEFAULT)]
     public class bulletBehaviour : MonoBehaviour, INetObj
     {
         [SerializeField] float velocity;
-        [SerializeField] float gravity = 9.8f;  // Valor de la gravedad
+        [SerializeField] float gravity = 9.8f;
         private Vector3 velocityVector;
 
         int originPlayerID = -1;
@@ -125,6 +126,16 @@ namespace Game
         public NetObj GetNetObj()
         {
             return netObj;
+        }
+
+        public TRS GetTRS()
+        {
+            return transform.TranslateTRS();
+        }
+
+        public void SetTRS(TRS trs, NetTRS.SYNC sync)
+        {
+            transform?.FromTRS(trs, sync);
         }
     }
 }

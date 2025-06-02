@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Linq;
 using System.Net;
 using System;
+using System.Diagnostics;
 
 namespace Net
 {
@@ -94,6 +95,11 @@ namespace Net
                         RouteInfo.CreateForProperty(netObj.GetID())
                     };
                     Inspect(netObj.GetType(), netObj, idRoute);
+
+                    TRS trs = netObj.GetTRS();
+                    NetTRSMessage netTRSMessage = new NetTRSMessage(MessagePriority.Default, trs, idRoute);
+                    byte[] aux = netTRSMessage.Serialize();
+                    networkEntity.SendMessage(aux);
                 }
             }
         }
@@ -667,17 +673,26 @@ namespace Net
                         InvokeCSharpEvent(eventData.Item1, eventData.Item2, route[0].route);
                         break;
 
+                    case MessageType.TRS:
+                        debug += "Processing TRS message\n";
+                        NetTRSMessage netTRSMessage = new NetTRSMessage(data);
+                        debug += $"Enum: {netTRSMessage.GetData()}, Route: {string.Join("->", netTRSMessage.GetMessageRoute().Select(r => r.route))}\n";
+                        consoleDebugger?.Invoke(debug);
+                        TRSMapping(netTRSMessage.GetMessageRoute(), netTRSMessage.GetData());
+                        break;
+
                     default:
                         debug += $"Unhandled message type: {messageType}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                //consoleDebugger?.Invoke($"ERROR Processing Message: {ex.Message}");
+                consoleDebugger?.Invoke($"ERROR Processing Message: {ex.Message}");
             }
         }
+
         #endregion
 
         #region Variable Mapping
@@ -803,6 +818,28 @@ namespace Net
                 _ = InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             }
             //consoleDebugger?.Invoke(debug);
+        }
+
+        private void TRSMapping(List<RouteInfo> route, TRS data)
+        {
+            if (route == null || route.Count == 0)
+            {
+                //consoleDebugger?.Invoke("Empty route\n");
+                return;
+            }
+
+            INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
+            if (objectRoot == null)
+            {
+                //consoleDebugger?.Invoke($"No INetObj found for ID: {route[0].route}\n");
+                return;
+            }
+
+            if (objectRoot.GetOwnerID() != networkEntity.clientID)
+            {
+                NetTRS auxSync = objectRoot.GetType().GetCustomAttribute<NetTRS>();
+                objectRoot.SetTRS(data, auxSync != null ? auxSync.syncData : NetTRS.SYNC.DEFAULT);
+            }
         }
         #endregion
 
@@ -2142,6 +2179,28 @@ namespace Net
             EventId = eventId;
             MessagePriority = priority;
             BackingFieldName = backingFieldName;
+        }
+    }
+
+    public class NetTRS : Attribute
+    {
+        [Flags]
+        public enum SYNC
+        {
+            DEFAULT = 0,
+            NOTPOSITION = 1,
+            NOTROTATION = 2,
+            NOTSCALE = 4,
+            NOTTRS = 7,
+            NOTISACTIVE = 8,
+            NOTALL = 15
+        }
+
+        public SYNC syncData = SYNC.DEFAULT;
+
+        public NetTRS(SYNC value)
+        {
+            syncData = value;
         }
     }
 

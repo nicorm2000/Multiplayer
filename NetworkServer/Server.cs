@@ -159,6 +159,7 @@ public class Server : NetworkEntity
             case MessageType.Method:
             case MessageType.Event:
             case MessageType.Enum:
+            case MessageType.TRS:
             case MessageType.Ushort:
 
                 BroadcastPlayerPosition(ipToId[ip], data);
@@ -478,7 +479,6 @@ public class Server : NetworkEntity
             }
         }
     }
-
 
     public override void Update()
     {

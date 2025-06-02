@@ -60,7 +60,7 @@ public class NetworkClient : NetworkEntity
 
     private async void InitializeClientWithDelay(int secondsToDelay)
     {
-        await Task.Delay(secondsToDelay * 1000); // Esperar 2 segundos
+        await Task.Delay(secondsToDelay * 1000);
         InitializeClient();
     }
 
@@ -150,7 +150,6 @@ public class NetworkClient : NetworkEntity
                 break;
 
             case MessageType.MatchMakerToClientHandShake:
-
 
                 clientID = new NetIDMessage(data).GetData();
                 if (checkActivity == null)

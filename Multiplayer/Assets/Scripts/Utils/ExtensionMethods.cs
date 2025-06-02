@@ -177,4 +177,28 @@ public static class ExtensionMethods
 
         return planeValues;
     }
+
+    public static TRS TranslateTRS(this Transform transform)
+    {
+        TRS trs = new TRS();
+
+        trs.position = (transform.position.x, transform.position.y, transform.position.z);
+        trs.rotation = (transform.rotation.x, transform.rotation.y, transform.rotation.z, transform.rotation.w);
+        trs.scale = (transform.localScale.x, transform.localScale.y, transform.localScale.z);
+        trs.isActive = transform.gameObject.activeSelf;
+
+        return trs;
+    }
+
+    public static void FromTRS(this Transform transform, TRS tRS, NetTRS.SYNC syncValue)
+    {
+        if (!syncValue.HasFlag(NetTRS.SYNC.NOTPOSITION))
+        transform.position = new Vector3(tRS.position.Item1, tRS.position.Item2, tRS.position.Item3);
+        if (!syncValue.HasFlag(NetTRS.SYNC.NOTROTATION))
+        transform.rotation = new Quaternion(tRS.rotation.Item1, tRS.rotation.Item2, tRS.rotation.Item3, tRS.rotation.Item4);
+        if (!syncValue.HasFlag(NetTRS.SYNC.NOTSCALE))
+        transform.localScale = new Vector3(tRS.scale.Item1, tRS.scale.Item2, tRS.scale.Item3);
+        if (!syncValue.HasFlag(NetTRS.SYNC.NOTISACTIVE))
+        transform.gameObject.SetActive(tRS.isActive);
+    }
 }

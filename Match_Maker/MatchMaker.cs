@@ -89,9 +89,6 @@ namespace Match_Maker
                 ipToId[ip] = newClientID;
                 Client clientAux = new(ip, newClientID, Convert.ToSingle((DateTime.UtcNow - appStartTime).TotalSeconds), clientName);
                 clients.Add(newClientID, clientAux);
-                //Agregar player a lista para que el matchmaker sepa quienes estan
-                //totalClientsInServers[playerCounterTotalServers].Add(clientAux);
-                //playerCounterTotalServers++;
                 pingPong.AddClientForList(newClientID);
                 //OnNewPlayer?.Invoke(newClientID);  El Lobby no instanca a los players
 
@@ -141,15 +138,12 @@ namespace Match_Maker
         /// <param name="ip">The IP address of the sender.</param>
         public override void OnReceiveData(byte[] data, IPEndPoint ip) 
         {
-            //TODO: a veces llegan mensajes de un ip que no esta contenida por el clients
-            
             OnReceivedMessage?.Invoke(data, ip);
 
             if (data != null && MessageChecker.CheckMessageType(data) != MessageType.Ping && ipToId.ContainsKey(ip))
             {
                 Console.WriteLine("RECEIVE (" + ipToId[ip] + ") = " + MessageChecker.CheckMessageType(data) + " - " + MessageChecker.CheckMessagePriority(data));
             }
-
 
             OnReceivedMessagePriority(data, ip);
 
@@ -504,7 +498,7 @@ namespace Match_Maker
             IPEndPoint serverEndPoint = new(ipAddress, serverPort);
             serversIps[serverPort] = serverEndPoint;
 
-            var msg = new MatchMakerIpMessage(MessagePriority.Default, ipAddress.ToString());
+            MatchMakerIpMessage msg = new MatchMakerIpMessage(MessagePriority.Default, ipAddress.ToString());
             Broadcast(msg.Serialize(), serverEndPoint);
 
             Console.WriteLine("[MatchMaker] Sent MatchMakerIp message to server at port " + serverPort);

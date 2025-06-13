@@ -30,12 +30,23 @@ namespace Net
             int messageHeaderSizeOffset = messageHeaderSize;
             bool checksumValid = MessageChecker.DeserializeCheckSum(message);
             TRS extractedValue = new TRS();
-            extractedValue.position = (BitConverter.ToSingle(message, messageHeaderSizeOffset), BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float)), BitConverter.ToSingle(message, messageHeaderSizeOffset) + sizeof(float) * 2);
+
+            extractedValue.position = (BitConverter.ToSingle(message, messageHeaderSizeOffset), 
+                                       BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float)), 
+                                       BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float) * 2));
             messageHeaderSizeOffset += sizeof(float) * 3;
-            extractedValue.rotation = (BitConverter.ToSingle(message, messageHeaderSizeOffset), BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float)), BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float) * 2), BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float) * 3));
+
+            extractedValue.rotation = (BitConverter.ToSingle(message, messageHeaderSizeOffset), 
+                                       BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float)), 
+                                       BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float) * 2), 
+                                       BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float) * 3));
             messageHeaderSizeOffset += sizeof(float) * 4;
-            extractedValue.scale = (BitConverter.ToSingle(message, messageHeaderSizeOffset), BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float)), BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float) * 2));
+
+            extractedValue.scale = (BitConverter.ToSingle(message, messageHeaderSizeOffset), 
+                                    BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float)), 
+                                    BitConverter.ToSingle(message, messageHeaderSizeOffset + sizeof(float) * 2));
             messageHeaderSizeOffset += sizeof(float) * 3;
+
             extractedValue.isActive = BitConverter.ToBoolean(message, messageHeaderSizeOffset);
 
             return extractedValue;
@@ -53,14 +64,18 @@ namespace Net
             outData.AddRange(BitConverter.GetBytes(data.position.Item1));
             outData.AddRange(BitConverter.GetBytes(data.position.Item2));
             outData.AddRange(BitConverter.GetBytes(data.position.Item3));
+
             outData.AddRange(BitConverter.GetBytes(data.rotation.Item1));
             outData.AddRange(BitConverter.GetBytes(data.rotation.Item2));
             outData.AddRange(BitConverter.GetBytes(data.rotation.Item3));
             outData.AddRange(BitConverter.GetBytes(data.rotation.Item4));
+
             outData.AddRange(BitConverter.GetBytes(data.scale.Item1));
             outData.AddRange(BitConverter.GetBytes(data.scale.Item2));
             outData.AddRange(BitConverter.GetBytes(data.scale.Item3));
+
             outData.AddRange(BitConverter.GetBytes(data.isActive));
+            
             outData.AddRange(MessageChecker.SerializeCheckSum(outData));
             return outData.ToArray();
         }

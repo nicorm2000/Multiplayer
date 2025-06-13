@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
-    public Action<int> OnBulletHit;
+    public static Action<int, int> OnBulletHit;
     public Action<bool> OnInitLobbyTimer;
     public Action OnInitGameplayTimer;
 
@@ -116,11 +116,28 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
-    void OnHitRecieved(int playerReciveDamage)
+    void OnHitRecieved(int playerReciveDamage, int otherPlayer)
     {
         if (playerList.ContainsKey(playerReciveDamage))
         {
             playerList[playerReciveDamage].transform.GetComponent<PlayerController>().OnReciveDamage();
+
+            if (playerList[playerReciveDamage].transform.GetComponent<PlayerController>().health <= 0)
+            {
+                NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, playerList[playerReciveDamage].transform.GetComponent<PlayerController>().clientID);
+                nm.networkEntity.SendMessage(netDisconnection.Serialize());
+                NetObjFactory.RemoveAllINetObject();
+                nm.networkEntity.RemoveClient(playerList[playerReciveDamage].transform.GetComponent<PlayerController>().clientID);
+
+                //Needs work
+                //WinWrapper winWrapper = new(playerList[otherPlayer].transform.GetComponent<PlayerController>().clientID);
+                //NetWin netWin = new NetWin(winWrapper);
+                //nm.networkEntity.SendMessage(netWin.Serialize());
+                //
+                //string winText = $"Congratulations! \n Player {playerList[otherPlayer].transform.GetComponent<PlayerController>().clientID} won the game!";
+                //NetworkScreen.Instance.SwitchToMenuScreen();
+                //NetworkScreen.Instance.ShowWinPanel(winText);
+            }
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Net
 {
@@ -7,7 +8,16 @@ namespace Net
         static NetworkEntity entity; //Se usa para mandar los mensajes 
         static readonly Dictionary<int, INetObj> NetObjectsInstances = new Dictionary<int, INetObj>();
 
-        public static List<INetObj> NetObjects => new List<INetObj>(NetObjectsInstances.Values);
+        public static List<INetObj> NetObjects()
+        {
+            List<INetObj> aux  = new List<INetObj>();
+            foreach (INetObj obj in NetObjectsInstances.Values)
+            {
+                if (obj != null)
+                    aux.Add(obj);
+            }
+            return aux;
+        }
 
         public static int NetObjectsCount
         {
@@ -26,7 +36,15 @@ namespace Net
 
         public static void RemoveINetObject(int key)
         {
-            NetObjectsInstances.Remove(key);
+            if (NetObjectsInstances.ContainsKey(key))
+            {
+                NetObjectsInstances.Remove(key);
+            }
+        }
+
+        public static void RemoveAllINetObject()
+        {
+            NetObjectsInstances.Clear();
         }
 
         public static INetObj GetINetObject(int key)

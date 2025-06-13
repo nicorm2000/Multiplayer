@@ -2,6 +2,7 @@ using Net;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using static Server;
 
 public class Server : NetworkEntity
 {
@@ -138,7 +139,8 @@ public class Server : NetworkEntity
 
         OnReceivedMessagePriority(data, ip);
 
-        switch (MessageChecker.CheckMessageType(data))
+        MessageType messageType = MessageChecker.CheckMessageType(data);
+        switch (messageType)
         {
             case MessageType.Bool:
             case MessageType.Byte:
@@ -164,8 +166,14 @@ public class Server : NetworkEntity
 
                 BroadcastPlayerPosition(ipToId[ip], data);
 
-                break;
+                if (MessageType.TRS == messageType)
+                {
+                    NetTRSMessage netTRSMessage = new NetTRSMessage(data);
+                    TRS tRS = netTRSMessage.GetData();
+                    NetObjTracker.UpdateNetObj(tRS, ipToId[ip], netTRSMessage.GetMessageRoute()[0].route);
+                }
 
+                break;
             case MessageType.Ping:
 
                 if (ipToId.ContainsKey(ip))
@@ -187,6 +195,7 @@ public class Server : NetworkEntity
                 UpdateChatText(data);
 
                 break;
+
             case MessageType.InstanceRequest:
 
                 InstanceRequestPayload instanceRequest = new InstanceRequestMenssage(data).GetData();
@@ -196,9 +205,12 @@ public class Server : NetworkEntity
                                                                        instanceRequest.rotationX, instanceRequest.rotationY, instanceRequest.rotationZ, instanceRequest.rotationW,
                                                                        instanceRequest.scaleX, instanceRequest.scaleY, instanceRequest.scaleZ, instanceRequest.parentInstanceID);
 
+                NetObjTracker.AddNetObj(instancePayload);
+                Console.WriteLine("Added Net Obj to tracker.");
+
                 InstanceMessage instanceMessage = new(MessagePriority.NonDisposable, instancePayload);
 
-                Console.WriteLine("Send Intance Message");
+                Console.WriteLine("Send Intance Message.");
                 SendMessage(instanceMessage.Serialize());
 
                 instancesIdCount++;
@@ -252,7 +264,23 @@ public class Server : NetworkEntity
 
                 break;
 
+            case MessageType.DestroyNetObj:
+
+                Console.WriteLine("Entered remove");
+                NetDestroyGO netDestroyGO = new(data);
+                int playerId = netDestroyGO.GetData().Item1;
+                int instanceId = netDestroyGO.GetData().Item2;
+                
+                NetObjTracker.RemoveNetObj(playerId, instanceId);
+
+                Broadcast(data);
+
+                Console.WriteLine("Removed Net Obj to tracker.");
+
+                break;
+
             default:
+                Console.WriteLine("Not known");
                 break;
         }
 
@@ -519,5 +547,36 @@ public class Server : NetworkEntity
         MatchMakerPlayerListUpdateMessage msg = new MatchMakerPlayerListUpdateMessage(MessagePriority.Default, names);
         connection.Send(msg.Serialize(), matchmMakerIp);
         Console.WriteLine("[Server] Sent player list to MatchMaker: " + string.Join(", ", names));
+    }
+}
+
+public static class NetObjTracker
+{
+    static Dictionary<(int owner, int instance), InstancePayload> instancePayloadsDictionary = new Dictionary<(int, int), InstancePayload>();
+
+    public static void AddNetObj(InstancePayload payload)
+    {
+        instancePayloadsDictionary.TryAdd((payload.ownerId, payload.instanceId), payload);
+    }
+
+    public static void RemoveNetObj(int owner, int instance)
+    {
+        instancePayloadsDictionary.Remove((owner, instance));
+    }
+
+    public static void UpdateNetObj(TRS tRS, int owner, int instance)
+    {
+        InstancePayload aux = instancePayloadsDictionary[(owner, instance)];
+        aux.positionX = tRS.position.Item1;
+        aux.positionY = tRS.position.Item2;
+        aux.positionZ = tRS.position.Item3;
+        aux.rotationX = tRS.rotation.Item1;
+        aux.rotationY = tRS.rotation.Item2;
+        aux.rotationZ = tRS.rotation.Item3;
+        aux.rotationW = tRS.rotation.Item4;
+        aux.scaleX = tRS.scale.Item1;
+        aux.scaleY = tRS.scale.Item2;
+        aux.scaleZ = tRS.scale.Item3;
+        instancePayloadsDictionary[(owner, instance)] = aux;
     }
 }

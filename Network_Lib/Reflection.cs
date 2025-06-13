@@ -86,7 +86,7 @@ namespace Net
                 return;
             }
 
-            foreach (INetObj netObj in NetObjFactory.NetObjects)
+            foreach (INetObj netObj in NetObjFactory.NetObjects())
             {
                 if (netObj.GetOwnerID() == networkEntity.clientID)
                 {
@@ -96,10 +96,12 @@ namespace Net
                     };
                     Inspect(netObj.GetType(), netObj, idRoute);
 
-                    TRS trs = netObj.GetTRS();
-                    NetTRSMessage netTRSMessage = new NetTRSMessage(MessagePriority.Default, trs, idRoute);
-                    byte[] aux = netTRSMessage.Serialize();
-                    networkEntity.SendMessage(aux);
+                    if (netObj.GetTRS() != null)
+                    {
+                        TRS trs = netObj.GetTRS();
+                        NetTRSMessage netTRSMessage = new NetTRSMessage(MessagePriority.Default, trs, idRoute);
+                        networkEntity.SendMessage(netTRSMessage.Serialize());
+                    }
                 }
             }
         }
@@ -1786,7 +1788,7 @@ namespace Net
         /// <param name="objectId">The ID of the target network object.</param>
         private void InvokeReflectionMethod(int id, List<(string, string)> parameters, int objectId)
         {
-            foreach (INetObj netObj in NetObjFactory.NetObjects)
+            foreach (INetObj netObj in NetObjFactory.NetObjects())
             {
                 if (netObj.GetOwnerID() != networkEntity.clientID && netObj.GetID() == objectId)
                 {
@@ -1944,7 +1946,7 @@ namespace Net
         /// <param name="objectId">The target network object ID whose event should be invoked.</param>
         public void InvokeCSharpEvent(int eventId, List<(string, string)> parameters, int objectId)
         {
-            foreach (INetObj netObj in NetObjFactory.NetObjects)
+            foreach (INetObj netObj in NetObjFactory.NetObjects())
             {
                 if (netObj.GetID() != objectId || netObj.GetOwnerID() == networkEntity.clientID)
                     continue;

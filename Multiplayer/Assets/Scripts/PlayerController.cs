@@ -854,16 +854,7 @@ public class PlayerController : MonoBehaviour, INetObj
         //    Debug.Log($"Client {clientID} TestingClass3 Collection is NULL");
         //}
         #endregion
-        if (health <= 0)
-        {
-            Debug.Log(clientID + " died");
-            NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, clientID);
-            nm.networkEntity.SendMessage(netDisconnection.Serialize());
-            nm.networkEntity.RemoveClient(clientID);
-        }
     }
-
-    
 
     public void OnReciveDamage()
     {

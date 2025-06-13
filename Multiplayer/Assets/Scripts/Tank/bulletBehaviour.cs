@@ -46,8 +46,6 @@ namespace Game
         {
             nm = NetworkManager.Instance;
 
-            Destroy(gameObject, 5.0f);
-
             velocityVector = transform.forward * velocity;
 
             OnEventA += () => Debug.Log("C# Event: OnEventA triggered!");
@@ -95,22 +93,13 @@ namespace Game
 
         private void OnCollisionEnter(Collision collision)
         {
+            NetDestroyGO netDestroyGO = new NetDestroyGO(MessagePriority.Default, (GetID(), originPlayerID));
+            nm.networkEntity.SendMessage(netDestroyGO.Serialize());
+
             if (collision.transform.TryGetComponent(out PlayerController pc))
             {
-                if (pc.clientID != originPlayerID)
-                {
-                    pc.health--;
-                    if (pc.health <= 0)
-                    {
-                        NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, pc.clientID);
-                        nm.networkEntity.SendMessage(netDisconnection.Serialize());
-                        nm.networkEntity.RemoveClient(pc.clientID);
-                    }
-                }
+                GameManager.OnBulletHit.Invoke(pc.clientID, originPlayerID);
             }
-
-            NetObjFactory.RemoveINetObject(GetID());
-            Destroy(gameObject);
         }
 
         public int GetID()

@@ -303,6 +303,22 @@ public class NetworkClient : NetworkEntity
 
                 break;
 
+            case MessageType.DestroyNetObj:
+
+                Debug.Log("Net Destroy enter");
+                NetDestroyGO netDestroyGO = new NetDestroyGO(data);
+                foreach (INetObj netObjAux in NetObjFactory.NetObjects())
+                {
+                    if (netObjAux.GetID() == netDestroyGO.GetData().Item1)
+                    {
+                        NetObjFactory.RemoveINetObject(netDestroyGO.GetData().Item1);
+                        GameObject.Destroy(((MonoBehaviour)netObjAux).gameObject);
+                        Debug.Log("Object Destroyed");
+                    }
+                }
+
+                break;
+
             default:
                 break;
         }

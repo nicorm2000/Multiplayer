@@ -37,6 +37,7 @@ namespace Net
         Event = -80,
         TRS = -79,
 
+        DisconnectAll = -13,
         DestroyNetObj = -12,
         MatchMakerPlayerListUpdate = -11,
         Instance = -10,

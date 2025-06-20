@@ -45,7 +45,6 @@ namespace Game
         private void Start()
         {
             nm = NetworkManager.Instance;
-
             velocityVector = transform.forward * velocity;
 
             OnEventA += () => Debug.Log("C# Event: OnEventA triggered!");
@@ -60,6 +59,8 @@ namespace Game
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), 99);
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
+            
+            originPlayerID = netObj.OwnerId;
         }
 
         [NetMethod(0)]

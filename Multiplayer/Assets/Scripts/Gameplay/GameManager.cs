@@ -68,7 +68,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             if (gameObject.TryGetComponent(out PlayerController pc)) //Confirmo que el objeto instanciado sea un player
             {
                 playerList[owner] = gameObject;
-                Debug.Log("Se instancion el Gameobject: " + gameObject.name + " Del Owner " + owner);
+                Debug.Log("Se instancio el Gameobject: " + gameObject.name + " Del Owner " + owner);
 
                 pc.clientID = owner;
                 pc.currentPlayer = owner == nm.ClientID;
@@ -120,23 +120,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (playerList.ContainsKey(playerReciveDamage))
         {
-            playerList[playerReciveDamage].transform.GetComponent<PlayerController>().OnReciveDamage();
+            playerList[playerReciveDamage].transform.GetComponent<PlayerController>().OnReceiveDamage();
 
             if (playerList[playerReciveDamage].transform.GetComponent<PlayerController>().health <= 0)
             {
-                NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, playerList[playerReciveDamage].transform.GetComponent<PlayerController>().clientID);
-                nm.networkEntity.SendMessage(netDisconnection.Serialize());
-                NetObjFactory.RemoveAllINetObject();
-                nm.networkEntity.RemoveClient(playerList[playerReciveDamage].transform.GetComponent<PlayerController>().clientID);
-
-                //Needs work
-                //WinWrapper winWrapper = new(playerList[otherPlayer].transform.GetComponent<PlayerController>().clientID);
-                //NetWin netWin = new NetWin(winWrapper);
-                //nm.networkEntity.SendMessage(netWin.Serialize());
-                //
-                //string winText = $"Congratulations! \n Player {playerList[otherPlayer].transform.GetComponent<PlayerController>().clientID} won the game!";
-                //NetworkScreen.Instance.SwitchToMenuScreen();
-                //NetworkScreen.Instance.ShowWinPanel(winText);
+                Debug.Log($"Player: { otherPlayer }, hit Player: {playerReciveDamage}");
+                if (playerReciveDamage == nm.networkEntity.clientID)
+                {
+                    WinnerInfo winnerInfo = new WinnerInfo(otherPlayer);
+                    NetWinnerMessage netWin = new(MessagePriority.Default, winnerInfo);
+                    nm.networkEntity.SendMessage(netWin.Serialize());
+                }
             }
         }
     }

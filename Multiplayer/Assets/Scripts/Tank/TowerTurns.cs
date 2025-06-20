@@ -37,7 +37,7 @@ public class TowerTurns : MonoBehaviour
     {
         IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();
         int prefabID = prefabService.GetIdByPrefab(bulletPrefab);
-
+        int ownerID = playerController.clientID;
         NetObjFactory.NetInstance(prefabID, initialPositionShooting.position.x , initialPositionShooting.position.y, initialPositionShooting.position.z,
                                      initialPositionShooting.rotation.x , initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
                                      bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,

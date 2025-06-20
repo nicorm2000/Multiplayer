@@ -856,7 +856,7 @@ public class PlayerController : MonoBehaviour, INetObj
         #endregion
     }
 
-    public void OnReciveDamage()
+    public void OnReceiveDamage()
     {
         health--;
     }

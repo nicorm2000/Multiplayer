@@ -140,6 +140,13 @@ public class Server : NetworkEntity
         OnReceivedMessagePriority(data, ip);
 
         MessageType messageType = MessageChecker.CheckMessageType(data);
+
+        if (messageType == MessageType.DisconnectAll)
+            Console.WriteLine("Disconnect Message detected");
+
+        if (messageType == MessageType.Winner)
+            Console.WriteLine("Winner detected");
+
         switch (messageType)
         {
             case MessageType.Bool:
@@ -250,6 +257,22 @@ public class Server : NetworkEntity
 
                 break;
 
+            case MessageType.DisconnectAll:
+
+                Console.WriteLine("Disconnect Message arrived");
+                NetDisconnectionMessage netDisconnectionMessage = new(data);
+                CloseConnection();
+
+                break;
+
+            case MessageType.Winner:
+
+                NetWinnerMessage netWinnerMessage = new(data);
+                Console.WriteLine("Winner Message arrived");
+                BroadcastPlayerPosition(ipToId[ip], data);
+
+                break;
+
             case MessageType.Error:
 
                 NetErrorMessage netErrorMessage = new(data);
@@ -266,11 +289,10 @@ public class Server : NetworkEntity
 
             case MessageType.DestroyNetObj:
 
-                Console.WriteLine("Entered remove");
                 NetDestroyGO netDestroyGO = new(data);
                 int playerId = netDestroyGO.GetData().Item1;
                 int instanceId = netDestroyGO.GetData().Item2;
-                
+
                 NetObjTracker.RemoveNetObj(playerId, instanceId);
 
                 Broadcast(data);
@@ -491,7 +513,7 @@ public class Server : NetworkEntity
     /// <param name="data">The data containing the player's position.</param>
     private void BroadcastPlayerPosition(int senderClientId, byte[] data)
     {
-        using (var iterator = clients.GetEnumerator())
+        using (Dictionary<int, Client>.Enumerator iterator = clients.GetEnumerator())
         {
             while (iterator.MoveNext())
             {

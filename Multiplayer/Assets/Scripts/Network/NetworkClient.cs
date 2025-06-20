@@ -295,11 +295,31 @@ public class NetworkClient : NetworkEntity
 
             case MessageType.Winner:
 
-                NetIDMessage netIDMessage = new(data);
-                string winText = $"Congratulations! \n {players[netIDMessage.GetData()].name} won the game!";
+                Debug.Log("Winner");
+                //NetWinnerMessage netWin = new(data);
+                //Debug.Log("Winner number: " + netWin.GetData().winner);
+                //string winText = $"Congratulations! \n {players[netWin.GetData().winner].name} won the game!";
+                string winText = "Game Over!";
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);
-                gm.EndMatch();
+
+                NetDisconnectionMessage netDisconnectionMessage = new(data);
+                SendMessage(netDisconnectionMessage.Serialize());
+
+                NetObjFactory.RemoveAllINetObject();
+
+                // Algo asi deberia ir
+                //for (int i = 0; i < players.Count; i++)
+                //{
+                //    RemoveClient(i);
+                //}
+                CloseConnection();
+
+                break;
+
+            case MessageType.DisconnectAll:
+
+                CloseConnection();
 
                 break;
 

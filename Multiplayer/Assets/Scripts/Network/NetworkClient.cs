@@ -296,29 +296,27 @@ public class NetworkClient : NetworkEntity
             case MessageType.Winner:
 
                 Debug.Log("Winner");
-                //NetWinnerMessage netWin = new(data);
-                //Debug.Log("Winner number: " + netWin.GetData().winner);
-                //string winText = $"Congratulations! \n {players[netWin.GetData().winner].name} won the game!";
-                string winText = "Game Over!";
+                NetWinnerMessage netWin = new(data);
+                Debug.Log("Winner number: " + netWin.GetData().winner);
+                string winText = $"Congratulations! \n {players[netWin.GetData().winner].name} won the game!";
+                //string winText = "Game Over!";
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);
 
-                NetDisconnectionMessage netDisconnectionMessage = new(data);
+                DisconnectAll disconnectAll = new();
+                NetDisconnectionMessage netDisconnectionMessage = new(disconnectAll);
                 SendMessage(netDisconnectionMessage.Serialize());
-
-                NetObjFactory.RemoveAllINetObject();
-
-                // Algo asi deberia ir
-                //for (int i = 0; i < players.Count; i++)
-                //{
-                //    RemoveClient(i);
-                //}
-                CloseConnection();
 
                 break;
 
             case MessageType.DisconnectAll:
 
+                Debug.Log("Disconnect All");
+                NetObjFactory.RemoveAllINetObject();
+                for (int i = 0; i < players.Count; i++)
+                {
+                    RemoveClient(i);
+                }
                 CloseConnection();
 
                 break;

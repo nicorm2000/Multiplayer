@@ -261,6 +261,7 @@ public class Server : NetworkEntity
 
                 Console.WriteLine("Disconnect Message arrived");
                 NetDisconnectionMessage netDisconnectionMessage = new(data);
+                Broadcast(data);
                 CloseConnection();
 
                 break;
@@ -269,7 +270,7 @@ public class Server : NetworkEntity
 
                 NetWinnerMessage netWinnerMessage = new(data);
                 Console.WriteLine("Winner Message arrived");
-                BroadcastPlayerPosition(ipToId[ip], data);
+                Broadcast(data);
 
                 break;
 
@@ -301,8 +302,14 @@ public class Server : NetworkEntity
 
                 break;
 
+            case MessageType.Confirm:
+
+                Console.WriteLine("Message reception confirmed");
+
+                break;
+
             default:
-                Console.WriteLine("Not known");
+                Console.WriteLine("Not known: " + messageType);
                 break;
         }
 

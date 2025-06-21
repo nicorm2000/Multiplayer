@@ -127,6 +127,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                 Debug.Log($"Player: { otherPlayer }, hit Player: {playerReciveDamage}");
                 if (playerReciveDamage == nm.networkEntity.clientID)
                 {
+                    //DisconnectAll disconnectAll = new();
+                    //NetDisconnectionMessage netDisconnectionMessage = new(disconnectAll);
                     WinnerInfo winnerInfo = new WinnerInfo(otherPlayer);
                     NetWinnerMessage netWin = new(MessagePriority.Default, winnerInfo);
                     nm.networkEntity.SendMessage(netWin.Serialize());

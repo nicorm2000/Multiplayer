@@ -46,6 +46,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             if (index == nm.ClientID)
             {
+                if (spawnCounter >= spawnPositions.Length)
+                {
+                    Debug.LogError("No available spawn positions!");
+                    return;
+                }
+
                 IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();
 
                 NetObjFactory.NetInstance(prefabService.GetIdByPrefab(playerPrefab),
@@ -58,6 +64,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             playerList.Add(index, null);
             OnChangeLobbyPlayers?.Invoke(index);
             spawnCounter++;
+            spawnCounter %= spawnPositions.Length;
         }
     }
 
@@ -84,6 +91,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             Destroy(playerList[index]);
             playerList.Remove(index);
 
+   
             if (!nm.isServer && index == nm.ClientID)
             {
                 spawnCounter = 0;
@@ -100,6 +108,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
 
         playerList.Clear();
+        spawnCounter = 0;
     }
 
     void InstantiatePlayerBullets(int id, Vec3 bulletDir)

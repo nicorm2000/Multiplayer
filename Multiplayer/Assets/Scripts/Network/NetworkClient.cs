@@ -299,7 +299,6 @@ public class NetworkClient : NetworkEntity
                 NetWinnerMessage netWin = new(data);
                 Debug.Log("Winner number: " + netWin.GetData().winner);
                 string winText = $"Congratulations! \n {players[netWin.GetData().winner].name} won the game!";
-                //string winText = "Game Over!";
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);
 

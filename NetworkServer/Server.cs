@@ -141,12 +141,6 @@ public class Server : NetworkEntity
 
         MessageType messageType = MessageChecker.CheckMessageType(data);
 
-        if (messageType == MessageType.DisconnectAll)
-            Console.WriteLine("Disconnect Message detected");
-
-        if (messageType == MessageType.Winner)
-            Console.WriteLine("Winner detected");
-
         switch (messageType)
         {
             case MessageType.Bool:
@@ -217,7 +211,7 @@ public class Server : NetworkEntity
 
                 InstanceMessage instanceMessage = new(MessagePriority.NonDisposable, instancePayload);
 
-                Console.WriteLine("Send Intance Message.");
+                Console.WriteLine("Send Instance Message");
                 SendMessage(instanceMessage.Serialize());
 
                 instancesIdCount++;

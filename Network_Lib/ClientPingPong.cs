@@ -1,6 +1,5 @@
 using System;
 
-
 namespace Net
 {
     public class ClientPingPong : PingPong

@@ -10,7 +10,6 @@ public class TowerTurns : MonoBehaviour
 
     Coroutine turnTower;
     Camera cam;
-
     PlayerController playerController;
 
     private void Awake()
@@ -21,33 +20,18 @@ public class TowerTurns : MonoBehaviour
 
     void Update()
     {
-        if (playerController.currentPlayer)
+        if (playerController.currentPlayer && Input.GetMouseButtonDown(0))
         {
-            if (Input.GetMouseButtonDown(0))
+            if (turnTower == null)
             {
-                if (turnTower == null)
-                {
-                    turnTower = StartCoroutine(TurnTower());
-                }
+                turnTower = StartCoroutine(TurnTower());
             }
         }
-    }
-
-    void Shoot()
-    {
-        IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();
-        int prefabID = prefabService.GetIdByPrefab(bulletPrefab);
-        int ownerID = playerController.clientID;
-        NetObjFactory.NetInstance(prefabID, initialPositionShooting.position.x , initialPositionShooting.position.y, initialPositionShooting.position.z,
-                                     initialPositionShooting.rotation.x , initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
-                                     bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,
-                                     -1);
     }
 
     IEnumerator TurnTower()
     {
         float timer = 0;
-
         Quaternion initialRotation = transform.rotation;
         Quaternion newRotation = cam.transform.rotation;
         newRotation.x = 0;
@@ -56,16 +40,50 @@ public class TowerTurns : MonoBehaviour
         while (timer <= duration)
         {
             float interpolationValue = timer / duration;
-
             transform.rotation = Quaternion.Lerp(initialRotation, newRotation, interpolationValue);
-
-
             timer += Time.deltaTime;
             yield return new WaitForEndOfFrame();
         }
 
         transform.rotation = newRotation;
         turnTower = null;
-        Shoot();
+
+        if (NetworkManager.Instance.isServer)
+        {
+            Shoot();
+        }
+        else
+        {
+            RequestShoot();
+        }
+    }
+
+    private void RequestShoot()
+    {
+        //NetVector3 shootRequest = new(MessagePriority.Default,
+        //    new Vec3(playerController.clientID, initialPositionShooting.position));
+        //shootRequest.CurrentMessageType = MessageType.BulletInstatiate;
+        //NetworkManager.Instance.networkEntity.SendMessage(shootRequest.Serialize());
+    }
+
+    private void Shoot()
+    {
+        IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();
+        int prefabID = prefabService.GetIdByPrefab(bulletPrefab);
+
+        NetObjFactory.NetInstance(
+            prefabID,
+            initialPositionShooting.position.x,
+            initialPositionShooting.position.y,
+            initialPositionShooting.position.z,
+            initialPositionShooting.rotation.x,
+            initialPositionShooting.rotation.y,
+            initialPositionShooting.rotation.z,
+            initialPositionShooting.rotation.w,
+            bulletPrefab.transform.localScale.x,
+            bulletPrefab.transform.localScale.y,
+            bulletPrefab.transform.localScale.z,
+            -1
+        );
     }
 }

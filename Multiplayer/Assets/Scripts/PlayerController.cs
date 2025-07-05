@@ -858,7 +858,22 @@ public class PlayerController : MonoBehaviour, INetObj
 
     public void OnReceiveDamage()
     {
-        health--;
+        //if (NetworkManager.Instance.isServer)
+        //{
+        //    health--;
+        //
+        //    if (health <= 0)
+        //    {
+        //        // Notify all clients about player death
+        //        NetIDMessage netIDMessage = new(MessagePriority.Default, clientID)
+        //        {
+        //            CurrentMessageType = MessageType.PlayerDeath
+        //        };
+        //        NetworkManager.Instance.networkEntity.SendMessage(netIDMessage.Serialize());
+        //
+        //        gameObject.SetActive(false);
+        //    }
+        //}
     }
 
     public int GetID()

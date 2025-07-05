@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Net;
 using TMPro;
@@ -8,7 +6,6 @@ using TMPro;
 public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
 {
     public Button connectBtn;
-    //public Button startServerBtn;
     public InputField nameInputField;
     public InputField portInputField;
     public InputField addressInputField;

@@ -1,5 +1,4 @@
 ﻿using Net;
-using System.Net;
 using UnityEngine.UI;
 
 public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
@@ -42,5 +41,4 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
         }
 
     }
-
 }

@@ -18,12 +18,10 @@ public class ServiceInitializer : MonoBehaviour
             Debug.Log("Instantiate Player");
           //  NetObjectFactory.NetInstance(prefabs[0], Vector3.zero, Quaternion.identity, Vector3.one, null);
         }
-
         if (Input.GetKeyDown(KeyCode.B))
         {
             Debug.Log("Instantiate Bullet");
             //NetObjectFactory.NetInstance(prefabs[1], Vector3.zero, Quaternion.identity, Vector3.one, prefabs[0]);
         }
-
     }
 }

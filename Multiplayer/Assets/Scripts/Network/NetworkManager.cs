@@ -6,21 +6,22 @@ using UnityEngine;
 public class NetworkManager : MonoBehaviourSingleton<NetworkManager>  
 {
     public NetworkEntity networkEntity;
+    public bool isServerMode = false;
 
     public Action onInitEntity;
     public Action<int, GameObject> onInstanceCreated;
 
-    public int ClientID
-    {
-        get { return networkEntity.clientID; }
-    }
+    public int ClientID => networkEntity?.clientID ?? -1;
 
+    //remove
     public bool isServer
     {
         get { return !(networkEntity is NetworkClient); }
         private set { }
     }
-    
+
+    //public bool isServer => isServerMode || (networkEntity is Server);
+
     DateTime appStartTime;
 
     private void Start()
@@ -38,11 +39,29 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         return (NetworkClient)networkEntity;
     }
 
+    //public void StartServer(int port)
+    //{
+    //    if (networkEntity != null) return;
+    //
+    //    isServerMode = true;
+    //    networkEntity = ServerManager.Instance.server;
+    //    onInitEntity?.Invoke();
+    //}
+
     public void StartClient(IPAddress ip, int port, string name)
     {
         networkEntity = new NetworkClient(ip, port, name);
         onInitEntity?.Invoke();
     }
+
+    //public void StartClient(IPAddress ip, int port, string name)
+    //{
+    //    if (networkEntity != null) return;
+    //
+    //    isServerMode = false;
+    //    networkEntity = new NetworkClient(ip, port, name);
+    //    onInitEntity?.Invoke();
+    //}
 
     private void Update()
     {

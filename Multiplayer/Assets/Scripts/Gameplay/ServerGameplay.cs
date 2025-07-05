@@ -1,235 +1,164 @@
-//using Net;
-//using System.Net;
-//using TMPro;
-//using UnityEngine;
+using System.Net;
+using UnityEngine;
 
-//enum States { Init, Lobby, Game, Finish };
+enum States { Init, Lobby, Game, Finish };
 
-//public class ServerGameplay : MonoBehaviour
-//{
-//    int minutesInLobby = 15; // 2 minutos
-//    float minutesGameplay = 30; //3 minutos
-//    float timeUntilCloseServer = 5;
-
-//    int minPlayerToInitCounter = 2;
-
-//    GameManager gm;
-//    NetworkManager nm;
-//    States currentState;
-
-//    bool counterInit = false;
-
-//    bool initLobby = true;
-//    bool initGameplay = true;
-
-//    float counter = 0;
-
-//    bool clientLobbyTimer = false;
-//    bool clientGameplayTimer = false;
-
-//    int serverClientsCount = 0;
-
-//    NetworkEntity server;
-
-//    private void Start()
-//    {
-//        gm = GameManager.Instance;
-//        nm = NetworkManager.Instance;
-
-//        nm.onInitEntity += ()=> nm.networkEntity.OnReceivedMessage += OnRecievedData;
-
-//        nm.onInitEntity += () => nm.networkEntity.OnNewPlayer += () => serverClientsCount++;
-
-
-//     gm.OnInitLobbyTimer += SetLobbyTimer;
-//        gm.OnInitGameplayTimer += SetGameplayTimer;
-
-//        gm.OnChangeLobbyPlayers += CheckForAddNewPlayer;
-//    }
-
-//    void CheckForAddNewPlayer(int clientID)
-//    {
-//        if (nm.isServer && currentState == States.Lobby && counterInit)
-//        {
-//            Debug.Log("Mando el tiempo a nuevos clientes en el lobby");
-//            NetUpdateNewPlayersTimer timer = new NetUpdateNewPlayersTimer(MessagePriority.NonDisposable, counter);
-//            server.Broadcast(timer.Serialize(), server.clients[clientID].ipEndPoint);
-//        }
-//    }
-
-//    void OnRecievedData(byte[] data, IPEndPoint ip)
-//    {
-//        if (MessageChecker.CheckMessageType(data) == MessageType.UpdateLobbyTimerForNewPlayers)
-//        {
-//            Debug.Log("Llego mensaje de update timer");
-//            NetUpdateNewPlayersTimer timer = new NetUpdateNewPlayersTimer(data);
-
-//            counter = timer.GetData();
-//            clientLobbyTimer = true;
-//        }
-//    }
-
-//    private void Update()
-//    {
-//        if (nm.isServer)
-//        {
-//            UpdateServer();
-//        }
-//        else
-//        {
-//            UpdateClient();
-//        }
-//    }
-
-//    void UpdateServer()
-//    {
-//        if (nm != null && nm.isServer)
-//        {
-//                server = nm.GetNetworkServer();
-
-//            switch (currentState)
-//            {
-//                case States.Init:
-
-//                    currentState = States.Lobby;
-
-//                    break;
-//                case States.Lobby:
-
-//                    if (server.pla.Count >= minPlayerToInitCounter)
-//                    {
-//                        counterInit = true;
-
-//                        if (initLobby)
-//                        {
-//                            NetUpdateTimer netUpdateLobbyTimer = new NetUpdateTimer(MessagePriority.NonDisposable, true);
-//                            netUpdateLobbyTimer.CurrentMessageType = MessageType.UpdateLobbyTimer;
-//                            server.Broadcast(netUpdateLobbyTimer.Serialize());
-//                            initLobby = false;
-//                        }
-
-//                        counter += Time.deltaTime;
-//                        gm.timer.text = counter.ToString("F2") + "s";
-
-//                        if (counter >= minutesInLobby)
-//                        {
-//                            counter = 0;
-//                            gm.timer.text = "";
-//                            server.matchOnGoing = true;
-//                            currentState = States.Game;
-//                        }
-//                    }
-//                    else
-//                    {
-//                        if (counterInit)
-//                        {
-//                            NetUpdateTimer netUpdateLobbyTimer = new NetUpdateTimer(MessagePriority.NonDisposable, false);
-//                            netUpdateLobbyTimer.CurrentMessageType = MessageType.UpdateLobbyTimer;
-//                            server.Broadcast(netUpdateLobbyTimer.Serialize());
-
-//                            counterInit = false;
-//                            initLobby = true;
-
-//                            counter = 0;
-//                            gm.timer.text = "";
-
-//                            currentState = States.Init;
-
-//                        }
-//                    }
-
-//                    break;
-//                case States.Game:
-
-//                    if (initGameplay)
-//                    {
-//                        NetUpdateTimer netUpdateGameplayTimer = new NetUpdateTimer(MessagePriority.NonDisposable, true);
-//                        netUpdateGameplayTimer.CurrentMessageType = MessageType.UpdateGameplayTimer;
-//                        server.Broadcast(netUpdateGameplayTimer.Serialize());
-
-//                        initGameplay = false;
-//                    }
-
-//                    counter += Time.deltaTime;
-//                    gm.timer.text = counter.ToString("F2") + "s";
-
-//                    if (counter >= minutesGameplay || gm.playerList.Count <= 1)
-//                    {
-//                        SendMatchWinner();
-
-//                        counter = 0;
-//                        gm.timer.text = "";
-//                        currentState = States.Finish;
-//                    }
-//                    break;
-
-//                case States.Finish:
-
-//                    timeUntilCloseServer -= Time.deltaTime;
-
-//                    if (timeUntilCloseServer <= 0)
-//                    {
-//                        server.CloseConnection();
-//                    }
-
-//                    break;
-
-
-//                default:
-//                    break;
-//            }
-//        }
-//    }
-
-//    void UpdateClient()
-//    {
-//        if (clientLobbyTimer)
-//        {
-//            counter += Time.deltaTime;
-//            gm.timer.text = counter.ToString("F2") + "s";
-//        }
-
-//        if (clientGameplayTimer && !NetworkScreen.Instance.gameObject.activeInHierarchy)
-//        {
-//            clientLobbyTimer = false;
-
-//            counter += Time.deltaTime;
-//            gm.timer.text = counter.ToString("F2") + "s";
-//        }
-//    }
-
-//    void SetGameplayTimer()
-//    {
-//        clientGameplayTimer = true;
-//        counter = 0;
-//    }
-
-//    void SetLobbyTimer(bool init)
-//    {
-//        counter = 0;
-//        gm.timer.text = "";
-//        clientLobbyTimer = init;
-//    }
-
-//    void SendMatchWinner()
-//    {
-//        PlayerController playerWithMaxHealth = null;
-//        int maxHealth = int.MinValue;
-
-//        foreach (int index in gm.playerList.Keys)
-//        {
-//            if (gm.playerList[index].TryGetComponent(out PlayerController pc))
-//            {
-//                if (pc.health > maxHealth)
-//                {
-//                    maxHealth = pc.health;
-//                    playerWithMaxHealth = pc;
-//                }
-//            }
-//        }
-
-//        NetIDMessage netIDMessage = new NetIDMessage(MessagePriority.Default, playerWithMaxHealth.clientID);
-//        netIDMessage.CurrentMessageType = MessageType.Winner;
-//        nm.GetNetworkServer().Broadcast(netIDMessage.Serialize());
-//    }
-//}
+public class ServerGameplay : MonoBehaviour
+{
+    //private GameManager gm;
+    //private NetworkManager nm;
+    //private States currentState;
+    //
+    //private int minutesInLobby = 15;
+    //private float minutesGameplay = 30;
+    //private float timeUntilCloseServer = 5;
+    //private int minAmountOfPlayersToInitCounter = 2;
+    //
+    //private bool initLobby = true;
+    //private bool initGameplay = true;
+    //private bool counterInit = false;
+    //
+    //private float counter = 0;
+    //
+    //private void Start()
+    //{
+    //    gm = GameManager.Instance;
+    //    nm = NetworkManager.Instance;
+    //
+    //    nm.OnReceivedMessage += OnReceivedData;
+    //}
+    //
+    //private void OnReceivedData(byte[] data, IPEndPoint ip)
+    //{
+    //    // Handle incoming commands from clients
+    //    if (MessageChecker.CheckMessageType(data) == MessageType.Position)
+    //    {
+    //        // Validate movement before broadcasting
+    //        NetVector3 netPosition = new(data);
+    //        int clientId = netPosition.GetData().id;
+    //
+    //        if (gm.playerList.ContainsKey(clientId))
+    //        {
+    //            // Only broadcast if valid
+    //            nm.networkEntity.SendMessage(data);
+    //        }
+    //    }
+    //    else if (MessageChecker.CheckMessageType(data) == MessageType.BulletInstatiate)
+    //    {
+    //        // Validate shooting before broadcasting
+    //        NetVector3 netBullet = new(data);
+    //        int clientId = netBullet.GetData().id;
+    //
+    //        if (gm.playerList.ContainsKey(clientId))
+    //        {
+    //            nm.networkEntity.SendMessage(data);
+    //        }
+    //    }
+    //}
+    //
+    //private void Update()
+    //{
+    //    if (!nm.isServer) return;
+    //
+    //    switch (currentState)
+    //    {
+    //        case States.Init:
+    //            if (nm.networkEntity.clients.Count >= minAmountOfPlayersToInitCounter)
+    //            {
+    //                currentState = States.Lobby;
+    //            }
+    //            break;
+    //
+    //        case States.Lobby:
+    //            HandleLobbyState();
+    //            break;
+    //
+    //        case States.Game:
+    //            HandleGameState();
+    //            break;
+    //
+    //        case States.Finish:
+    //            HandleFinishState();
+    //            break;
+    //    }
+    //}
+    //
+    //private void HandleLobbyState()
+    //{
+    //    if (nm.networkEntity.clients.Count >= minAmountOfPlayersToInitCounter)
+    //    {
+    //        if (!counterInit)
+    //        {
+    //            counterInit = true;
+    //            counter = 0;
+    //        }
+    //
+    //        counter += Time.deltaTime;
+    //        gm.timer.text = counter.ToString("F0");
+    //
+    //        if (counter >= minutesInLobby)
+    //        {
+    //            counter = 0;
+    //            gm.timer.text = "";
+    //            currentState = States.Game;
+    //        }
+    //    }
+    //    else if (counterInit)
+    //    {
+    //        counterInit = false;
+    //        counter = 0;
+    //        gm.timer.text = "";
+    //        currentState = States.Init;
+    //    }
+    //}
+    //
+    //private void HandleGameState()
+    //{
+    //    counter += Time.deltaTime;
+    //    gm.timer.text = counter.ToString("F0");
+    //
+    //    if (counter >= minutesGameplay || gm.playerList.Count <= 1)
+    //    {
+    //        SendMatchWinner();
+    //        counter = 0;
+    //        gm.timer.text = "";
+    //        currentState = States.Finish;
+    //    }
+    //}
+    //
+    //private void HandleFinishState()
+    //{
+    //    timeUntilCloseServer -= Time.deltaTime;
+    //    if (timeUntilCloseServer <= 0)
+    //    {
+    //        nm.networkEntity.CloseConnection();
+    //    }
+    //}
+    //
+    //private void SendMatchWinner()
+    //{
+    //    PlayerController playerWithMaxHealth = null;
+    //    int maxHealth = int.MinValue;
+    //
+    //    foreach (var player in gm.playerList)
+    //    {
+    //        if (player.Value.TryGetComponent(out PlayerController pc))
+    //        {
+    //            if (pc.health > maxHealth)
+    //            {
+    //                maxHealth = pc.health;
+    //                playerWithMaxHealth = pc;
+    //            }
+    //        }
+    //    }
+    //
+    //    if (playerWithMaxHealth != null)
+    //    {
+    //        NetIDMessage netIDMessage = new(MessagePriority.Default, playerWithMaxHealth.clientID)
+    //        {
+    //            CurrentMessageType = MessageType.Winner
+    //        };
+    //        nm.networkEntity.SendMessage(netIDMessage.Serialize());
+    //    }
+    //}
+}

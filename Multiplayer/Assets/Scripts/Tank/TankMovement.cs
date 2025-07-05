@@ -19,25 +19,48 @@ public class TankMovement : MonoBehaviour
     {
         if (playerController.currentPlayer)
         {
+            Vector3 movement = Vector3.zero;
+            float rotation = 0;
+
             if (Input.GetKey(KeyCode.W))
             {
-                RB.AddForce(transform.forward * velocityY, ForceMode.Force);
+                movement += transform.forward * velocityY;
             }
 
             if (Input.GetKey(KeyCode.S))
             {
-                RB.AddForce(-transform.forward * velocityY);
+                movement -= transform.forward * velocityY;
             }
 
             if (Input.GetKey(KeyCode.A))
             {
-                transform.eulerAngles += Vector3.down * velocityX * Time.deltaTime;
+                rotation -= velocityX;
             }
 
             if (Input.GetKey(KeyCode.D))
             {
-                transform.eulerAngles += Vector3.up * velocityX * Time.deltaTime;
+                rotation += velocityX;
             }
+
+            // Send movement to server for validation
+            SendMovementToServer(movement, rotation);
         }
+    }
+
+    private void SendMovementToServer(Vector3 movement, float rotation)
+    {
+        //if (NetworkManager.Instance.isServer)
+        //{
+        //    // Server can apply movement directly
+        //    RB.AddForce(movement, ForceMode.Force);
+        //    transform.eulerAngles += Vector3.up * rotation * Time.deltaTime;
+        //}
+        //else
+        //{
+        //    // Client sends movement request to server
+        //    NetVector3 netMovement = new(MessagePriority.Default, new Vec3(playerController.clientID, movement));
+        //    netMovement.CurrentMessageType = MessageType.Position;
+        //    NetworkManager.Instance.networkEntity.SendMessage(netMovement.Serialize());
+        //}
     }
 }

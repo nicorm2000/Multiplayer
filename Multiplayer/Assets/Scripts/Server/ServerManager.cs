@@ -1,13 +1,12 @@
-//using NetworkServer;
-using System;
+using NetworkServer;
 using UnityEngine;
-
+using System;
 
 public class ServerManager : MonoBehaviour
 {
     public static ServerManager Instance { get; private set; }
 
-    //public Server server { get; private set; }
+    public Server server { get; private set; }
     public bool isServerRunning = false;
 
     private DateTime appStartTime;
@@ -29,7 +28,7 @@ public class ServerManager : MonoBehaviour
         if (isServerRunning) return;
 
         appStartTime = DateTime.UtcNow;
-        //server = new Server(port, appStartTime);
+        server = new Server(port, appStartTime);
         isServerRunning = true;
 
         Debug.Log($"Server started on port {port}");
@@ -39,7 +38,7 @@ public class ServerManager : MonoBehaviour
     {
         if (!isServerRunning) return;
 
-        //server.CloseConnection();
+        server.CloseConnection();
         isServerRunning = false;
 
         Debug.Log("Server stopped");
@@ -49,7 +48,7 @@ public class ServerManager : MonoBehaviour
     {
         if (isServerRunning)
         {
-            //server.Update();
+            server.Update();
         }
     }
 
@@ -57,7 +56,7 @@ public class ServerManager : MonoBehaviour
     {
         if (isServerRunning)
         {
-            //server.OnApplicationQuit();
+            server.OnApplicationQuit();
         }
     }
 }

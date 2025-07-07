@@ -1,10 +1,11 @@
-using Net;
 using UnityEngine;
+using Net;
 
 public class TankMovement : MonoBehaviour
 {
     [SerializeField, NetVariable(0)] float velocityY;
     [SerializeField, NetVariable(1)] float velocityX;
+    [NetVariable(2, NETAUTHORITY.CLIENT)] Vector2 movementInput;
 
     PlayerController playerController;
     Rigidbody RB;
@@ -12,55 +13,59 @@ public class TankMovement : MonoBehaviour
     void Awake()
     {
         RB = GetComponent<Rigidbody>();
-        playerController = GetComponentInParent<PlayerController>();
+        playerController ??= GetComponentInParent<PlayerController>();
     }
 
     void FixedUpdate()
     {
         if (playerController.currentPlayer)
         {
-            Vector3 movement = Vector3.zero;
-            float rotation = 0;
-
             if (Input.GetKey(KeyCode.W))
             {
-                movement += transform.forward * velocityY;
+                movementInput.y = 1;
             }
 
             if (Input.GetKey(KeyCode.S))
             {
-                movement -= transform.forward * velocityY;
+                movementInput.y = -1;
             }
 
             if (Input.GetKey(KeyCode.A))
             {
-                rotation -= velocityX;
+                movementInput.x = 1;
             }
 
             if (Input.GetKey(KeyCode.D))
             {
-                rotation += velocityX;
+                movementInput.x = -1;
             }
-
-            // Send movement to server for validation
-            SendMovementToServer(movement, rotation);
+        }
+        else
+        {
+            TankMovementInputChecker();
         }
     }
 
-    private void SendMovementToServer(Vector3 movement, float rotation)
+    public void TankMovementInputChecker()
     {
-        //if (NetworkManager.Instance.isServer)
-        //{
-        //    // Server can apply movement directly
-        //    RB.AddForce(movement, ForceMode.Force);
-        //    transform.eulerAngles += Vector3.up * rotation * Time.deltaTime;
-        //}
-        //else
-        //{
-        //    // Client sends movement request to server
-        //    NetVector3 netMovement = new(MessagePriority.Default, new Vec3(playerController.clientID, movement));
-        //    netMovement.CurrentMessageType = MessageType.Position;
-        //    NetworkManager.Instance.networkEntity.SendMessage(netMovement.Serialize());
-        //}
+        if (movementInput.y == 1)
+        {
+            RB.AddForce(transform.forward * velocityY, ForceMode.Force);
+        }
+
+        if (movementInput.y == -1)
+        {
+            RB.AddForce(-transform.forward * velocityY);
+        }
+
+        if (movementInput.x == 1)
+        {
+            transform.eulerAngles += Vector3.down * velocityX * Time.deltaTime;
+        }
+
+        if (movementInput.x == -1)
+        {
+            transform.eulerAngles += Vector3.up * velocityX * Time.deltaTime;
+        }
     }
 }

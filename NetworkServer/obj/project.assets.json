@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net5.0": {
+    ".NETStandard,Version=v2.1": {
       "Network_Lib/1.0.0": {
         "type": "project",
         "framework": ".NETStandard,Version=v2.1",
@@ -22,7 +22,7 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net5.0": [
+    ".NETStandard,Version=v2.1": [
       "Network_Lib >= 1.0.0"
     ]
   },
@@ -51,15 +51,15 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net5.0"
+        "netstandard2.1"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net5.0": {
-          "targetAlias": "net5.0",
+        "netstandard2.1": {
+          "targetAlias": "netstandard2.1",
           "projectReferences": {
             "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj": {
               "projectPath": "C:\\Users\\Nico\\Desktop\\Multiplayer\\Network_Lib\\Network_Lib.csproj"
@@ -80,8 +80,8 @@
       "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
-      "net5.0": {
-        "targetAlias": "net5.0",
+      "netstandard2.1": {
+        "targetAlias": "netstandard2.1",
         "imports": [
           "net461",
           "net462",
@@ -94,7 +94,7 @@
         "assetTargetFallback": true,
         "warn": true,
         "frameworkReferences": {
-          "Microsoft.NETCore.App": {
+          "NETStandard.Library": {
             "privateAssets": "all"
           }
         },

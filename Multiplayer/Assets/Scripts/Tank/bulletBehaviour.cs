@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using Net;
 using System;
+using Net;
 
 namespace Game
 {

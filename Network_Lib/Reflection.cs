@@ -21,6 +21,12 @@ namespace Net
         Remove
     }
 
+    public enum NETAUTHORITY
+    {
+        CLIENT = 0,
+        SERVER = 1,
+    }
+
     /// <summary>
     /// Provides reflection-based inspection and manipulation of network objects.
     /// Handles serialization, deserialization, and network communication of object states.
@@ -32,6 +38,7 @@ namespace Net
         private Assembly executeAssembly;
         private Assembly gameAssembly;
         private NetworkEntity networkEntity;
+        private NETAUTHORITY netAuthority;
 
         public static Action<string> consoleDebugger;
         public static Action consoleDebuggerPause;
@@ -46,10 +53,11 @@ namespace Net
         /// Provides reflection-based inspection and manipulation of network objects.
         /// Handles serialization, deserialization, and network communication of object states.
         /// </summary>
-        public Reflection(NetworkEntity entity)
+        public Reflection(NetworkEntity entity, NETAUTHORITY netAuthority)
         {
             networkEntity = entity;
             networkEntity.OnReceivedMessage += OnReceivedReflectionMessage;
+            this.netAuthority = netAuthority;
 
             executeAssembly = Assembly.GetExecutingAssembly();
             gameAssembly = Assembly.GetCallingAssembly();
@@ -88,20 +96,17 @@ namespace Net
 
             foreach (INetObj netObj in NetObjFactory.NetObjects())
             {
-                if (netObj.GetOwnerID() == networkEntity.clientID)
+                List<RouteInfo> idRoute = new List<RouteInfo>
                 {
-                    List<RouteInfo> idRoute = new List<RouteInfo>
-                    {
-                        RouteInfo.CreateForProperty(netObj.GetID())
-                    };
-                    Inspect(netObj.GetType(), netObj, idRoute);
+                    RouteInfo.CreateForProperty(netObj.GetID())
+                };
+                Inspect(netObj.GetType(), netObj, idRoute);
 
-                    if (netObj.GetTRS() != null)
-                    {
-                        TRS trs = netObj.GetTRS();
-                        NetTRSMessage netTRSMessage = new NetTRSMessage(MessagePriority.Default, trs, idRoute);
-                        networkEntity.SendMessage(netTRSMessage.Serialize());
-                    }
+                if (netObj.GetTRS() != null && netAuthority == NETAUTHORITY.SERVER)
+                {
+                    TRS trs = netObj.GetTRS();
+                    NetTRSMessage netTRSMessage = new NetTRSMessage(MessagePriority.Default, trs, idRoute);
+                    networkEntity.SendMessage(netTRSMessage.Serialize());
                 }
             }
         }
@@ -127,8 +132,11 @@ namespace Net
                     {
                         if (attribute is NetVariable netVariable)
                         {
-                            //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
-                            ReadValue(info, obj, netVariable, new List<RouteInfo>(idRoute));
+                            if (netVariable.syncAuthority == netAuthority)
+                            {
+                                //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
+                                ReadValue(info, obj, netVariable, new List<RouteInfo>(idRoute));
+                            }
                         }
                     }
                     if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo))
@@ -141,8 +149,11 @@ namespace Net
                             List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
                             foreach ((FieldInfo, NetVariable) field in values)
                             {
-                                //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
-                                ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute));
+                                if (field.Item2.syncAuthority == netAuthority)
+                                {
+                                    //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
+                                    ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute));
+                                }
                             }
                         }
                     }
@@ -886,6 +897,7 @@ namespace Net
                     NetVariable attributes = info.GetCustomAttribute<NetVariable>();
                     if (attributes != null && attributes.VariableId == currentRoute.route)
                     {
+                        //if (netVariable.syncAuthority == netAuthority)
                         //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
                         //debug += $"Current field value: {info.GetValue(obj)}\n";
                         //consoleDebugger?.Invoke(debug);
@@ -2060,14 +2072,16 @@ namespace Net
         int variableId;
         MessagePriority messagePriority;
 
+        public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
         /// <summary>
         /// Initializes a new instance of the NetVariable attribute.
         /// </summary>
         /// <param name="id">The unique identifier for this variable.</param>
         /// <param name="messagePriority">The priority for network messages.</param>
-        public NetVariable(int id, MessagePriority messagePriority = MessagePriority.Default)
+        public NetVariable(int id, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER, MessagePriority messagePriority = MessagePriority.Default)
         {
             variableId = id;
+            syncAuthority = netAuthority;
             this.messagePriority = messagePriority;
         }
 

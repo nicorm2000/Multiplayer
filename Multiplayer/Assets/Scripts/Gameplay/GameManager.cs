@@ -1,7 +1,7 @@
-using Net;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using Net;
 
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {

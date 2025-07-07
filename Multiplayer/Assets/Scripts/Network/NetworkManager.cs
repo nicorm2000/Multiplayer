@@ -1,7 +1,8 @@
-﻿using Net;
-using System;
+﻿using UnityEngine;
 using System.Net;
-using UnityEngine;
+using System;
+using Net;
+using NetworkServer;
 
 public class NetworkManager : MonoBehaviourSingleton<NetworkManager>  
 {

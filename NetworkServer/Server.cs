@@ -30,11 +30,11 @@ namespace NetworkServer
             }
         }
 
-        public readonly Dictionary<int, Client> clients = new();
+        public readonly Dictionary<int, Client> clients = new Dictionary<int, Client>();
 
-        public readonly Dictionary<IPEndPoint, int> ipToId = new();
+        public readonly Dictionary<IPEndPoint, int> ipToId = new Dictionary<IPEndPoint, int>();
 
-        private List<string> activePlayerNames = new();
+        private List<string> activePlayerNames = new List<string>();
 
         DateTime appStartTime;
 
@@ -90,14 +90,14 @@ namespace NetworkServer
                 pingPong.AddClientForList(newClientID);
                 OnNewPlayer?.Invoke(newClientID);
 
-                List<(int, string)> playersInServer = new();
+                List<(int, string)> playersInServer = new List<(int, string)>();
 
                 foreach (int id in clients.Keys)
                 {
                     playersInServer.Add((clients[id].id, clients[id].clientName));
                 }
 
-                ServerToClientHandShake serverToClient = new(MessagePriority.NonDisposable, playersInServer);
+                ServerToClientHandShake serverToClient = new ServerToClientHandShake(MessagePriority.NonDisposable, playersInServer);
                 Broadcast(serverToClient.Serialize());
             }
             else
@@ -202,7 +202,7 @@ namespace NetworkServer
 
                     InstanceRequestPayload instanceRequest = new InstanceRequestMenssage(data).GetData();
 
-                    InstancePayload instancePayload = new(instancesIdCount, ipToId[ip], instanceRequest.objectId,
+                    InstancePayload instancePayload = new InstancePayload(instancesIdCount, ipToId[ip], instanceRequest.objectId,
                                                                            instanceRequest.positionX, instanceRequest.positionY, instanceRequest.positionZ,
                                                                            instanceRequest.rotationX, instanceRequest.rotationY, instanceRequest.rotationZ, instanceRequest.rotationW,
                                                                            instanceRequest.scaleX, instanceRequest.scaleY, instanceRequest.scaleZ, instanceRequest.parentInstanceID);
@@ -210,7 +210,7 @@ namespace NetworkServer
                     NetObjTracker.AddNetObj(instancePayload);
                     Console.WriteLine("Added Net Obj to tracker.");
 
-                    InstanceMessage instanceMessage = new(MessagePriority.NonDisposable, instancePayload);
+                    InstanceMessage instanceMessage = new InstanceMessage(MessagePriority.NonDisposable, instancePayload);
 
                     Console.WriteLine("Send Instance Message");
                     SendMessage(instanceMessage.Serialize());
@@ -221,7 +221,7 @@ namespace NetworkServer
 
                 case MessageType.Position:
 
-                    NetVector3 netVector3 = new(data);
+                    NetVector3 netVector3 = new NetVector3(data);
 
                     if (ipToId.ContainsKey(ip))
                     {
@@ -235,7 +235,7 @@ namespace NetworkServer
 
                 case MessageType.BulletInstatiate:
 
-                    NetVector3 netBullet = new(data);
+                    NetVector3 netBullet = new NetVector3(data);
                     OnInstantiateBullet?.Invoke(netBullet.GetData().id, netBullet.GetData().position);
 
                     BroadcastPlayerPosition(netBullet.GetData().id, data);
@@ -244,7 +244,7 @@ namespace NetworkServer
 
                 case MessageType.Disconnection:
 
-                    NetIDMessage netDisconnection = new(data);
+                    NetIDMessage netDisconnection = new NetIDMessage(data);
                     int playerID = netDisconnection.GetData();
 
                     Broadcast(data);
@@ -255,7 +255,7 @@ namespace NetworkServer
                 case MessageType.DisconnectAll:
 
                     Console.WriteLine("Disconnect Message arrived");
-                    NetDisconnectionMessage netDisconnectionMessage = new(data);
+                    NetDisconnectionMessage netDisconnectionMessage = new NetDisconnectionMessage(data);
                     Broadcast(data);
                     CloseConnection();
 
@@ -263,7 +263,7 @@ namespace NetworkServer
 
                 case MessageType.Winner:
 
-                    NetWinnerMessage netWinnerMessage = new(data);
+                    NetWinnerMessage netWinnerMessage = new NetWinnerMessage(data);
                     Console.WriteLine("Winner Message arrived");
                     Broadcast(data);
 
@@ -271,7 +271,7 @@ namespace NetworkServer
 
                 case MessageType.Error:
 
-                    NetErrorMessage netErrorMessage = new(data);
+                    NetErrorMessage netErrorMessage = new NetErrorMessage(data);
                     CloseConnection();
 
                     break;
@@ -285,7 +285,7 @@ namespace NetworkServer
 
                 case MessageType.DestroyNetObj:
 
-                    NetDestroyGO netDestroyGO = new(data);
+                    NetDestroyGO netDestroyGO = new NetDestroyGO(data);
                     int playerId = netDestroyGO.GetData().Item1;
                     int instanceId = netDestroyGO.GetData().Item2;
 
@@ -370,7 +370,7 @@ namespace NetworkServer
         /// <param name="ip">The IP endpoint of the client.</param>
         void ReceiveClientToServerHandShake(byte[] data, IPEndPoint ip)
         {
-            ClientToServerNetHandShake handShake = new(data);
+            ClientToServerNetHandShake handShake = new ClientToServerNetHandShake(data);
 
             if (!MatchOnGoing(ip) && CheckValidUserName(handShake.GetData().Item3, ip) && !ServerIsFull(ip))
             {
@@ -388,7 +388,7 @@ namespace NetworkServer
         {
             if (matchOnGoing)
             {
-                NetErrorMessage netServerIsFull = new("Match has already started");
+                NetErrorMessage netServerIsFull = new NetErrorMessage("Match has already started");
                 Broadcast(netServerIsFull.Serialize(), ip);
             }
 
@@ -407,7 +407,7 @@ namespace NetworkServer
 
             if (serverIsFull)
             {
-                NetErrorMessage netServerIsFull = new("Server is full");
+                NetErrorMessage netServerIsFull = new NetErrorMessage("Server is full");
                 Broadcast(netServerIsFull.Serialize(), ip);
             }
 
@@ -426,7 +426,7 @@ namespace NetworkServer
             {
                 if (userName == clients[clientID].clientName)
                 {
-                    NetErrorMessage netInvalidUserName = new("Invalid User Name");
+                    NetErrorMessage netInvalidUserName = new NetErrorMessage("Invalid User Name");
                     Broadcast(netInvalidUserName.Serialize(), ip);
 
                     return false;
@@ -445,7 +445,7 @@ namespace NetworkServer
         {
             string messageText = "";
 
-            NetMessage netMessage = new(data);
+            NetMessage netMessage = new NetMessage(data);
             messageText += new string(netMessage.GetData());
 
             Broadcast(data);
@@ -460,7 +460,7 @@ namespace NetworkServer
 
             BroadcastPlayerListToMatchMaker(); // Will be empty if all clients disconnected properly
 
-            NetErrorMessage netErrorMessage = new("Lost Connection To Server");
+            NetErrorMessage netErrorMessage = new NetErrorMessage("Lost Connection To Server");
             Broadcast(netErrorMessage.Serialize());
             CloseConnection();
         }
@@ -470,12 +470,12 @@ namespace NetworkServer
         /// </summary>
         public override void CloseConnection()
         {
-            List<byte[]> disconnectMessages = new();
-            List<int> clientIdsToRemove = new(clients.Keys);
+            List<byte[]> disconnectMessages = new List<byte[]>();
+            List<int> clientIdsToRemove = new List<int>(clients.Keys);
 
             foreach (int clientId in clientIdsToRemove)
             {
-                NetIDMessage netDisconnection = new(MessagePriority.Default, clientId);
+                NetIDMessage netDisconnection = new NetIDMessage(MessagePriority.Default, clientId);
                 disconnectMessages.Add(netDisconnection.Serialize());
             }
 
@@ -501,7 +501,7 @@ namespace NetworkServer
         /// <param name="data">The data containing the player's position.</param>
         protected override void UpdatePlayerPosition(byte[] data)
         {
-            NetVector3 netPosition = new(data);
+            NetVector3 netPosition = new NetVector3(data);
             int clientId = netPosition.GetData().id;
 
             // Broadcast the player's position to all clients except the sender
@@ -559,7 +559,7 @@ namespace NetworkServer
         {
             if (matchmMakerIp == null) return;
 
-            List<string> names = new();
+            List<string> names = new List<string>();
             foreach (Client client in clients.Values)
             {
                 names.Add(client.clientName);

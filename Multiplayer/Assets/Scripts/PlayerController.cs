@@ -1,10 +1,10 @@
-﻿using Net;
-using System;
+﻿using System.Collections.Generic;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using System;
+using Net;
 
 [NetTRS(NetTRS.SYNC.DEFAULT)]
 public class PlayerController : MonoBehaviour, INetObj
@@ -12,7 +12,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class TestingClass
     {
-        [NetVariable(0)] public TestingClass2 testInt = new();
+        [NetVariable(0, NETAUTHORITY.CLIENT)] public TestingClass2 testInt = new();
     }
     [Serializable]
     public class TestingClass2

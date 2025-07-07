@@ -1,5 +1,5 @@
-﻿using Net;
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
+using Net;
 
 public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
 {

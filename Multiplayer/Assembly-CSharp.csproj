@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\Factory\ServiceInitializer.cs" />
     <Compile Include="Assets\Scripts\Factory\PrefabService.cs" />
     <Compile Include="Assets\Scripts\Network\interfaces\IRecieveData.cs" />
+    <Compile Include="Assets\Scripts\Server\ServerManager.cs" />
     <Compile Include="Assets\Scripts\Tank\bulletBehaviour.cs" />
     <Compile Include="Assets\Scripts\Tank\TankMovement.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraOrbit.cs" />
@@ -77,7 +78,6 @@
     <Compile Include="Assets\Scripts\Utils\MonoBehaviourSingleton.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Network\NetworkManager.cs" />
-    <Compile Include="Assets\Scripts\Server\ServerManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -445,6 +445,10 @@
     </Reference>
     <Reference Include="Unity.Analytics.Editor">
       <HintPath>Library\PackageCache\com.unity.analytics@3.6.12\Unity.Analytics.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="NetworkServer">
+      <HintPath>Assets\Plugins\NetworkServer.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Analytics.Tracker">

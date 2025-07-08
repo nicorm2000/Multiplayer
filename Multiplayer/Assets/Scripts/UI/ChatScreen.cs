@@ -7,6 +7,7 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
     public InputField inputMessage;
 
     static int consoleMessageOrder = 1;
+    #if CLIENT
     protected override void Initialize()
     {
         inputMessage.onEndEdit.AddListener(OnEndEdit);
@@ -39,6 +40,6 @@ public class ChatScreen : MonoBehaviourSingleton<ChatScreen>
             inputMessage.Select();
             inputMessage.text = "";
         }
-
     }
+#endif
 }

@@ -17,7 +17,7 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     [SerializeField] TextMeshProUGUI winText;
 
     public bool isInMenu = true;
-
+#if CLIENT
     protected override void Initialize()
     {
         connectBtn.onClick.AddListener(OnConnectBtnClick);
@@ -70,4 +70,5 @@ public class NetworkScreen : MonoBehaviourSingleton<NetworkScreen>
     {
         winPanel.SetActive(false);
     }
+#endif
 }

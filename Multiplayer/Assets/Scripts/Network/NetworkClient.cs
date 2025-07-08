@@ -77,7 +77,9 @@ public class NetworkClient : NetworkEntity
 
         ClientToServerNetHandShake handShakeMesage = new(MessagePriority.NonDisposable, (UdpConnection.IPToLong(ipAddress), port, userName));
         SendToServer(handShakeMesage.Serialize());
+        #if CLIENT
         NetworkScreen.Instance.SwitchToChatScreen();
+        #endif
     }
 
     /// <summary>
@@ -161,7 +163,9 @@ public class NetworkClient : NetworkEntity
 
                 if (NetworkScreen.Instance.isInMenu)
                 {
+#if CLIENT
                     NetworkScreen.Instance.SwitchToChatScreen();
+#endif
                 }
 
                 OnNewPlayer?.Invoke(new NetIDMessage(data).GetData());
@@ -186,7 +190,9 @@ public class NetworkClient : NetworkEntity
                     {
                         if (NetworkScreen.Instance.isInMenu)
                         {
+                            #if CLIENT
                             NetworkScreen.Instance.SwitchToChatScreen();
+                            #endif
                         }
 
                         clientID = playerList[i].clientId;
@@ -286,8 +292,10 @@ public class NetworkClient : NetworkEntity
             case MessageType.Error:
 
                 NetErrorMessage netErrorMessage = new(data);
+                #if CLIENT
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowErrorPanel(netErrorMessage.GetData());
+                #endif
 
                 CloseConnection();
 
@@ -299,9 +307,10 @@ public class NetworkClient : NetworkEntity
                 NetWinnerMessage netWin = new(data);
                 Debug.Log("Winner number: " + netWin.GetData().winner);
                 string winText = $"Congratulations! \n {players[netWin.GetData().winner].name} won the game!";
+                #if CLIENT
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);
-
+                #endif
                 DisconnectAll disconnectAll = new();
                 NetDisconnectionMessage netDisconnectionMessage = new(disconnectAll);
                 SendMessage(netDisconnectionMessage.Serialize());
@@ -404,8 +413,9 @@ public class NetworkClient : NetworkEntity
         pingPong = null;
         nondisposablesMessages = null;
         sortableMessage = null;
-
+        #if CLIENT
         NetworkScreen.Instance.SwitchToMenuScreen();
+        #endif
     }
 
     /// <summary>

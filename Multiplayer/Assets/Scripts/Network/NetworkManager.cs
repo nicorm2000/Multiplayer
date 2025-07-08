@@ -40,15 +40,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         return (NetworkClient)networkEntity;
     }
 
-    //public void StartServer(int port)
-    //{
-    //    if (networkEntity != null) return;
-    //
-    //    isServerMode = true;
-    //    networkEntity = ServerManager.Instance.server;
-    //    onInitEntity?.Invoke();
-    //}
-
     public void StartClient(IPAddress ip, int port, string name)
     {
         networkEntity = new NetworkClient(ip, port, name);
@@ -76,17 +67,23 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
 
     public void SwitchToMenuScreen()
     {
+        #if CLIENT
         NetworkScreen.Instance.SwitchToMenuScreen();
+        #endif
     }
 
     public void WriteChat(string text)
     {
+        #if CLIENT
         ChatScreen.Instance.messages.text += text;
+        #endif
     }
 
     public void ShowErrorPanel(string errorText)
     {
+        #if CLIENT
         NetworkScreen.Instance.ShowErrorPanel(errorText);
+        #endif
     }
 
     public void UpdatePlayerPosition((int index, Vector3 newPosition) data, NetVector3 netVector3)

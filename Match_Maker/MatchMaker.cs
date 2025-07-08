@@ -511,7 +511,7 @@ namespace Match_Maker
             Process currentServer;
             ProcessStartInfo startInfo = new ProcessStartInfo();
 
-            string serverPath = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName + "\\NetworkServer\\bin\\Debug\\net5.0\\net5.0\\NetworkServer.exe";
+            string serverPath = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName + "\\Build\\Multiplayer.exe";
 
             startInfo.FileName = serverPath;
             startInfo.Arguments = numberPort.ToString();

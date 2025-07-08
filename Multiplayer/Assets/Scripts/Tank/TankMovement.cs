@@ -5,7 +5,7 @@ public class TankMovement : MonoBehaviour
 {
     [SerializeField, NetVariable(0)] float velocityY;
     [SerializeField, NetVariable(1)] float velocityX;
-    [NetVariable(2, NETAUTHORITY.CLIENT)] Vector2 movementInput;
+    [NetVariable(2)] Vector2 movementInput;
 
     PlayerController playerController;
     Rigidbody RB;

@@ -100,7 +100,7 @@ namespace Net
                 {
                     RouteInfo.CreateForProperty(netObj.GetID())
                 };
-                Inspect(netObj.GetType(), netObj, idRoute);
+                Inspect(netObj.GetType(), netObj, idRoute, netObj.GetOwnerID());
 
                 if (netObj.GetTRS() != null && netAuthority == NETAUTHORITY.SERVER)
                 {
@@ -117,7 +117,7 @@ namespace Net
         /// <param name="type">The type of the object to inspect.</param>
         /// <param name="obj">The object instance to inspect.</param>
         /// <param name="idRoute">The route information for network message routing.</param>
-        public void Inspect(Type type, object obj, List<RouteInfo> idRoute)
+        public void Inspect(Type type, object obj, List<RouteInfo> idRoute, int owner)
         {
             string debug = "";
             if (obj != null)
@@ -134,8 +134,15 @@ namespace Net
                         {
                             if (netVariable.syncAuthority == netAuthority)
                             {
-                                //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
-                                ReadValue(info, obj, netVariable, new List<RouteInfo>(idRoute));
+                                if (netAuthority == NETAUTHORITY.CLIENT && owner == networkEntity.clientID)
+                                {
+                                    //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}");
+                                    ReadValue(info, obj, netVariable, new List<RouteInfo>(idRoute), owner);
+                                }
+                                else if (netAuthority == NETAUTHORITY.SERVER)
+                                {
+                                    ReadValue(info, obj, netVariable, new List<RouteInfo>(idRoute), owner);
+                                }
                             }
                         }
                     }
@@ -151,15 +158,22 @@ namespace Net
                             {
                                 if (field.Item2.syncAuthority == netAuthority)
                                 {
-                                    //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
-                                    ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute));
+                                    if (netAuthority == NETAUTHORITY.CLIENT && owner == networkEntity.clientID)
+                                    {
+                                        //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.GetValue(obj)}, fields Item1: " + field.Item1);
+                                        ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute), owner);
+                                    }
+                                    else if (netAuthority == NETAUTHORITY.SERVER)
+                                    {
+                                        ReadValue(field.Item1, obj, field.Item2, new List<RouteInfo>(idRoute), owner);
+                                    }
                                 }
                             }
                         }
                     }
                     if (type.BaseType != null)
                     {
-                        Inspect(type.BaseType, obj, new List<RouteInfo>(idRoute));
+                        Inspect(type.BaseType, obj, new List<RouteInfo>(idRoute), owner);
                     }
                 }
                 debug += "Exit foreach: " + obj + "\n";
@@ -182,7 +196,7 @@ namespace Net
         /// <param name="obj">Parent object containing the field.</param>
         /// <param name="attribute">NetVariable attribute of the field.</param>
         /// <param name="idRoute">Route information for network message routing.</param>
-        public void ReadValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute)
+        public void ReadValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int owner)
         {
             string debug = "ReadValue Start - ";
             debug += $"Field: {info.Name}, Type: {info.FieldType}, Current Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
@@ -233,7 +247,7 @@ namespace Net
                                 dimensions,
                                 element?.GetType() ?? fieldType.GetElementType())
                         };
-                        ProcessValue(element, currentRoute, attribute);
+                        ProcessValue(element, currentRoute, attribute, owner);
                     }
                 }
                 else if (typeof(IDictionary).IsAssignableFrom(fieldType))
@@ -289,7 +303,7 @@ namespace Net
                         ProcessValue(entry.Value, new List<RouteInfo>(idRoute)
                         {
                             RouteInfo.CreateForDictionary(attribute.VariableId, GetStableKeyHash(entry.Key), valueType)
-                        }, attribute);
+                        }, attribute, owner);
                     }
 
                     // Handle empty dictionary
@@ -376,7 +390,7 @@ namespace Net
                         //                      $"Type: {item?.GetType()?.Name ?? "null"}, " +
                         //                      $"Value: {item ?? "null"}");
 
-                        ProcessValue(item, currentRoute, attribute);
+                        ProcessValue(item, currentRoute, attribute, owner);
                     }
 
                     if (count == 0)
@@ -395,7 +409,7 @@ namespace Net
             // Handle complex objects
             //consoleDebugger?.Invoke("Handling complex object type\n");
             idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
-            Inspect(fieldType, fieldValue, idRoute);
+            Inspect(fieldType, fieldValue, idRoute, owner);
         }
         #endregion
 
@@ -1623,7 +1637,7 @@ namespace Net
         /// <param name="value">The value to process.</param>
         /// <param name="route">Route information for the value.</param>
         /// <param name="attribute">NetVariable attribute containing metadata.</param>
-        private void ProcessValue(object value, List<RouteInfo> route, NetVariable attribute)
+        private void ProcessValue(object value, List<RouteInfo> route, NetVariable attribute, int owner)
         {
             string debug = "ProcessValue - ";
             debug += $"Value: {value ?? "null"}, Type: {value?.GetType()?.Name ?? "null"}, ";
@@ -1673,7 +1687,7 @@ namespace Net
             {
                 debug += "Inspecting complex object\n";
                 //consoleDebugger?.Invoke(debug);
-                Inspect(valueType, value, route);
+                Inspect(valueType, value, route, owner);
             }
         }
 

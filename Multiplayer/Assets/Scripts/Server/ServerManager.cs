@@ -23,6 +23,23 @@ public class ServerManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    void Start()
+    {
+        string[] args = Environment.GetCommandLineArgs();
+
+        int port = 52002;
+        foreach (var arg in args)
+        {
+            Debug.Log($"arg is: {arg}");
+        }
+        if (args.Length > 0 && int.TryParse(args[0], out int parsedPort))
+        {
+            port = parsedPort;
+        }
+
+        StartServer(port);
+    }
+
     public void StartServer(int port)
     {
         if (isServerRunning) return;

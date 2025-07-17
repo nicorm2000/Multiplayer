@@ -136,15 +136,20 @@ namespace Net
                         {
                             route.Add(info.Item3);
                         }
-                        if (netAuthority == NETAUTHORITY.CLIENT && owner == networkEntity.clientID)
-                        {
-                            //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.Item1.GetValue(obj)}");
-                            ReadValue(info.Item1, obj, info.Item2, new List<RouteInfo>(route), owner);
-                        }
-                        else if (netAuthority == NETAUTHORITY.SERVER)
+                        CheckAuthority(owner, info.Item2.syncAuthority, ReadValueAction, ReadValueAction);
+                        void ReadValueAction()
                         {
                             ReadValue(info.Item1, obj, info.Item2, new List<RouteInfo>(route), owner);
                         }
+                        //if (netAuthority == NETAUTHORITY.CLIENT && owner == networkEntity.clientID)
+                        //{
+                        //    //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.Item1.GetValue(obj)}");
+                        //    ReadValueAction(obj, owner, info, route);
+                        //}
+                        //else if (netAuthority == NETAUTHORITY.SERVER)
+                        //{
+                        //    ReadValueAction(obj, owner, info, route);
+                        //}
                     }
                     if (type.BaseType != null)
                     {
@@ -159,6 +164,7 @@ namespace Net
                 debug += "Object is NULL";
                 //consoleDebugger.Invoke(debug);
             }
+
         }
 
         #endregion
@@ -1764,6 +1770,21 @@ namespace Net
                 }
 
                 type = type.BaseType;
+            }
+        }
+
+        public void CheckAuthority(int owner, NETAUTHORITY auxAuthority, Action onClientAuthority, Action onServerAuthority)
+        {
+            if (netAuthority != auxAuthority)
+                return;
+
+            if (netAuthority == NETAUTHORITY.CLIENT && owner == networkEntity.clientID)
+            {
+                onClientAuthority?.Invoke();
+            }
+            else if (netAuthority == NETAUTHORITY.SERVER)
+            {
+                onServerAuthority?.Invoke();
             }
         }
         #endregion

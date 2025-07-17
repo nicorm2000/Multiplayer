@@ -1,6 +1,8 @@
 using NetworkServer;
+using Network_Lib;
 using UnityEngine;
 using System;
+using Net;
 
 public class ServerManager : MonoBehaviour
 {
@@ -28,10 +30,6 @@ public class ServerManager : MonoBehaviour
         string[] args = Environment.GetCommandLineArgs();
 
         int port = 52002;
-        foreach (var arg in args)
-        {
-            Debug.Log($"arg is: {arg}");
-        }
         if (args.Length > 0 && int.TryParse(args[0], out int parsedPort))
         {
             port = parsedPort;
@@ -41,7 +39,8 @@ public class ServerManager : MonoBehaviour
 
 #if SERVER
         server.OnPlayerID += gm.SpawnPlayerPefab;
-        gm.OnPlayerInstanceCreated += server.HandleInstanceRequest;
+        //gm.OnPlayerInstanceCreated += server.HandleInstanceRequest;
+        NetObjFactory.OnDataSend += server.HandleInstanceRequest;
         NetworkManager.Instance.networkEntity = server;
 #endif
     }

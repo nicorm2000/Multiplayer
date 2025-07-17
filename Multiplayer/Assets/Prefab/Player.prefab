@@ -227,10 +227,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   duration: 0.5
-  shouldShoot: 0
   initialPositionShooting: {fileID: 6190912716761482191}
   bulletPrefab: {fileID: 9065385898612094083, guid: 28dd34ace8586d649af728a6704955dd,
     type: 3}
+  playerController: {fileID: 2649511967912427814}
 --- !u!1 &2771723475687813403
 GameObject:
   m_ObjectHideFlags: 0
@@ -296,6 +296,7 @@ Transform:
   - {fileID: 8587811201855472103}
   - {fileID: 6501926116119915496}
   - {fileID: 7165238016506140578}
+  - {fileID: 6637376312038205130}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -328,9 +329,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   health: 3
+  movementSynced: {x: 0, y: 0}
+  movementXSynced: 0
+  movementYSynced: 0
+  shouldShoot: 0
+  cameraHor: 0
   towerTurns: {fileID: 888843024134725453}
   movement: {fileID: 4467788783669252480}
   cameraPivot: {fileID: 7165238016506140578}
+  cameraOrbit: {fileID: 3578463810907031253}
   currentPlayer: 0
   clientID: -1
 --- !u!114 &4467788783669252480
@@ -347,6 +354,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   velocityY: 15
   velocityX: 35
+  movementInput: {x: 0, y: 0}
 --- !u!1 &5864520047254556651
 GameObject:
   m_ObjectHideFlags: 0
@@ -544,6 +552,113 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &8213032290410967528
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6637376312038205130}
+  - component: {fileID: 4797731330820326386}
+  - component: {fileID: 7368260543716361040}
+  - component: {fileID: 3578463810907031253}
+  m_Layer: 0
+  m_Name: Main Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6637376312038205130
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8213032290410967528}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5835457332643937606}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!20 &4797731330820326386
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8213032290410967528}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_FocalLength: 50
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!81 &7368260543716361040
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8213032290410967528}
+  m_Enabled: 1
+--- !u!114 &3578463810907031253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8213032290410967528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0defd0ff3a64e4543a499b4b36867708, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentDistance: 15
+  minDistance: 4
+  maxDistance: 25
+  angleY: 0
+  sensitivity: {x: 200, y: 200}
+  follow: {fileID: 7165238016506140578}
+  cameraCollisionLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  playerController: {fileID: 2649511967912427814}
 --- !u!1 &8399822890977348533
 GameObject:
   m_ObjectHideFlags: 0

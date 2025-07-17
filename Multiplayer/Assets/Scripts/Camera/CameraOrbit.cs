@@ -19,8 +19,6 @@ public class CameraOrbit : MonoBehaviour
     Vector2 nearPlaneSize;
 
     [SerializeField] LayerMask cameraCollisionLayer;
-    [SerializeField, NetVariable(0, NETAUTHORITY.CLIENT)]float hor = 0; // Check later
-
     public PlayerController playerController;
 
     void Awake()
@@ -36,14 +34,12 @@ public class CameraOrbit : MonoBehaviour
 
     void Update()
     {
-        if (playerController.currentPlayer)
-        {
-            hor = Input.GetAxis("Mouse X");
-        }
+        if (playerController == null)
+            return;
 
-        if (hor != 0)
+        if (playerController.cameraHor != 0)
         {
-            angle.x += hor * Mathf.Deg2Rad * sensitivity.x * Time.deltaTime;
+            angle.x += playerController.cameraHor * Mathf.Deg2Rad * sensitivity.x * Time.deltaTime;
         }
         angle.y = angleY;
 

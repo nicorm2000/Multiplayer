@@ -166,9 +166,11 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
-    [SerializeField, NetVariable(1, NETAUTHORITY.CLIENT)] public Vector2 movementSynced;
-    [SerializeField, NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
-    [SerializeField, NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
+    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector2 movementSynced;
+    [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
+    [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
+    [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
+    [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
     //[NetVariable(1)] public bool myBool = false;
     //[NetVariable(2)] public string myString = "pepe";
     //[NetVariable(3)] public char myChar = 'a';
@@ -210,14 +212,16 @@ public class PlayerController : MonoBehaviour, INetObj
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
+    [SerializeField] CameraOrbit cameraOrbit;
 
     public bool currentPlayer = false;
     public int clientID = -1;
     private int testing4ConstructorInt = 0;
     private TestingClass2 testing4ConstructorClass = new();
     NetObj netObj = new(-1, -1);
-
+    Coroutine turnTowerCoroutine;
     NetworkManager nm;
+    private Camera cam;
 
     #region ENUM
     //[ContextMenu("Test Enum - Set Default")]
@@ -709,13 +713,25 @@ public class PlayerController : MonoBehaviour, INetObj
     //}
     #endregion
 
+    private void Awake()
+    {
+        cam = cameraOrbit.gameObject.GetComponent<Camera>();
+#if SERVER
+        cam.enabled = false;
+        cam.gameObject.GetComponent<AudioListener>().enabled = false;
+#endif
+    }
+
     private void Start()
     {
         nm = NetworkManager.Instance;
         if (currentPlayer)
         {
-            Camera.main.gameObject.GetComponent<CameraOrbit>().SetFollowObject(cameraPivot);
-            Camera.main.gameObject.GetComponent<CameraOrbit>().playerController = this;
+            cameraOrbit.playerController = this;
+        }
+        else
+        {
+            cam.enabled = false;
         }
         //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
         //enumField = TestEnum.Special;
@@ -773,8 +789,23 @@ public class PlayerController : MonoBehaviour, INetObj
 
     private void Update()
     {
+#if CLIENT
+        if (currentPlayer)
+        {
+            shouldShoot = Input.GetMouseButtonDown(0);
+            cameraHor = Input.GetAxis("Mouse X");
+        }
+#endif
+        if (shouldShoot)
+        {
+            Debug.Log("Try to shoot");
+            if (!towerTurns.isRunning)
+            {
+                turnTowerCoroutine = StartCoroutine(towerTurns.TurnTower(cam.transform));
+            }
+        }
         //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
-        #region LIST
+#region LIST
         //if (Input.GetKeyDown(KeyCode.Space))
         //{
         //    testList = null;
@@ -789,8 +820,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //        testList.Add(3);
         //    }
         //}
-        #endregion
-        #region CLASS
+#endregion
+#region CLASS
         //if (Input.GetKeyDown(KeyCode.P))
         //{
         //    testing = null;
@@ -808,8 +839,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} testing class IS NULL");
         //}
-        #endregion
-        #region PLANE
+#endregion
+#region PLANE
         //if (Input.GetKeyDown(KeyCode.M))
         //{
         //    Plane temp = MyPlane;
@@ -824,8 +855,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //    Debug.Log("Normal: " + MyPlane.normal);
         //    Debug.Log("Distance: " + MyPlane.distance);
         //}
-        #endregion
-        #region DICTIONARY
+#endregion
+#region DICTIONARY
         //if (dictionaryTest != null)
         //{
         //    string dictContents = $"Client {clientID} Dictionary Contents:\n";
@@ -839,8 +870,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} Dictionary is NULL");
         //}
-        #endregion
-        #region MULTIDIMENSIONALARRAYS
+#endregion
+#region MULTIDIMENSIONALARRAYS
         //if (arrayTest != null)
         //{
         //    Debug.Log($"Client {clientID} Arrays are NOT NULL");
@@ -849,8 +880,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} Arrays are NULL");
         //}
-        #endregion
-        #region CUSTOM COLLECTION
+#endregion
+#region CUSTOM COLLECTION
         //if (_customCollection != null)
         //{
         //    Debug.Log($"Client {clientID} Collection Contents:");
@@ -863,8 +894,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} Collection is NULL");
         //}
-        #endregion
-        #region CUSTOM COLLECTION 2
+#endregion
+#region CUSTOM COLLECTION 2
         //if (_customCollection2 != null)
         //{
         //    Debug.Log($"Client {clientID} Printing _customCollection2 - Count: {_customCollection2.Count}");
@@ -878,8 +909,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} String Collection is NULL");
         //}
-        #endregion
-        #region CUSTOM COLLECTION 3
+#endregion
+#region CUSTOM COLLECTION 3
         //if (_customCollection3 != null)
         //{
         //    Debug.Log($"Client {clientID} TestingClass3 Collection Contents:");
@@ -892,27 +923,12 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} TestingClass3 Collection is NULL");
         //}
-        #endregion
+#endregion
     }
 
     public void OnReceiveDamage()
     {
-        //if (NetworkManager.Instance.isServer)
-        //{
-        //    health--;
-        //
-        //    if (health <= 0)
-        //    {
-        //        // Notify all clients about player death
-        //        NetIDMessage netIDMessage = new(MessagePriority.Default, clientID)
-        //        {
-        //            CurrentMessageType = MessageType.PlayerDeath
-        //        };
-        //        NetworkManager.Instance.networkEntity.SendMessage(netIDMessage.Serialize());
-        //
-        //        gameObject.SetActive(false);
-        //    }
-        //}
+        health--;
     }
 
     public int GetID()

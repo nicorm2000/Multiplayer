@@ -4,40 +4,11 @@ using Net;
 
 public class TowerTurns : MonoBehaviour
 {
-    [SerializeField, NetVariable(0)] float duration;
-    [NetVariable(1, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
+    [SerializeField] float duration;
     [SerializeField] Transform initialPositionShooting;
     [SerializeField] GameObject bulletPrefab;
-
-    Coroutine turnTower;
-    Camera cam;
-
-    PlayerController playerController;
-
-
-    private void Awake()
-    {
-        cam = Camera.main;
-        playerController = GetComponentInParent<PlayerController>();
-    }
-
-    void Update()
-    {
-        if (playerController.currentPlayer)
-        {
-            shouldShoot = Input.GetMouseButtonDown(0);
-        }
-
-#if SERVER
-        if (shouldShoot)
-        {
-            if (turnTower == null)
-            {
-                turnTower = StartCoroutine(TurnTower());
-            }
-        }
-#endif
-    }
+    [SerializeField] PlayerController playerController;
+    public bool isRunning = false;
 
     void Shoot()
     {
@@ -48,10 +19,36 @@ public class TowerTurns : MonoBehaviour
                                      initialPositionShooting.rotation.x, initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
                                      bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,
                                      -1);
+        InstancePayload instancePayload = new InstancePayload(NetObjFactory.NetObjectsCount, ownerID, prefabID, initialPositionShooting.position.x, initialPositionShooting.position.y, initialPositionShooting.position.z,
+                                     initialPositionShooting.rotation.x, initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
+                                     bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,
+                                     -1);
+
+        GameObject prefab = prefabService.GetPrefabById(instancePayload.objectId);
+        INetObj parentObj = NetObjFactory.GetINetObject(instancePayload.parentInstanceID);
+
+        GameObject instance = MonoBehaviour.Instantiate(prefab, new Vector3(instancePayload.positionX, instancePayload.positionY, instancePayload.positionZ),
+                                                               new Quaternion(instancePayload.rotationX, instancePayload.rotationY, instancePayload.rotationZ, instancePayload.rotationW));
+
+        if (parentObj != null)
+        {
+            instance.transform.SetParent(((GameObject)(parentObj as object)).transform);
+        }
+
+        instance.transform.localScale = new Vector3(instancePayload.scaleX, instancePayload.scaleY, instancePayload.scaleZ);
+
+
+        if (instance.TryGetComponent(out INetObj obj))
+        {
+            obj.GetNetObj().SetValues(instancePayload.instanceId, instancePayload.ownerId);
+
+            NetObjFactory.AddINetObject(obj.GetID(), obj);
+        }
     }
 
-    IEnumerator TurnTower()
+    public IEnumerator TurnTower(Transform cam)
     {
+        isRunning = true;
         float timer = 0;
 
         Quaternion initialRotation = transform.rotation;
@@ -65,13 +62,14 @@ public class TowerTurns : MonoBehaviour
 
             transform.rotation = Quaternion.Lerp(initialRotation, newRotation, interpolationValue);
 
-
             timer += Time.deltaTime;
             yield return new WaitForEndOfFrame();
         }
 
         transform.rotation = newRotation;
-        turnTower = null;
+#if SERVER
         Shoot();
+#endif
+        isRunning = false;
     }
 }

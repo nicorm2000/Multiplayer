@@ -5,6 +5,7 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
 {
     public Reflection reflection;
     public NETAUTHORITY netAuthority;
+    public bool showDebugs = true;
 
     private void Start()
     {
@@ -35,6 +36,7 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
 
     void WriteConsoleDebugger(string message)
     {
-        Debug.Log(message);
+        if (showDebugs)
+            Debug.Log(message);
     }
 }

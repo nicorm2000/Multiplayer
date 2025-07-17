@@ -7,9 +7,6 @@ using System.Reflection;
 using System.Linq;
 using System.Net;
 using System;
-using System.Diagnostics;
-using System.Xml.Linq;
-using System.Runtime.InteropServices;
 
 namespace Net
 {
@@ -128,12 +125,12 @@ namespace Net
                 {
                     debug += "___info field: " + info.Item1 + "\n";
                     debug += "___info route: " + idRoute[0].route + "\n";
-                    consoleDebugger.Invoke(debug);
+                    //consoleDebugger.Invoke(debug);
                     IEnumerable<Attribute> attributes = info.Item1.GetCustomAttributes();
 
                     if (info.Item2.syncAuthority == netAuthority)
                     {
-                        consoleDebugger.Invoke($"Inspect: {owner}, {networkEntity.clientID}");
+                        //consoleDebugger.Invoke($"Inspect: {owner}, {networkEntity.clientID}");
                         List<RouteInfo> route = new List<RouteInfo>(idRoute);
                         if (info.Item3.route != -1)
                         {
@@ -141,7 +138,7 @@ namespace Net
                         }
                         if (netAuthority == NETAUTHORITY.CLIENT && owner == networkEntity.clientID)
                         {
-                            consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.Item1.GetValue(obj)}");
+                            //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.Item1.GetValue(obj)}");
                             ReadValue(info.Item1, obj, info.Item2, new List<RouteInfo>(route), owner);
                         }
                         else if (netAuthority == NETAUTHORITY.SERVER)
@@ -195,7 +192,7 @@ namespace Net
             // Handle simple types
             if (IsSimpleType(fieldType))
             {
-                consoleDebugger?.Invoke("Handling primitive/string/enum type\n");
+                //consoleDebugger?.Invoke("Handling primitive/string/enum type\n");
                 idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
                 SendPackage(fieldValue, attribute, idRoute);
                 return;
@@ -461,7 +458,7 @@ namespace Net
                                 {
                                     ParentBaseMessage message = (ParentBaseMessage)ctor.Invoke(parameters);
                                     debug += $"Message created successfully. Serializing...\n";
-                                    consoleDebugger?.Invoke(debug);
+                                    //consoleDebugger?.Invoke(debug);
                                     networkEntity.SendMessage(message.Serialize());
                                     return;
                                 }
@@ -575,7 +572,7 @@ namespace Net
                         debug += "Processing Int message\n";
                         NetIntMessage netIntMessage = new NetIntMessage(data);
                         debug += $"Data: {netIntMessage.GetData()}, Route: {string.Join("->", netIntMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         VariableMapping(netIntMessage.GetMessageRoute(), netIntMessage.GetData());
                         break;
 
@@ -682,19 +679,19 @@ namespace Net
                         debug += "Processing TRS message\n";
                         NetTRSMessage netTRSMessage = new NetTRSMessage(data);
                         debug += $"Enum: {netTRSMessage.GetData()}, Route: {string.Join("->", netTRSMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         TRSMapping(netTRSMessage.GetMessageRoute(), netTRSMessage.GetData());
                         break;
 
                     default:
                         debug += $"Unhandled message type: {messageType}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                consoleDebugger?.Invoke($"ERROR Processing Message: {ex.Message}");
+                //consoleDebugger?.Invoke($"ERROR Processing Message: {ex.Message}");
             }
         }
 
@@ -863,7 +860,7 @@ namespace Net
                 // Regular fields check
                 foreach ((FieldInfo, NetVariable, RouteInfo) info in GetAllFieldsCustom(type))
                 {
-                    consoleDebugger.Invoke("info and type: " + info.Item1.Name + type.Name);
+                    //consoleDebugger.Invoke("info and type: " + info.Item1.Name + type.Name);
                     if (info.Item2.VariableId == currentRoute.route)
                     {
                         //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";

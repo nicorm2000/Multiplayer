@@ -227,6 +227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   duration: 0.5
+  shouldShoot: 0
   initialPositionShooting: {fileID: 6190912716761482191}
   bulletPrefab: {fileID: 9065385898612094083, guid: 28dd34ace8586d649af728a6704955dd,
     type: 3}
@@ -327,24 +328,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   health: 3
-  myBool: 0
-  myString: pepe
-  myChar: 97
-  myDouble: 1
-  myShort: 1
-  myUShort: 1
-  myInt: 1
-  myUInt: 1
-  myLong: 1
-  myULong: 1
-  myByte: 1
-  mySByte: 1
-  test: 0000000001000000020000000300000004000000050000000600000032000000
-  testing:
-    testInt:
-      testInt:
-        testInt: 0
-  myArray: 0000000000000000
   towerTurns: {fileID: 888843024134725453}
   movement: {fileID: 4467788783669252480}
   cameraPivot: {fileID: 7165238016506140578}

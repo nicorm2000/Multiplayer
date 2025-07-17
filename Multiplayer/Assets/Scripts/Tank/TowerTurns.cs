@@ -5,6 +5,7 @@ using Net;
 public class TowerTurns : MonoBehaviour
 {
     [SerializeField, NetVariable(0)] float duration;
+    [NetVariable(1, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
     [SerializeField] Transform initialPositionShooting;
     [SerializeField] GameObject bulletPrefab;
 
@@ -12,6 +13,7 @@ public class TowerTurns : MonoBehaviour
     Camera cam;
 
     PlayerController playerController;
+
 
     private void Awake()
     {
@@ -23,14 +25,18 @@ public class TowerTurns : MonoBehaviour
     {
         if (playerController.currentPlayer)
         {
-            if (Input.GetMouseButtonDown(0))
+            shouldShoot = Input.GetMouseButtonDown(0);
+        }
+
+#if SERVER
+        if (shouldShoot)
+        {
+            if (turnTower == null)
             {
-                if (turnTower == null)
-                {
-                    turnTower = StartCoroutine(TurnTower());
-                }
+                turnTower = StartCoroutine(TurnTower());
             }
         }
+#endif
     }
 
     void Shoot()

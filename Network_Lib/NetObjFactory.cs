@@ -7,6 +7,7 @@ namespace Net
     {
         static NetworkEntity entity; //Se usa para mandar los mensajes 
         static readonly Dictionary<int, INetObj> NetObjectsInstances = new Dictionary<int, INetObj>();
+        // add netauthority i think can be added from the server constructor
 
         public static List<INetObj> NetObjects()
         {
@@ -69,6 +70,7 @@ namespace Net
                                                                        parentGameObjectID);
 
             InstanceRequestMenssage instanceRequest = new InstanceRequestMenssage(MessagePriority.NonDisposable, instanceRequestPayload);
+            // add if server with the netauthority
             entity.SendMessage(instanceRequest.Serialize());
         }
     }

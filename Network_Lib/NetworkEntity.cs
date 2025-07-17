@@ -22,7 +22,7 @@ namespace Net
         public int clientID = 0;
 
         public PingPong checkActivity;
-
+        
         public NetworkEntity()
         {
             NetObjFactory.SetNetworkEntity(this);
@@ -55,5 +55,9 @@ namespace Net
 
         public abstract void OnApplicationQuit();
 
+        public virtual int GetNetworkClient()
+        {
+            return clientID;
+        }
     }
 }

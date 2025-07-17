@@ -166,6 +166,9 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
+    [SerializeField, NetVariable(1, NETAUTHORITY.CLIENT)] public Vector2 movementSynced;
+    [SerializeField, NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
+    [SerializeField, NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
     //[NetVariable(1)] public bool myBool = false;
     //[NetVariable(2)] public string myString = "pepe";
     //[NetVariable(3)] public char myChar = 'a';
@@ -712,6 +715,7 @@ public class PlayerController : MonoBehaviour, INetObj
         if (currentPlayer)
         {
             Camera.main.gameObject.GetComponent<CameraOrbit>().SetFollowObject(cameraPivot);
+            Camera.main.gameObject.GetComponent<CameraOrbit>().playerController = this;
         }
         //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
         //enumField = TestEnum.Special;
@@ -730,6 +734,41 @@ public class PlayerController : MonoBehaviour, INetObj
         //    new() { testInt = 7 },
         //    new() { testInt = 17 }
         //};
+    }
+
+    void FixedUpdate()
+    {
+        if (currentPlayer)
+        {
+            movementXSynced = 0;
+            movementYSynced = 0;
+
+            if (Input.GetKey(KeyCode.W))
+            {
+                movementYSynced = 1;
+            }
+
+            if (Input.GetKey(KeyCode.S))
+            {
+                movementYSynced = -1;
+            }
+
+            if (Input.GetKey(KeyCode.A))
+            {
+                movementXSynced = 1;
+            }
+
+            if (Input.GetKey(KeyCode.D))
+            {
+                movementXSynced = -1;
+            }
+            movement.movementInput = new Vector2(movementXSynced, movementYSynced);
+        }
+        else
+        {
+            movement.movementInput = new Vector2(movementXSynced, movementYSynced);
+            movement.TankMovementInputChecker();
+        }
     }
 
     private void Update()

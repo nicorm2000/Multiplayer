@@ -100,7 +100,6 @@ namespace Net
                     {
                         connection.BeginReceive(OnReceive, null);
                     }
-
                     dataReceivedQueue.Enqueue(dataReceived);
                 }
             }

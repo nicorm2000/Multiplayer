@@ -134,6 +134,11 @@ public class NetworkClient : NetworkEntity
         {
             case MessageType.Ping:
 
+                if (pingPong == null)
+                {
+                    Debug.Log("Ping Pong null");
+                    return;
+                }
                 pingPong.ReciveServerToClientPingMessage();
                 pingPong.CalculateLatencyFromServer();
 
@@ -212,13 +217,13 @@ public class NetworkClient : NetworkEntity
 
             case MessageType.Instance:
 
+                Debug.Log("Entered instance client");
                 InstancePayload instancePayload = new InstanceMessage(data).GetData();
 
                 // Obtengo los prefabs ID del objeto y el padre;
                 IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();
                 GameObject prefab = prefabService.GetPrefabById(instancePayload.objectId);
                 INetObj parentObj = NetObjFactory.GetINetObject(instancePayload.parentInstanceID);
-
 
                 GameObject instance = MonoBehaviour.Instantiate(prefab, new Vector3(instancePayload.positionX, instancePayload.positionY, instancePayload.positionZ),
                                                                        new Quaternion(instancePayload.rotationX, instancePayload.rotationY, instancePayload.rotationZ, instancePayload.rotationW));
@@ -236,7 +241,7 @@ public class NetworkClient : NetworkEntity
                     obj.GetNetObj().SetValues(instancePayload.instanceId, instancePayload.ownerId);
 
                     NetObjFactory.AddINetObject(obj.GetID(), obj);
-
+                    Debug.Log("Owner: " + obj.GetOwnerID());
                     NetworkManager.Instance.onInstanceCreated?.Invoke(obj.GetOwnerID(), instance); //Enivo un evento con el objeto instanciado y su owner
                 }
 
@@ -296,7 +301,6 @@ public class NetworkClient : NetworkEntity
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowErrorPanel(netErrorMessage.GetData());
                 #endif
-
                 CloseConnection();
 
                 break;

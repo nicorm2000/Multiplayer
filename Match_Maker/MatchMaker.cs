@@ -491,7 +491,7 @@ namespace Match_Maker
             serversApplicationRunnnig.Add(proc);
 
             // Give the server some time to initialize before sending the handshake
-            System.Threading.Thread.Sleep(200);
+            System.Threading.Thread.Sleep(2000);
 
             // Register server's IP and port
             IPAddress ipAddress = IPAddress.Parse("127.0.0.1");

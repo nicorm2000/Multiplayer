@@ -8,6 +8,8 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
 
     private void Start()
     {
+        Reflection.consoleDebugger += WriteConsoleDebugger;
+        Reflection.consoleDebuggerPause += PauseConsoleDebugger;
         NetworkManager.Instance.onInitEntity += StartReflection;
     }
 
@@ -19,8 +21,6 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
         netAuthority = NETAUTHORITY.CLIENT;
 #endif
         reflection = new(NetworkManager.Instance.networkEntity, netAuthority);
-        Reflection.consoleDebugger += WriteConsoleDebugger;
-        Reflection.consoleDebuggerPause+= PauseConsoleDebugger;
     }
 
     private void LateUpdate()

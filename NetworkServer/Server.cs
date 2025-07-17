@@ -1,6 +1,7 @@
 using Net;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 
 namespace NetworkServer
@@ -30,6 +31,7 @@ namespace NetworkServer
             }
         }
 
+        private const int minPlayerAmount = 2;
         public readonly Dictionary<int, Client> clients = new Dictionary<int, Client>();
 
         public readonly Dictionary<IPEndPoint, int> ipToId = new Dictionary<IPEndPoint, int>();
@@ -48,6 +50,9 @@ namespace NetworkServer
         IPEndPoint matchmMakerIp;
 
         int instancesIdCount = 0;
+
+        public Action<int> OnPlayerID;
+        public Action<byte[], IPEndPoint> OnReflectionMsg;
 
         /// <summary>
         /// Starts the server on the specified port.
@@ -68,6 +73,7 @@ namespace NetworkServer
             nondisponsableMessage = new ServerNondisponsableMessage(this);
 
             this.appStartTime = appStartTime;
+            NETAUTHORITY netAuthority = NETAUTHORITY.SERVER;
         }
 
         /// <summary>
@@ -135,6 +141,12 @@ namespace NetworkServer
         /// <param name="ip">The IP address of the sender.</param>
         public override void OnReceiveData(byte[] data, IPEndPoint ip)
         {
+            if (data == null || ip == null)
+            {
+                Console.WriteLine("On Receive IP or Data NULL");
+                return;
+            }
+
             // Invoke the event to notify listeners about the received message
             OnReceivedMessage?.Invoke(data, ip);
 
@@ -166,6 +178,7 @@ namespace NetworkServer
                 case MessageType.TRS:
                 case MessageType.Ushort:
 
+                    OnReflectionMsg?.Invoke(data, ip);
                     BroadcastPlayerPosition(ipToId[ip], data);
 
                     if (MessageType.TRS == messageType)
@@ -200,22 +213,7 @@ namespace NetworkServer
 
                 case MessageType.InstanceRequest:
 
-                    InstanceRequestPayload instanceRequest = new InstanceRequestMenssage(data).GetData();
-
-                    InstancePayload instancePayload = new InstancePayload(instancesIdCount, ipToId[ip], instanceRequest.objectId,
-                                                                           instanceRequest.positionX, instanceRequest.positionY, instanceRequest.positionZ,
-                                                                           instanceRequest.rotationX, instanceRequest.rotationY, instanceRequest.rotationZ, instanceRequest.rotationW,
-                                                                           instanceRequest.scaleX, instanceRequest.scaleY, instanceRequest.scaleZ, instanceRequest.parentInstanceID);
-
-                    NetObjTracker.AddNetObj(instancePayload);
-                    Console.WriteLine("Added Net Obj to tracker.");
-
-                    InstanceMessage instanceMessage = new InstanceMessage(MessagePriority.NonDisposable, instancePayload);
-
-                    Console.WriteLine("Send Instance Message");
-                    SendMessage(instanceMessage.Serialize());
-
-                    instancesIdCount++;
+                    HandleInstanceRequest(data, ipToId[ip]);
 
                     break;
 
@@ -310,6 +308,26 @@ namespace NetworkServer
 
         }
 
+        public void HandleInstanceRequest(byte[] data, int ownerID)
+        {
+            InstanceRequestPayload instanceRequest = new InstanceRequestMenssage(data).GetData();
+
+            InstancePayload instancePayload = new InstancePayload(instancesIdCount, ownerID, instanceRequest.objectId,
+                                                                   instanceRequest.positionX, instanceRequest.positionY, instanceRequest.positionZ,
+                                                                   instanceRequest.rotationX, instanceRequest.rotationY, instanceRequest.rotationZ, instanceRequest.rotationW,
+                                                                   instanceRequest.scaleX, instanceRequest.scaleY, instanceRequest.scaleZ, instanceRequest.parentInstanceID);
+
+            NetObjTracker.AddNetObj(instancePayload);
+            Console.WriteLine("Added Net Obj to tracker.");
+
+            InstanceMessage instanceMessage = new InstanceMessage(MessagePriority.NonDisposable, instancePayload);
+
+            Console.WriteLine("Send Instance Message");
+            SendMessage(instanceMessage.Serialize());
+
+            instancesIdCount++;
+        }
+
         void OnReceivedMessagePriority(byte[] data, IPEndPoint ip)
         {
             if (ipToId.ContainsKey(ip))
@@ -376,6 +394,13 @@ namespace NetworkServer
             {
                 AddClient(ip, clientID, handShake.GetData().Item3);
                 clientID++;
+                if (clientID >= minPlayerAmount)
+                {
+                    foreach (KeyValuePair<int, Client> item in clients)
+                    {
+                        OnPlayerID?.Invoke(item.Key);
+                    }
+                }
             }
         }
 
@@ -449,6 +474,11 @@ namespace NetworkServer
             messageText += new string(netMessage.GetData());
 
             Broadcast(data);
+        }
+
+        public override int GetNetworkClient()
+        {
+            return -1;
         }
 
         /// <summary>

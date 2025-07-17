@@ -8,7 +8,7 @@ public class ServerManager : MonoBehaviour
 
     public Server server { get; private set; }
     public bool isServerRunning = false;
-
+    public GameManager gm;
     private DateTime appStartTime;
 
     private void Awake()
@@ -38,6 +38,20 @@ public class ServerManager : MonoBehaviour
         }
 
         StartServer(port);
+
+#if SERVER
+        server.OnPlayerID += gm.SpawnPlayerPefab;
+        gm.OnPlayerInstanceCreated += server.HandleInstanceRequest;
+        NetworkManager.Instance.networkEntity = server;
+#endif
+    }
+
+    private void OnDestroy()
+    {
+#if SERVER
+        server.OnPlayerID = null;
+        gm.OnPlayerInstanceCreated = null;
+#endif
     }
 
     public void StartServer(int port)
@@ -61,7 +75,7 @@ public class ServerManager : MonoBehaviour
         Debug.Log("Server stopped");
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (isServerRunning)
         {

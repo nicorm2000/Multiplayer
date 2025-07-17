@@ -2,26 +2,23 @@
 using System.Net;
 using System;
 using Net;
-using NetworkServer;
+
+enum States { Init, Lobby, Game, Finish };
 
 public class NetworkManager : MonoBehaviourSingleton<NetworkManager>  
 {
     public NetworkEntity networkEntity;
-    public bool isServerMode = false;
 
     public Action onInitEntity;
     public Action<int, GameObject> onInstanceCreated;
 
-    public int ClientID => networkEntity?.clientID ?? -1;
+    public int ClientID => networkEntity?.GetNetworkClient() ?? -1;
 
-    //remove
     public bool isServer
     {
         get { return !(networkEntity is NetworkClient); }
         private set { }
     }
-
-    //public bool isServer => isServerMode || (networkEntity is Server);
 
     DateTime appStartTime;
 
@@ -34,6 +31,7 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
     {
         if (isServer)
         {
+            Instance.onInitEntity.Invoke();
             return null;
         }
 
@@ -45,15 +43,6 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         networkEntity = new NetworkClient(ip, port, name);
         onInitEntity?.Invoke();
     }
-
-    //public void StartClient(IPAddress ip, int port, string name)
-    //{
-    //    if (networkEntity != null) return;
-    //
-    //    isServerMode = false;
-    //    networkEntity = new NetworkClient(ip, port, name);
-    //    onInitEntity?.Invoke();
-    //}
 
     private void Update()
     {
@@ -84,10 +73,5 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         #if CLIENT
         NetworkScreen.Instance.ShowErrorPanel(errorText);
         #endif
-    }
-
-    public void UpdatePlayerPosition((int index, Vector3 newPosition) data, NetVector3 netVector3)
-    {
-        GameManager.Instance.UpdatePlayerPosition(data);
     }
 }

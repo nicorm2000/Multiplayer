@@ -1,4 +1,5 @@
 using UnityEngine;
+using Net;
 
 public class CameraOrbit : MonoBehaviour
 {
@@ -18,6 +19,9 @@ public class CameraOrbit : MonoBehaviour
     Vector2 nearPlaneSize;
 
     [SerializeField] LayerMask cameraCollisionLayer;
+    [SerializeField, NetVariable(0, NETAUTHORITY.CLIENT)]float hor = 0; // Check later
+
+    public PlayerController playerController;
 
     void Awake()
     {
@@ -28,12 +32,14 @@ public class CameraOrbit : MonoBehaviour
     void Start()
     {
         CalculateNearPlaneSize();
-
     }
 
     void Update()
     {
-        float hor = Input.GetAxis("Mouse X");
+        if (playerController.currentPlayer)
+        {
+            hor = Input.GetAxis("Mouse X");
+        }
 
         if (hor != 0)
         {

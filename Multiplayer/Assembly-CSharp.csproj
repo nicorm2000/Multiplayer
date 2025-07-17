@@ -62,7 +62,7 @@
     <Compile Include="Assets\Scripts\Reflection\ReflectionSystem.cs" />
     <Compile Include="Assets\Scripts\Network\NetworkClient.cs" />
     <Compile Include="Assets\Scripts\Network\packets\NetworkPacket.cs" />
-    <Compile Include="Assets\Scripts\Gameplay\ServerGameplay.cs" />
+    <Compile Include="Assets\Scripts\Gameplay\NetworkServerUnity.cs" />
     <Compile Include="Assets\Scripts\Utils\ExtensionMethods.cs" />
     <Compile Include="Assets\Scripts\UI\NetworkScreen.cs" />
     <Compile Include="Assets\Scripts\Factory\ServiceInitializer.cs" />
@@ -72,13 +72,13 @@
     <Compile Include="Assets\Scripts\Tank\bulletBehaviour.cs" />
     <Compile Include="Assets\Scripts\Tank\TankMovement.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraOrbit.cs" />
+    <Compile Include="Assets\Scripts\Reflection\NetCharMessageTest.cs" />
     <Compile Include="Assets\Scripts\Tank\TowerTurns.cs" />
     <Compile Include="Assets\Scripts\Factory\ServiceProvider.cs" />
     <Compile Include="Assets\Scripts\UI\ChatScreen.cs" />
     <Compile Include="Assets\Scripts\Utils\MonoBehaviourSingleton.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Network\NetworkManager.cs" />
-    <Compile Include="Assets\Scripts\Reflection\NetCharMessageTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

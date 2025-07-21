@@ -190,6 +190,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                 WinnerInfo winnerInfo = new WinnerInfo(otherPlayer);
                 NetWinnerMessage netWin = new(MessagePriority.Default, winnerInfo);
                 nm.networkEntity.SendMessage(netWin.Serialize());
+
+                DisconnectAll disconnectAll = new();
+                NetDisconnectionMessage netDisconnectionMessage = new(disconnectAll);
+                nm.networkEntity.SendMessage(netDisconnectionMessage.Serialize());
             }
         }
 #endif

@@ -53,6 +53,7 @@ namespace NetworkServer
 
         public Action<int> OnPlayerID;
         public Action<byte[], IPEndPoint> OnReflectionMsg;
+        public Action OnApplicationClose;
 
         /// <summary>
         /// Starts the server on the specified port.
@@ -509,6 +510,8 @@ namespace NetworkServer
                 disconnectMessages.Add(netDisconnection.Serialize());
             }
 
+            NetObjFactory.RemoveAllINetObject();
+
             foreach (int clientId in clientIdsToRemove)
             {
                 RemoveClient(clientId);
@@ -522,6 +525,7 @@ namespace NetworkServer
             BroadcastPlayerListToMatchMaker();
             System.Threading.Thread.Sleep(100);
             connection.Close();
+            OnApplicationClose?.Invoke();
         }
 
 

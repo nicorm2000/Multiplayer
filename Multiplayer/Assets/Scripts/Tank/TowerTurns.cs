@@ -2,13 +2,14 @@ using System.Collections;
 using UnityEngine;
 using Net;
 
-public class TowerTurns : MonoBehaviour
+public class TowerTurns : MonoBehaviour, INetObj
 {
     [SerializeField] float duration;
     [SerializeField] Transform initialPositionShooting;
     [SerializeField] GameObject bulletPrefab;
     [SerializeField] PlayerController playerController;
     public bool isRunning = false;
+    NetObj netObj = new(-1, -1);
 
     void Shoot()
     {
@@ -71,5 +72,30 @@ public class TowerTurns : MonoBehaviour
         Shoot();
 #endif
         isRunning = false;
+    }
+
+    public int GetID()
+    {
+        return netObj.ID;
+    }
+
+    public int GetOwnerID()
+    {
+        return netObj.OwnerId;
+    }
+
+    public NetObj GetNetObj()
+    {
+        return netObj;
+    }
+
+    public TRS GetTRS()
+    {
+        return transform.TranslateTRS();
+    }
+
+    public void SetTRS(TRS trs, NetTRS.SYNC sync)
+    {
+        transform?.FromTRS(trs, sync);
     }
 }

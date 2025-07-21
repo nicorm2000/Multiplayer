@@ -30,11 +30,14 @@ public class ServerManager : MonoBehaviour
         string[] args = Environment.GetCommandLineArgs();
 
         int port = 52002;
-        if (args.Length > 0 && int.TryParse(args[0], out int parsedPort))
+        foreach (var arg in args)
         {
-            port = parsedPort;
+            if (int.TryParse(arg, out int parsedPort))
+            {
+                port = parsedPort;
+            }
+            Debug.Log("args: " + arg);
         }
-
         StartServer(port);
 
 #if SERVER
@@ -42,6 +45,7 @@ public class ServerManager : MonoBehaviour
         //gm.OnPlayerInstanceCreated += server.HandleInstanceRequest;
         NetObjFactory.OnDataSend += server.HandleInstanceRequest;
         NetworkManager.Instance.networkEntity = server;
+        server.OnApplicationClose += Application.Quit;
 #endif
     }
 

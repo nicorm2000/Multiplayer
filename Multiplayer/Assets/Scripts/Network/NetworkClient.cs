@@ -241,7 +241,7 @@ public class NetworkClient : NetworkEntity
                     obj.GetNetObj().SetValues(instancePayload.instanceId, instancePayload.ownerId);
 
                     NetObjFactory.AddINetObject(obj.GetID(), obj);
-                    Debug.Log("Owner: " + obj.GetOwnerID());
+                    Debug.Log("Instance Owner: " + obj.GetOwnerID());
                     NetworkManager.Instance.onInstanceCreated?.Invoke(obj.GetOwnerID(), instance); //Enivo un evento con el objeto instanciado y su owner
                 }
 

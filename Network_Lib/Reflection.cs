@@ -651,7 +651,7 @@ namespace Net
                         NetMethodMessage netMethodMessage = new NetMethodMessage(data);
                         (int, List<(string, string)>) methodData = netMethodMessage.GetData();
                         debug += $"Method: {methodData.Item1}, Args: {string.Join(", ", methodData.Item2)}, Route: {netMethodMessage.GetMessageRoute()[0].route}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         InvokeReflectionMethod(methodData.Item1, methodData.Item2, netMethodMessage.GetMessageRoute()[0].route);
                         break;
 
@@ -1801,31 +1801,29 @@ namespace Net
         {
             foreach (INetObj netObj in NetObjFactory.NetObjects())
             {
-                if (netObj.GetOwnerID() != networkEntity.clientID && netObj.GetID() == objectId) // TODO: REVIEW
+                List<object> parametersToApply = new List<object>();
+
+                foreach ((string, string) param in parameters)
                 {
-                    List<object> parametersToApply = new List<object>();
+                    TypeConverter converter = TypeDescriptor.GetConverter(Type.GetType(param.Item1));
+                    object parameterValue = converter.ConvertFromInvariantString(param.Item2);
+                    parametersToApply.Add(parameterValue);
+                }
+                int length = netObj.GetType().GetMethods(bindingFlags).Length;
 
-                    foreach ((string, string) param in parameters)
+                for (int i = 0; i < length; i++)
+                {
+                    MethodInfo method = netObj.GetType().GetMethods(bindingFlags)[i];
+
+                    NetMethod netMethod = method.GetCustomAttribute<NetMethod>();
+
+                    if (netMethod != null && netMethod.MethodId == id)
                     {
-                        TypeConverter converter = TypeDescriptor.GetConverter(Type.GetType(param.Item1));
-                        object parameterValue = converter.ConvertFromInvariantString(param.Item2);
-                        parametersToApply.Add(parameterValue);
-                    }
-                    int length = netObj.GetType().GetMethods(bindingFlags).Length;
-
-                    for (int i = 0; i < length; i++)
-                    {
-                        MethodInfo method = netObj.GetType().GetMethods(bindingFlags)[i];
-
-                        NetMethod netMethod = method.GetCustomAttribute<NetMethod>();
-
-                        if (netMethod != null && netMethod.MethodId == id)
-                        {
-                            object[] objectParameters = parametersToApply.ToArray();
-                            object invokeMethod = method.Invoke(netObj, objectParameters);
-                        }
+                        object[] objectParameters = parametersToApply.ToArray();
+                        object invokeMethod = method.Invoke(netObj, objectParameters);
                     }
                 }
+                consoleDebugger?.Invoke("Invoked reflection method");
             }
         }
 
@@ -1840,20 +1838,19 @@ namespace Net
         public object SendMethodMessage(INetObj iNetObj, string methodName, params object[] parameters)
         {
             string debug = "";
-            debug += "Started SendMethodMessage";
-            //consoleDebugger.Invoke(debug);
             object objectToReturn = null;
 
-            if (iNetObj.GetOwnerID() != networkEntity.clientID) // TODO: REVIEW
-                return objectToReturn;
-
             MethodInfo method = iNetObj.GetType().GetMethod(methodName, bindingFlags);
-
             NetMethod netmethod = method.GetCustomAttribute<NetMethod>();
-            debug += "NetMethod is " + netmethod;
-            //consoleDebugger.Invoke(debug);
+
             if (netmethod != null)
             {
+                CheckAuthority(iNetObj.GetOwnerID(), netmethod.syncAuthority, SendMethodMessageAction, SendMethodMessageAction);
+            }
+
+            void SendMethodMessageAction()
+            {
+                consoleDebugger?.Invoke("Enter Send Method Action");
                 object invokeMethod = method.Invoke(iNetObj, parameters);
 
                 if (method.ReturnParameter.GetType() != typeof(void))
@@ -1877,9 +1874,9 @@ namespace Net
                 messageData.Item1 = netmethod.MethodId;
                 messageData.Item2 = parametersList;
                 List<RouteInfo> idRoute = new List<RouteInfo>
-                {
-                    new RouteInfo(iNetObj.GetID())
-                };
+                    {
+                        new RouteInfo(iNetObj.GetID())
+                    };
 
                 foreach ((string, string) item in messageData.Item2)
                 {
@@ -1889,6 +1886,7 @@ namespace Net
 
                 NetMethodMessage messageToSend = new NetMethodMessage(MessagePriority.Default, messageData, idRoute);
                 networkEntity.SendMessage(messageToSend.Serialize());
+                consoleDebugger?.Invoke("Sent Method Message");
             }
             return objectToReturn;
         }
@@ -2070,12 +2068,13 @@ namespace Net
     {
         int variableId;
         MessagePriority messagePriority;
-
         public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
+
         /// <summary>
         /// Initializes a new instance of the NetVariable attribute.
         /// </summary>
         /// <param name="id">The unique identifier for this variable.</param>
+        /// <param name="netAuthority">The authority for this variable.</param>
         /// <param name="messagePriority">The priority for network messages.</param>
         public NetVariable(int id, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER, MessagePriority messagePriority = MessagePriority.Default)
         {
@@ -2108,15 +2107,18 @@ namespace Net
     {
         int methodId;
         MessagePriority messagePriority;
+        public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
 
         /// <summary>
         /// Initializes a new instance of the NetMethod attribute.
         /// </summary>
         /// <param name="id">The unique identifier for this method.</param>
+        /// <param name="netAuthority">The authority for this method.</param>
         /// <param name="messagePriority">The priority for network messages.</param>
-        public NetMethod(int id, MessagePriority messagePriority = MessagePriority.Default)
+        public NetMethod(int id, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER, MessagePriority messagePriority = MessagePriority.Default)
         {
             methodId = id;
+            syncAuthority = netAuthority;
             this.messagePriority = messagePriority;
         }
 
@@ -2180,18 +2182,21 @@ namespace Net
         public int EventId { get; }
         public MessagePriority MessagePriority { get; }
         public string? BackingFieldName { get; }
+        public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
 
         /// <summary>
         /// Creates a new NetEvent attribute instance.
         /// </summary>
         /// <param name="eventId">Unique identifier for the event.</param>
+        /// <param name="netAuthority">The authority for this event.</param>
         /// <param name="priority">The priority of the network message.</param>
         /// <param name="backingFieldName">
         /// Optional backing field name (e.g. "onEventX"). If omitted, the system falls back to a convention.
         /// </param>
-        public NetEvent(int eventId, MessagePriority priority = MessagePriority.Default, string? backingFieldName = null)
+        public NetEvent(int eventId, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER, MessagePriority priority = MessagePriority.Default, string? backingFieldName = null)
         {
             EventId = eventId;
+            syncAuthority = netAuthority;
             MessagePriority = priority;
             BackingFieldName = backingFieldName;
         }

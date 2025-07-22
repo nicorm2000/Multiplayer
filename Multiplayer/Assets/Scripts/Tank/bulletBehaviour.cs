@@ -18,7 +18,7 @@ namespace Game
         NetworkManager nm;
 
         private Action onEventA;
-        [NetEvent(0)]
+        [NetEvent(0, NETAUTHORITY.SERVER)]
         public event Action OnEventA
         {
             add => onEventA += value;
@@ -26,7 +26,7 @@ namespace Game
         }
 
         private Action<int> onEventB;
-        [NetEvent(1)]
+        [NetEvent(1, NETAUTHORITY.SERVER)]
         public event Action<int> OnEventB
         {
             add => onEventB += value;
@@ -35,17 +35,27 @@ namespace Game
 
         private Action<string, float> shootTriggered;
 
-        [NetEvent(2, backingFieldName: "shootTriggered")]
+        [NetEvent(2, NETAUTHORITY.SERVER, backingFieldName: "shootTriggered")]
         public event Action<string, float> OnEventC
         {
             add => shootTriggered += value;
             remove => shootTriggered -= value;
         }
 
+        private void OnEnable()
+        {
+#if SERVER
+            originPlayerID = netObj.OwnerId;
+#endif
+        }
+
         private void Start()
         {
             nm = NetworkManager.Instance;
             velocityVector = transform.forward * velocity;
+#if ClIENT
+netObj.OwnerId = originPlayerID;
+#endif
 
             OnEventA += () => Debug.Log("C# Event: OnEventA triggered!");
             OnEventB += (value) => Debug.Log($"C# Event: OnEventB({value}) triggered!");
@@ -60,22 +70,22 @@ namespace Game
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), 99);
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
             
-            originPlayerID = netObj.OwnerId;
+            Debug.Log("Bullet Authority: " + originPlayerID);
         }
 
-        [NetMethod(0)]
+        [NetMethod(0, NETAUTHORITY.CLIENT)]
         private void TestMR()
         {
             Debug.Log("Funca");
         }
 
-        [NetMethod(1)]
+        [NetMethod(1, NETAUTHORITY.CLIENT)]
         private void TestMRB(bool a)
         {
             Debug.Log("a: " + a);
         }
 
-        [NetMethod(2)]
+        [NetMethod(2, NETAUTHORITY.CLIENT)]
         private void TestMRI(int a)
         {
             Debug.Log("int: " + a);

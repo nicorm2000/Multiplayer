@@ -18,7 +18,7 @@ namespace Game
         NetworkManager nm;
 
         private Action onEventA;
-        [NetEvent(0, NETAUTHORITY.SERVER)]
+        [NetEvent(0, NETAUTHORITY.CLIENT)]
         public event Action OnEventA
         {
             add => onEventA += value;
@@ -26,7 +26,7 @@ namespace Game
         }
 
         private Action<int> onEventB;
-        [NetEvent(1, NETAUTHORITY.SERVER)]
+        [NetEvent(1, NETAUTHORITY.CLIENT)]
         public event Action<int> OnEventB
         {
             add => onEventB += value;
@@ -35,7 +35,7 @@ namespace Game
 
         private Action<string, float> shootTriggered;
 
-        [NetEvent(2, NETAUTHORITY.SERVER, backingFieldName: "shootTriggered")]
+        [NetEvent(2, NETAUTHORITY.CLIENT, backingFieldName: "shootTriggered")]
         public event Action<string, float> OnEventC
         {
             add => shootTriggered += value;

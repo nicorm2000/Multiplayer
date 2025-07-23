@@ -651,7 +651,7 @@ namespace Net
                         NetMethodMessage netMethodMessage = new NetMethodMessage(data);
                         (int, List<(string, string)>) methodData = netMethodMessage.GetData();
                         debug += $"Method: {methodData.Item1}, Args: {string.Join(", ", methodData.Item2)}, Route: {netMethodMessage.GetMessageRoute()[0].route}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         InvokeReflectionMethod(methodData.Item1, methodData.Item2, netMethodMessage.GetMessageRoute()[0].route);
                         break;
 
@@ -1901,12 +1901,6 @@ namespace Net
         /// <param name="parameters">Optional parameters to serialize and send to listeners.</param>
         public void SendCSharpEventMessage(INetObj iNetObj, string eventName, params object[] parameters)
         {
-            if (iNetObj.GetOwnerID() != networkEntity.clientID) // TODO: REVIEW
-            {
-                consoleDebugger?.Invoke("[SendCSharpEventMessage] Skipped: not owner.");
-                return;
-            }
-
             EventInfo eventInfo = iNetObj.GetType().GetEvent(eventName, bindingFlags);
             if (eventInfo == null)
             {
@@ -1921,31 +1915,37 @@ namespace Net
                 return;
             }
 
-            string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
+            CheckAuthority(iNetObj.GetOwnerID(), netEvent.syncAuthority, SendEventMessageAction, SendEventMessageAction);
 
-            FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
-
-            if (field == null)
+            void SendEventMessageAction()
             {
-                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Could not find backing field '{backingFieldName}'");
-                return;
+                string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
+                FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
+
+                if (field == null)
+                {
+                    consoleDebugger?.Invoke($"[SendCSharpEventMessage] Could not find backing field '{backingFieldName}'");
+                    return;
+                }
+
+                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Found backing field '{backingFieldName}', sending event...");
+
+                // Serialize parameters
+                List<(string, string)> parametersList = new List<(string, string)>();
+                foreach (object param in parameters)
+                {
+                    parametersList.Add((param.GetType().ToString(), param.ToString()));
+                }
+
+                var messageData = (netEvent.EventId, parametersList);
+                var idRoute = new List<RouteInfo> { new RouteInfo(iNetObj.GetID()) };
+
+                NetEventMessage messageToSend = new NetEventMessage(netEvent.MessagePriority, messageData, idRoute);
+                networkEntity.SendMessage(messageToSend.Serialize());
+                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Sent NetEventMessage for '{eventName}'");
             }
-
-            consoleDebugger?.Invoke($"[SendCSharpEventMessage] Found backing field '{backingFieldName}', sending event...");
-
-            // Serialize parameters
-            List<(string, string)> parametersList = new List<(string, string)>();
-            foreach (object param in parameters)
-            {
-                parametersList.Add((param.GetType().ToString(), param.ToString()));
-            }
-
-            (int EventId, List<(string, string)> parametersList) messageData = (netEvent.EventId, parametersList);
-            List<RouteInfo> idRoute = new List<RouteInfo>() { new RouteInfo(iNetObj.GetID()) };
-
-            NetEventMessage messageToSend = new NetEventMessage(netEvent.MessagePriority, messageData, idRoute);
-            networkEntity.SendMessage(messageToSend.Serialize());
         }
+
 
         /// <summary>
         /// Invokes a previously declared C# event on a target network object by matching its event ID.

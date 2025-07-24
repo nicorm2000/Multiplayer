@@ -1902,50 +1902,39 @@ namespace Net
         public void SendCSharpEventMessage(INetObj iNetObj, string eventName, params object[] parameters)
         {
             EventInfo eventInfo = iNetObj.GetType().GetEvent(eventName, bindingFlags);
-            if (eventInfo == null)
-            {
-                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Could not find event '{eventName}' on {iNetObj.GetType().Name}");
-                return;
-            }
+            if (eventInfo == null) return;
 
             NetEvent netEvent = eventInfo.GetCustomAttribute<NetEvent>();
-            if (netEvent == null)
+            if (netEvent == null) return;
+
+            // ALWAYS execute locally first (regardless of authority)
+            string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
+            FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
+            if (field != null)
             {
-                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Missing [NetEvent] on event '{eventName}'");
-                return;
+                Delegate eventDelegate = field.GetValue(iNetObj) as Delegate;
+                eventDelegate?.DynamicInvoke(parameters);
             }
 
+            // Then check authority for network sending
             CheckAuthority(iNetObj.GetOwnerID(), netEvent.syncAuthority, SendEventMessageAction, SendEventMessageAction);
 
             void SendEventMessageAction()
             {
-                string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
-                FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
-
-                if (field == null)
-                {
-                    consoleDebugger?.Invoke($"[SendCSharpEventMessage] Could not find backing field '{backingFieldName}'");
-                    return;
-                }
-
-                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Found backing field '{backingFieldName}', sending event...");
-
-                // Serialize parameters
+                // Serialize and send the network message
                 List<(string, string)> parametersList = new List<(string, string)>();
                 foreach (object param in parameters)
                 {
                     parametersList.Add((param.GetType().ToString(), param.ToString()));
                 }
 
-                var messageData = (netEvent.EventId, parametersList);
-                var idRoute = new List<RouteInfo> { new RouteInfo(iNetObj.GetID()) };
+                (int EventId, List<(string, string)> parametersList) messageData = (netEvent.EventId, parametersList);
+                List<RouteInfo> idRoute = new List<RouteInfo> { new RouteInfo(iNetObj.GetID()) };
 
                 NetEventMessage messageToSend = new NetEventMessage(netEvent.MessagePriority, messageData, idRoute);
                 networkEntity.SendMessage(messageToSend.Serialize());
-                consoleDebugger?.Invoke($"[SendCSharpEventMessage] Sent NetEventMessage for '{eventName}'");
             }
         }
-
 
         /// <summary>
         /// Invokes a previously declared C# event on a target network object by matching its event ID.
@@ -1955,12 +1944,11 @@ namespace Net
         /// <param name="objectId">The target network object ID whose event should be invoked.</param>
         public void InvokeCSharpEvent(int eventId, List<(string, string)> parameters, int objectId)
         {
+            // SIMPLIFIED - just execute the event on the target object
             foreach (INetObj netObj in NetObjFactory.NetObjects())
             {
-                if (netObj.GetID() != objectId || netObj.GetOwnerID() == networkEntity.clientID) // TODO: REVIEW
+                if (netObj.GetID() != objectId) // Check later on, may cause issues
                     continue;
-
-                consoleDebugger?.Invoke($"[InvokeCSharpEvent] Matching object ID {objectId}");
 
                 Type targetType = netObj.GetType();
                 EventInfo[] events = targetType.GetEvents(bindingFlags);
@@ -1968,57 +1956,28 @@ namespace Net
                 foreach (EventInfo evt in events)
                 {
                     NetEvent netEventAttr = evt.GetCustomAttribute<NetEvent>();
-                    consoleDebugger?.Invoke($"[InvokeCSharpEvent] Checking event {evt.Name}...");
+                    if (netEventAttr == null || netEventAttr.EventId != eventId)
+                        continue;
 
-                    if (netEventAttr != null)
+                    string backingFieldName = netEventAttr.BackingFieldName ?? $"on{evt.Name.Substring(2)}";
+                    FieldInfo field = targetType.GetField(backingFieldName, bindingFlags);
+                    if (field == null) continue;
+
+                    Delegate eventDelegate = field.GetValue(netObj) as Delegate;
+                    if (eventDelegate == null) continue;
+
+                    List<object> parsedParameters = new List<object>();
+                    for (int i = 0; i < parameters.Count; i++)
                     {
-                        consoleDebugger?.Invoke($"[InvokeCSharpEvent] Found NetEvent with ID {netEventAttr.EventId}");
+                        Type type = Type.GetType(parameters[i].Item1);
+                        if (type == null) continue;
+
+                        TypeConverter converter = TypeDescriptor.GetConverter(type);
+                        parsedParameters.Add(converter.ConvertFromInvariantString(parameters[i].Item2));
                     }
 
-                    if (netEventAttr != null && netEventAttr.EventId == eventId)
-                    {
-                        string backingFieldName = netEventAttr.BackingFieldName ?? $"on{evt.Name.Substring(2)}";
-
-                        FieldInfo field = targetType.GetField(backingFieldName, bindingFlags);
-
-                        if (field == null)
-                        {
-                            consoleDebugger?.Invoke($"[InvokeCSharpEvent] Could not find backing field '{backingFieldName}'");
-                            return;
-                        }
-
-                        Delegate eventDelegate = field.GetValue(netObj) as Delegate;
-                        if (eventDelegate == null)
-                        {
-                            consoleDebugger?.Invoke($"[InvokeCSharpEvent] No subscribers for event '{evt.Name}'");
-                            return;
-                        }
-
-                        List<object> parsedParameters = new List<object>();
-                        ParameterInfo[] paramInfos = evt.EventHandlerType?.GetMethod("Invoke")?.GetParameters() ?? Array.Empty<ParameterInfo>();
-
-                        for (int i = 0; i < parameters.Count; i++)
-                        {
-                            string typeStr = parameters[i].Item1;
-                            string valueStr = parameters[i].Item2;
-
-                            Type type = Type.GetType(typeStr);
-                            TypeConverter converter = TypeDescriptor.GetConverter(type);
-                            object param = converter.ConvertFromInvariantString(valueStr);
-                            parsedParameters.Add(param);
-                        }
-
-                        foreach (Delegate handler in eventDelegate.GetInvocationList())
-                        {
-                            consoleDebugger?.Invoke($"[InvokeCSharpEvent] Invoking {evt.Name}...");
-                            handler.DynamicInvoke(parsedParameters.ToArray());
-                        }
-
-                        return;
-                    }
+                    eventDelegate.DynamicInvoke(parsedParameters.ToArray());
                 }
-
-                consoleDebugger?.Invoke($"[InvokeCSharpEvent] No matching event with ID {eventId} found.");
             }
         }
         #endregion

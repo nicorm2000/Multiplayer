@@ -69,8 +69,6 @@ netObj.OwnerId = originPlayerID;
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), 99);
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
-            
-            Debug.Log("Bullet Authority: " + originPlayerID);
         }
 
         [NetMethod(0, NETAUTHORITY.CLIENT)]

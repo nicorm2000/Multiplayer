@@ -42,7 +42,6 @@ public class ServerManager : MonoBehaviour
 
 #if SERVER
         server.OnPlayerID += gm.SpawnPlayerPefab;
-        //gm.OnPlayerInstanceCreated += server.HandleInstanceRequest;
         NetObjFactory.OnDataSend += server.HandleInstanceRequest;
         NetworkManager.Instance.networkEntity = server;
         server.OnApplicationClose += Application.Quit;

@@ -222,6 +222,13 @@ public class PlayerController : MonoBehaviour, INetObj
     Coroutine turnTowerCoroutine;
     NetworkManager nm;
     private Camera cam;
+    private Action onEventA;
+    [NetEvent(0, NETAUTHORITY.SERVER)]
+    public event Action OnEventA
+    {
+        add => onEventA += value;
+        remove => onEventA -= value;
+    }
 
     #region ENUM
     //[ContextMenu("Test Enum - Set Default")]
@@ -720,6 +727,13 @@ public class PlayerController : MonoBehaviour, INetObj
         cam.enabled = false;
         cam.gameObject.GetComponent<AudioListener>().enabled = false;
 #endif
+        OnEventA += () => { Debug.Log("TestEvent"); };
+    }
+
+    [ContextMenu("Test")]
+    private void TriggerEvent()
+    {
+        ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
     }
 
     private void Start()

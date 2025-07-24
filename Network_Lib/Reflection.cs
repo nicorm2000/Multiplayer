@@ -55,7 +55,8 @@ namespace Net
         public Reflection(NetworkEntity entity, NETAUTHORITY netAuthority)
         {
             networkEntity = entity;
-            networkEntity.OnReceivedMessage += OnReceivedReflectionMessage;
+            if (netAuthority == NETAUTHORITY.CLIENT)
+                networkEntity.OnReceivedMessage += OnReceivedReflectionMessage;
             this.netAuthority = netAuthority;
 
             executeAssembly = Assembly.GetExecutingAssembly();
@@ -88,7 +89,7 @@ namespace Net
         /// </summary>
         public void UpdateReflection()
         {
-            if (NetObjFactory.NetObjectsCount <= 0)
+            if (NetObjFactory.NetObjects().Count <= 0)
             {
                 return;
             }
@@ -651,7 +652,7 @@ namespace Net
                         NetMethodMessage netMethodMessage = new NetMethodMessage(data);
                         (int, List<(string, string)>) methodData = netMethodMessage.GetData();
                         debug += $"Method: {methodData.Item1}, Args: {string.Join(", ", methodData.Item2)}, Route: {netMethodMessage.GetMessageRoute()[0].route}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         InvokeReflectionMethod(methodData.Item1, methodData.Item2, netMethodMessage.GetMessageRoute()[0].route);
                         break;
 
@@ -677,7 +678,7 @@ namespace Net
                         (int, List<(string, string)>) eventData = netEventMessage.GetData();
                         debug += $"Method: {eventData.Item1}, Args: {string.Join(", ", eventData.Item2)}, Route: {netEventMessage.GetMessageRoute()[0].route}\n";
                         List<RouteInfo> route = netEventMessage.GetMessageRoute();
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         InvokeCSharpEvent(eventData.Item1, eventData.Item2, route[0].route);
                         break;
 
@@ -1907,20 +1908,18 @@ namespace Net
             NetEvent netEvent = eventInfo.GetCustomAttribute<NetEvent>();
             if (netEvent == null) return;
 
-            // ALWAYS execute locally first (regardless of authority)
-            string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
-            FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
-            if (field != null)
-            {
-                Delegate eventDelegate = field.GetValue(iNetObj) as Delegate;
-                eventDelegate?.DynamicInvoke(parameters);
-            }
-
             // Then check authority for network sending
             CheckAuthority(iNetObj.GetOwnerID(), netEvent.syncAuthority, SendEventMessageAction, SendEventMessageAction);
 
             void SendEventMessageAction()
             {
+                string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
+                FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
+                if (field != null)
+                {
+                    Delegate eventDelegate = field.GetValue(iNetObj) as Delegate;
+                    eventDelegate?.DynamicInvoke(parameters);
+                }
                 // Serialize and send the network message
                 List<(string, string)> parametersList = new List<(string, string)>();
                 foreach (object param in parameters)
@@ -1944,40 +1943,44 @@ namespace Net
         /// <param name="objectId">The target network object ID whose event should be invoked.</param>
         public void InvokeCSharpEvent(int eventId, List<(string, string)> parameters, int objectId)
         {
-            // SIMPLIFIED - just execute the event on the target object
             foreach (INetObj netObj in NetObjFactory.NetObjects())
             {
-                if (netObj.GetID() != objectId) // Check later on, may cause issues
-                    continue;
-
                 Type targetType = netObj.GetType();
                 EventInfo[] events = targetType.GetEvents(bindingFlags);
+
+                if (netObj.GetID() != objectId)
+                    continue;
 
                 foreach (EventInfo evt in events)
                 {
                     NetEvent netEventAttr = evt.GetCustomAttribute<NetEvent>();
                     if (netEventAttr == null || netEventAttr.EventId != eventId)
                         continue;
-
-                    string backingFieldName = netEventAttr.BackingFieldName ?? $"on{evt.Name.Substring(2)}";
-                    FieldInfo field = targetType.GetField(backingFieldName, bindingFlags);
-                    if (field == null) continue;
-
-                    Delegate eventDelegate = field.GetValue(netObj) as Delegate;
-                    if (eventDelegate == null) continue;
-
-                    List<object> parsedParameters = new List<object>();
-                    for (int i = 0; i < parameters.Count; i++)
-                    {
-                        Type type = Type.GetType(parameters[i].Item1);
-                        if (type == null) continue;
-
-                        TypeConverter converter = TypeDescriptor.GetConverter(type);
-                        parsedParameters.Add(converter.ConvertFromInvariantString(parameters[i].Item2));
-                    }
-
-                    eventDelegate.DynamicInvoke(parsedParameters.ToArray());
+                    ExecuteEvent(parameters, netObj, targetType, evt, netEventAttr);
                 }
+            }
+
+            void ExecuteEvent(List<(string, string)> parameters, INetObj netObj, Type targetType, EventInfo evt, NetEvent netEventAttr)
+            {
+                consoleDebugger?.Invoke("Execute event" + DateTime.UtcNow);
+                string backingFieldName = netEventAttr.BackingFieldName ?? $"on{evt.Name.Substring(2)}";
+                FieldInfo field = targetType.GetField(backingFieldName, bindingFlags);
+                if (field == null) return;
+
+                Delegate eventDelegate = field.GetValue(netObj) as Delegate;
+                if (eventDelegate == null) return;
+
+                List<object> parsedParameters = new List<object>();
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    Type type = Type.GetType(parameters[i].Item1);
+                    if (type == null) continue;
+
+                    TypeConverter converter = TypeDescriptor.GetConverter(type);
+                    parsedParameters.Add(converter.ConvertFromInvariantString(parameters[i].Item2));
+                }
+
+                eventDelegate.DynamicInvoke(parsedParameters.ToArray());
             }
         }
         #endregion

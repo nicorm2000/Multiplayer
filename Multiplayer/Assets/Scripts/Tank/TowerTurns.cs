@@ -17,14 +17,14 @@ public class TowerTurns : MonoBehaviour, INetObj
         int prefabID = prefabService.GetIdByPrefab(bulletPrefab);
         int ownerID = playerController.clientID;
 
-        NetObjFactory.NetInstance(prefabID, initialPositionShooting.position.x, initialPositionShooting.position.y, initialPositionShooting.position.z,
-                                     initialPositionShooting.rotation.x, initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
-                                     bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,
-                                     -1, ownerID);
         InstancePayload instancePayload = new InstancePayload(NetObjFactory.NetObjectsCount, ownerID, prefabID, initialPositionShooting.position.x, initialPositionShooting.position.y, initialPositionShooting.position.z,
                                      initialPositionShooting.rotation.x, initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
                                      bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,
                                      -1);
+        NetObjFactory.NetInstance(prefabID, initialPositionShooting.position.x, initialPositionShooting.position.y, initialPositionShooting.position.z,
+                                     initialPositionShooting.rotation.x, initialPositionShooting.rotation.y, initialPositionShooting.rotation.z, initialPositionShooting.rotation.w,
+                                     bulletPrefab.transform.localScale.x, bulletPrefab.transform.localScale.y, bulletPrefab.transform.localScale.z,
+                                     -1, ownerID);
 
         GameObject prefab = prefabService.GetPrefabById(instancePayload.objectId);
         INetObj parentObj = NetObjFactory.GetINetObject(instancePayload.parentInstanceID);

@@ -77,9 +77,9 @@ public class NetworkClient : NetworkEntity
 
         ClientToServerNetHandShake handShakeMesage = new(MessagePriority.NonDisposable, (UdpConnection.IPToLong(ipAddress), port, userName));
         SendToServer(handShakeMesage.Serialize());
-        #if CLIENT
+#if CLIENT
         NetworkScreen.Instance.SwitchToChatScreen();
-        #endif
+#endif
     }
 
     /// <summary>
@@ -195,9 +195,9 @@ public class NetworkClient : NetworkEntity
                     {
                         if (NetworkScreen.Instance.isInMenu)
                         {
-                            #if CLIENT
+#if CLIENT
                             NetworkScreen.Instance.SwitchToChatScreen();
-                            #endif
+#endif
                         }
 
                         clientID = playerList[i].clientId;
@@ -297,10 +297,10 @@ public class NetworkClient : NetworkEntity
             case MessageType.Error:
 
                 NetErrorMessage netErrorMessage = new(data);
-                #if CLIENT
+#if CLIENT
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowErrorPanel(netErrorMessage.GetData());
-                #endif
+#endif
                 CloseConnection();
 
                 break;
@@ -311,10 +311,10 @@ public class NetworkClient : NetworkEntity
                 NetWinnerMessage netWin = new(data);
                 Debug.Log("Winner number: " + netWin.GetData().winner);
                 string winText = $"Congratulations! \n {players[netWin.GetData().winner].name} won the game!";
-                #if CLIENT
+#if CLIENT
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowWinPanel(winText);
-                #endif
+#endif
                 DisconnectAll disconnectAll = new();
                 NetDisconnectionMessage netDisconnectionMessage = new(disconnectAll);
                 SendMessage(netDisconnectionMessage.Serialize());
@@ -337,6 +337,7 @@ public class NetworkClient : NetworkEntity
 
                 Debug.Log("Net Destroy enter");
                 NetDestroyGO netDestroyGO = new NetDestroyGO(data);
+
                 foreach (INetObj netObjAux in NetObjFactory.NetObjects())
                 {
                     if (netObjAux.GetID() == netDestroyGO.GetData().Item1)
@@ -417,9 +418,9 @@ public class NetworkClient : NetworkEntity
         pingPong = null;
         nondisposablesMessages = null;
         sortableMessage = null;
-        #if CLIENT
+#if CLIENT
         NetworkScreen.Instance.SwitchToMenuScreen();
-        #endif
+#endif
     }
 
     /// <summary>

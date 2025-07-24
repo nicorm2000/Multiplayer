@@ -20,10 +20,7 @@ namespace Net
             return aux;
         }
 
-        public static int NetObjectsCount
-        {
-            get { return NetObjectsInstances.Count;  }
-        }
+        public static int NetObjectsCount{ get; private set; }
 
         public static void SetNetworkEntity(NetworkEntity networkEntity)
         {
@@ -74,6 +71,7 @@ namespace Net
             byte[] dataToSend = instanceRequest.Serialize();
             OnDataSend?.Invoke(dataToSend, owner);
             entity.SendMessage(dataToSend);
+            NetObjectsCount++;
         }
     }
 }

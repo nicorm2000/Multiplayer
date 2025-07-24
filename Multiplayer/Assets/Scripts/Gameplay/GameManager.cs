@@ -64,17 +64,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             }
             IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();
 
-            NetObjFactory.NetInstance(prefabService.GetIdByPrefab(playerPrefab),
-                                          spawnPositions[spawnCounter].position.x, spawnPositions[spawnCounter].position.y, spawnPositions[spawnCounter].position.z,
-                                          Quaternion.identity.x, Quaternion.identity.y, Quaternion.identity.z, Quaternion.identity.w,
-                                          playerPrefab.transform.localScale.x, playerPrefab.transform.localScale.y, playerPrefab.transform.localScale.z,
-                                          -1, index);
-
             InstancePayload instancePayload = new InstancePayload(NetObjFactory.NetObjectsCount, index, prefabService.GetIdByPrefab(playerPrefab),
                                               spawnPositions[spawnCounter].position.x, spawnPositions[spawnCounter].position.y, spawnPositions[spawnCounter].position.z,
                                               Quaternion.identity.x, Quaternion.identity.y, Quaternion.identity.z, Quaternion.identity.w,
                                               playerPrefab.transform.localScale.x, playerPrefab.transform.localScale.y, playerPrefab.transform.localScale.z,
                                               -1);
+
+            NetObjFactory.NetInstance(prefabService.GetIdByPrefab(playerPrefab),
+                                          spawnPositions[spawnCounter].position.x, spawnPositions[spawnCounter].position.y, spawnPositions[spawnCounter].position.z,
+                                          Quaternion.identity.x, Quaternion.identity.y, Quaternion.identity.z, Quaternion.identity.w,
+                                          playerPrefab.transform.localScale.x, playerPrefab.transform.localScale.y, playerPrefab.transform.localScale.z,
+                                          -1, index);
 
             GameObject prefab = prefabService.GetPrefabById(instancePayload.objectId);
             INetObj parentObj = NetObjFactory.GetINetObject(instancePayload.parentInstanceID);

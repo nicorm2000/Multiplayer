@@ -188,8 +188,13 @@ namespace NetworkServer
                         TRS tRS = netTRSMessage.GetData();
                         NetObjTracker.UpdateNetObj(tRS, ipToId[ip], netTRSMessage.GetMessageRoute()[0].route);
                     }
+                    else if (MessageType.Event == messageType)
+                    {
+                        Console.WriteLine("Event");
+                    }
 
                     break;
+
                 case MessageType.Ping:
 
                     if (ipToId.ContainsKey(ip))

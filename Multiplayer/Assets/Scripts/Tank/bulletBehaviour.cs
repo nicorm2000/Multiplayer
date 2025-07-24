@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using NetworkServer;
 using System;
 using Net;
 
@@ -51,15 +52,18 @@ namespace Game
 
         private void Start()
         {
+#if SERVER
+            Invoke(nameof(DestroyBehaviour), 5f);
+#endif
             nm = NetworkManager.Instance;
             velocityVector = transform.forward * velocity;
 #if ClIENT
 netObj.OwnerId = originPlayerID;
 #endif
 
-            OnEventA += () => Debug.Log("C# Event: OnEventA triggered!");
-            OnEventB += (value) => Debug.Log($"C# Event: OnEventB({value}) triggered!");
-            OnEventC += (text, weight) => Debug.Log($"C# Event: OnEventC(\"{text}\", {weight}) triggered!");
+            OnEventA += () => Debug.Log("C# Event: OnEventA triggered! " + netObj.OwnerId);
+            //OnEventB += (value) => Debug.Log($"C# Event: OnEventB({value}) triggered!");
+            //OnEventC += (text, weight) => Debug.Log($"C# Event: OnEventC(\"{text}\", {weight}) triggered!");
 
             Debug.Log("Shoot Game");
             ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMR));
@@ -67,8 +71,10 @@ netObj.OwnerId = originPlayerID;
             ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRI), 3);
 
             ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
-            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), 99);
-            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
+            //ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), GetID());
+            //ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
+
+            Debug.Log("Bullet owner: " + GetOwnerID());
         }
 
         [NetMethod(0, NETAUTHORITY.CLIENT)]
@@ -102,13 +108,22 @@ netObj.OwnerId = originPlayerID;
 
         private void OnCollisionEnter(Collision collision)
         {
-            NetDestroyGO netDestroyGO = new NetDestroyGO(MessagePriority.Default, (GetID(), originPlayerID));
-            nm.networkEntity.SendMessage(netDestroyGO.Serialize());
-
+#if SERVER
             if (collision.transform.TryGetComponent(out PlayerController pc))
             {
                 GameManager.OnBulletHit.Invoke(pc.clientID, originPlayerID);
             }
+            DestroyBehaviour();
+#endif
+        }
+
+        private void DestroyBehaviour()
+        {
+            NetDestroyGO netDestroyGO = new NetDestroyGO(MessagePriority.Default, (GetID(), originPlayerID));
+            nm.networkEntity.SendMessage(netDestroyGO.Serialize());
+            Debug.Log($"Origin & ID:  {GetOwnerID() } & { GetID()}");
+            NetObjFactory.RemoveINetObject(GetID());
+            Destroy(gameObject);
         }
 
         public int GetID()

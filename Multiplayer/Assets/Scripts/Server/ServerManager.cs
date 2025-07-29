@@ -36,7 +36,6 @@ public class ServerManager : MonoBehaviour
             {
                 port = parsedPort;
             }
-            Debug.Log("args: " + arg);
         }
         StartServer(port);
 

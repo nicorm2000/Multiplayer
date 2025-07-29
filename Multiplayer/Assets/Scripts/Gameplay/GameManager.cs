@@ -45,7 +45,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (!playerList.ContainsKey(index))
         {
-            Debug.Log("Entered spawn player prefab");
+            //Debug.Log("Entered spawn player prefab");
             if (index == nm.ClientID)
             {
                 if (spawnCounter >= spawnPositions.Length)
@@ -117,10 +117,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     void CheckForInstanceCreated(int owner, GameObject gameObject)
     {
-        foreach (KeyValuePair<int, GameObject> item in playerList)
-        {
-            Debug.Log(item.Key);
-        }
         if (playerList.ContainsKey(owner))
         {
             if (gameObject.TryGetComponent(out PlayerController pc)) //Confirmo que el objeto instanciado sea un player

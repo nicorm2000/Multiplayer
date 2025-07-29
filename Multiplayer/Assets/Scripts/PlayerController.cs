@@ -12,22 +12,22 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class TestingClass
     {
-        [NetVariable(0)] public TestingClass2 testInt = new();
+        [NetVariable(0, NETAUTHORITY.CLIENT)] public TestingClass2 testInt = new();
     }
     [Serializable]
     public class TestingClass2
     {
-        [NetVariable(0)] public TestingClass3 testInt = new();
+        [NetVariable(0, NETAUTHORITY.CLIENT)] public TestingClass3 testInt = new();
     }
     [Serializable]
     public class TestingClass3
     {
-        [NetVariable(0)] public int testInt = 0;
+        [NetVariable(42, NETAUTHORITY.CLIENT)] public int testInt = 0;
     }
     [Serializable]
-    private class TestingClass4
+    public class TestingClass4
     {
-        [NetVariable(0)] public int testInt = 0;
+        [NetVariable(0, NETAUTHORITY.CLIENT)] public int testInt = 0;
         public TestingClass2 testIntClass2 = new();
 
         public TestingClass4(int testingInt, TestingClass2 testingClass2)
@@ -39,15 +39,15 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public struct TestingStruct
     {
-        [NetVariable(0)] public int testInt;
-        [NetVariable(1)] public int testInt2;
-        [NetVariable(2)] public int testInt3;
+        [NetVariable(0, NETAUTHORITY.CLIENT)] public int testInt;
+        [NetVariable(1, NETAUTHORITY.CLIENT)] public int testInt2;
+        [NetVariable(2, NETAUTHORITY.CLIENT)] public int testInt3;
     }
 
     [Serializable]
     public class DictionaryTestClass
     {
-        [NetVariable(0)] public Dictionary<int, string> testDictionary = new Dictionary<int, string>();
+        [NetVariable(0, NETAUTHORITY.CLIENT)] public Dictionary<int, string> testDictionary = new Dictionary<int, string>();
 
         public DictionaryTestClass()
         {
@@ -59,8 +59,8 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class MultiDimArrayTestClass
     {
-        [NetVariable(0)] public int[,] twoDArray = new int[3, 3];
-        [NetVariable(1)] public int[,,,,] fiveDArray = new int[2, 2, 2, 2, 2];
+        [NetVariable(0, NETAUTHORITY.CLIENT)] public int[,] twoDArray = new int[3, 3];
+        [NetVariable(1, NETAUTHORITY.CLIENT)] public int[,,,,] fiveDArray = new int[2, 2, 2, 2, 2];
 
         public MultiDimArrayTestClass()
         {
@@ -85,7 +85,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class CustomCollection<T>
     {
-        [NetVariable(0)] private List<T> customCollectionItems = new List<T>();
+        [NetVariable(0, NETAUTHORITY.CLIENT)] private List<T> customCollectionItems = new List<T>();
         public int Count => customCollectionItems.Count;
         public T this[int index] => customCollectionItems[index];
         public void Add(T item) => customCollectionItems.Add(item);
@@ -98,7 +98,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class CustomCollection2<T> : IEnumerable<T>, IEnumerable
     {
-        [NetVariable(0)] private List<T> customCollectionItems = new List<T>();
+        [NetVariable(0, NETAUTHORITY.CLIENT)] private List<T> customCollectionItems = new List<T>();
         public int Count => customCollectionItems.Count;
         public T this[int index]
         {
@@ -118,7 +118,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [Serializable]
     public class CustomCollection3<T> : ICollection
     {
-        [NetVariable(0)] private List<T> customCollectionItems = new List<T>();
+        [NetVariable(0, NETAUTHORITY.CLIENT)] private List<T> customCollectionItems = new List<T>();
         public int Count => customCollectionItems.Count;
         public bool IsSynchronized => false;
         public object SyncRoot => this;
@@ -166,49 +166,49 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
-    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector2 movementSynced;
+    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1,1,1);
     [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
     [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
     [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
     [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
-    //[NetVariable(1)] public bool myBool = false;
-    //[NetVariable(2)] public string myString = "pepe";
-    //[NetVariable(3)] public char myChar = 'a';
-    //[NetVariable(4)] public decimal myDecimal = 1;
-    //[NetVariable(5)] public double myDouble = 1;
-    //[NetVariable(6)] public short myShort = 1;
-    //[NetVariable(7)] public ushort myUShort = 1;
-    //[NetVariable(8)] public int myInt = 1;
-    //[NetVariable(9)] public uint myUInt = 1;
-    //[NetVariable(10)] public long myLong = 1;
-    //[NetVariable(11)] public ulong myULong = 1;
-    //[NetVariable(12)] public byte myByte = 1;
-    //[NetVariable(13)] public sbyte mySByte = 1;
-    //[NetVariable(14)] public TestEnum enumField;
-    //[NetVariable(15)] public List<int> testList;
-    //[NetVariable(16)] public TestingClass testing = new();
-    //[NetVariable(17)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    //[NetVariable(18)] public int[] myArray = new int[2];
-    //[NetVariable(19)] public TestingClass4 testingClass4;
-    //[NetVariable(20)] public List<TestingClass3> jajaxd = null;
-    //[NetVariable(21)] public TestingClass3 testingclass3 = new();
-    //[NetVariable(22)] public Vector2 MyVector2 = Vector2.zero;
-    //[NetVariable(23)] public Vector3 MyVector3 = Vector3.zero;
-    //[NetVariable(24)] public Vector4 MyVector4 = Vector4.zero;
-    //[NetVariable(25)] public Quaternion MyQuaternion = new(0f, 0f, 0f, 1f);
-    //[NetVariable(26)] public Color MyColor = new(1f,0.5f,0f,1f);
-    //[NetVariable(27)] public Color32 MyColor32 = new(0, 0, 0, 255);
-    //[NetVariable(28)] public Rect MyRect = new(0, 0, 1, 1);
-    //[NetVariable(29)] public Bounds MyBounds = new(Vector3.zero, Vector3.one);
-    //[NetVariable(30)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
-    //[NetVariable(31)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
-    //[NetVariable(32)] public Vector2Int MyVector2Int = new (0,0);
-    //[NetVariable(33)] public Vector3Int MyVector3Int = new (0,0,0);
-    //[NetVariable(34)] public DictionaryTestClass dictionaryTest;
-    //[NetVariable(35)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
-    //[NetVariable(36)] public CustomCollection<int> _customCollection;
-    //[NetVariable(37)] public CustomCollection2<string> _customCollection2;
-    //[NetVariable(38)] public CustomCollection3<TestingClass3> _customCollection3;
+    //[NetVariable(1, NETAUTHORITY.CLIENT)] public bool myBool = false;
+    //[NetVariable(2, NETAUTHORITY.CLIENT)] public string myString = "pepe";
+    //[NetVariable(3, NETAUTHORITY.CLIENT)] public char myChar = 'a';
+    //[NetVariable(4, NETAUTHORITY.CLIENT)] public decimal myDecimal = 1;
+    //[NetVariable(5, NETAUTHORITY.CLIENT)] public double myDouble = 1;
+    //[NetVariable(6, NETAUTHORITY.CLIENT)] public short myShort = 1;
+    //[NetVariable(7, NETAUTHORITY.CLIENT)] public ushort myUShort = 1;
+    //[NetVariable(8, NETAUTHORITY.CLIENT)] public int myInt = 1;
+    //[NetVariable(9, NETAUTHORITY.CLIENT)] public uint myUInt = 1;
+    //[NetVariable(10, NETAUTHORITY.CLIENT)] public long myLong = 1;
+    //[NetVariable(11, NETAUTHORITY.CLIENT)] public ulong myULong = 1;
+    //[NetVariable(12, NETAUTHORITY.CLIENT)] public byte myByte = 1;
+    //[NetVariable(13, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
+    //[NetVariable(14, NETAUTHORITY.CLIENT)] public TestEnum enumField;
+    //[NetVariable(15, NETAUTHORITY.CLIENT)] public List<int> testList;
+    //[NetVariable(16, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
+    [NetVariable(17, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
+    //[NetVariable(18, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
+    //[NetVariable(19, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
+    //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
+    [NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
+    //[NetVariable(22, NETAUTHORITY.CLIENT)] public Vector2 MyVector2 = Vector2.zero;
+    //[NetVariable(23, NETAUTHORITY.CLIENT)] public Vector3 MyVector3 = Vector3.zero;
+    //[NetVariable(24, NETAUTHORITY.CLIENT)] public Vector4 MyVector4 = Vector4.zero;
+    //[NetVariable(25, NETAUTHORITY.CLIENT)] public Quaternion MyQuaternion = new(0f, 0f, 0f, 1f);
+    //[NetVariable(26, NETAUTHORITY.CLIENT)] public Color MyColor = new(1f,0.5f,0f,1f);
+    //[NetVariable(27, NETAUTHORITY.CLIENT)] public Color32 MyColor32 = new(0, 0, 0, 255);
+    //[NetVariable(28, NETAUTHORITY.CLIENT)] public Rect MyRect = new(0, 0, 1, 1);
+    //[NetVariable(29, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one);
+    //[NetVariable(30, NETAUTHORITY.CLIENT)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
+    //[NetVariable(31, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
+    //[NetVariable(32, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
+    //[NetVariable(33, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
+    //[NetVariable(34, NETAUTHORITY.CLIENT)] public DictionaryTestClass dictionaryTest;
+    //[NetVariable(35, NETAUTHORITY.CLIENT)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
+    //[NetVariable(36, NETAUTHORITY.CLIENT)] public CustomCollection<int> _customCollection;
+    //[NetVariable(37, NETAUTHORITY.CLIENT)] public CustomCollection2<string> _customCollection2;
+    //[NetVariable(38, NETAUTHORITY.CLIENT)] public CustomCollection3<TestingClass3> _customCollection3;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -728,6 +728,8 @@ public class PlayerController : MonoBehaviour, INetObj
         cam.gameObject.GetComponent<AudioListener>().enabled = false;
 #endif
         OnEventA += () => { Debug.Log("TestEvent"); };
+        movementSynced = Vector3.one;
+        Debug.Log($"Awake Initial movementSynced in Start(): {movementSynced}");
     }
 
     [ContextMenu("Test")]
@@ -801,6 +803,7 @@ public class PlayerController : MonoBehaviour, INetObj
         }
     }
 
+    private Vector3 _lastMovementSynced;
     private void Update()
     {
 #if CLIENT

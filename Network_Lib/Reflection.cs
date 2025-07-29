@@ -122,39 +122,65 @@ namespace Net
             string debug = "";
             if (obj != null)
             {
-                foreach ((FieldInfo, NetVariable, RouteInfo) info in GetAllFieldsCustom(type))
+                foreach (FieldInfo info in GetAllFields(type))
                 {
-                    debug += "___info field: " + info.Item1 + "\n";
-                    debug += "___info route: " + idRoute[0].route + "\n";
-                    //consoleDebugger.Invoke(debug);
-                    IEnumerable<Attribute> attributes = info.Item1.GetCustomAttributes();
+                    NetVariable netVarAux = info.GetCustomAttribute<NetVariable>();
+                    if (netVarAux != null)
+                    {
+                        debug += "___info field: " + info + "\n";
+                        debug += "___info route: " + idRoute[0].route + "\n";
+                        consoleDebugger.Invoke(debug);
+                        if (netVarAux.syncAuthority == netAuthority)
+                        {
+                            //consoleDebugger.Invoke($"Inspect: {owner}, {networkEntity.clientID}");
+                            if (extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
+                            {
+                                CheckAuthority(owner, netVarAux.syncAuthority, ReadValueEMAction, ReadValueEMAction);
+                                void ReadValueEMAction()
+                                {
+                                    object actualObject = info.GetValue(obj);
+                                    if (actualObject == null)
+                                    {
+                                        actualObject = ConstructObject(info.FieldType);
+                                        info.SetValue(obj, actualObject);
+                                    }
 
-                    if (info.Item2.syncAuthority == netAuthority)
-                    {
-                        //consoleDebugger.Invoke($"Inspect: {owner}, {networkEntity.clientID}");
-                        List<RouteInfo> route = new List<RouteInfo>(idRoute);
-                        if (info.Item3.route != -1)
-                        {
-                            route.Add(info.Item3);
+                                    object fields = methodInfo.Invoke(null, new object[] { actualObject, netVarAux.syncAuthority });
+                                    if (fields is List<(FieldInfo, NetVariable)> values)
+                                    {
+                                        foreach ((FieldInfo, NetVariable) field in values)
+                                        {
+                                            List<RouteInfo> structRoute = new List<RouteInfo>(idRoute);
+                                            structRoute.Add(RouteInfo.CreateForProperty(netVarAux.VariableId));
+                                            structRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
+                                            object componentValue = field.Item1.GetValue(actualObject);
+
+                                            ReadValue(field.Item1, actualObject, field.Item2, structRoute, owner);
+
+                                            info.SetValue(obj, actualObject);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                CheckAuthority(owner, netVarAux.syncAuthority, ReadValueAction, ReadValueAction);
+                                void ReadValueAction()
+                                {
+                                    List<RouteInfo> extendedRoute = new List<RouteInfo>(idRoute);
+                                    //extendedRoute.Add(RouteInfo.CreateForProperty(aux.VariableId));
+
+                                    consoleDebugger?.Invoke($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
+                                    consoleDebugger?.Invoke($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                    ReadValue(info, obj, netVarAux, extendedRoute, owner);
+                                }
+                            }
                         }
-                        CheckAuthority(owner, info.Item2.syncAuthority, ReadValueAction, ReadValueAction);
-                        void ReadValueAction()
+
+                        if (type.BaseType != null)
                         {
-                            ReadValue(info.Item1, obj, info.Item2, new List<RouteInfo>(route), owner);
+                            Inspect(type.BaseType, obj, new List<RouteInfo>(idRoute), owner);
                         }
-                        //if (netAuthority == NETAUTHORITY.CLIENT && owner == networkEntity.clientID)
-                        //{
-                        //    //consoleDebugger.Invoke($"Inspect: {type} - {obj} - {info} - {info.GetType()} - {info.Item1.GetValue(obj)}");
-                        //    ReadValueAction(obj, owner, info, route);
-                        //}
-                        //else if (netAuthority == NETAUTHORITY.SERVER)
-                        //{
-                        //    ReadValueAction(obj, owner, info, route);
-                        //}
-                    }
-                    if (type.BaseType != null)
-                    {
-                        Inspect(type.BaseType, obj, new List<RouteInfo>(idRoute), owner);
                     }
                 }
                 debug += "Exit foreach: " + obj + "\n";
@@ -165,7 +191,6 @@ namespace Net
                 debug += "Object is NULL";
                 //consoleDebugger.Invoke(debug);
             }
-
         }
 
         #endregion
@@ -182,7 +207,7 @@ namespace Net
         {
             string debug = "ReadValue Start - ";
             debug += $"Field: {info.Name}, Type: {info.FieldType}, Current Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
-            //consoleDebugger?.Invoke(debug);
+            consoleDebugger?.Invoke(debug);
 
             object fieldValue = info.GetValue(obj);
             Type fieldType = info.FieldType;
@@ -190,16 +215,15 @@ namespace Net
             // Handle null case
             if (fieldValue == null)
             {
-                //consoleDebugger?.Invoke("Field is NULL\n");
                 idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
                 SendPackage(PossibleStates.Null, attribute, idRoute);
                 return;
             }
 
             // Handle simple types
-            if (IsSimpleType(fieldType))
+            if (IsSimpleType(info.FieldType))
             {
-                //consoleDebugger?.Invoke("Handling primitive/string/enum type\n");
+                consoleDebugger?.Invoke("Simple Type: " + fieldValue + fieldType);
                 idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
                 SendPackage(fieldValue, attribute, idRoute);
                 return;
@@ -389,8 +413,9 @@ namespace Net
             }
 
             // Handle complex objects
-            //consoleDebugger?.Invoke("Handling complex object type\n");
+            consoleDebugger?.Invoke("Handling complex object type\n");
             idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
+            consoleDebugger?.Invoke($"Full Route Read: {string.Join("->", idRoute.Select(r => r.route))}\n");
             Inspect(fieldType, fieldValue, idRoute, owner);
         }
         #endregion
@@ -579,7 +604,7 @@ namespace Net
                         debug += "Processing Int message\n";
                         NetIntMessage netIntMessage = new NetIntMessage(data);
                         debug += $"Data: {netIntMessage.GetData()}, Route: {string.Join("->", netIntMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        consoleDebugger?.Invoke(debug);
                         VariableMapping(netIntMessage.GetMessageRoute(), netIntMessage.GetData());
                         break;
 
@@ -652,7 +677,7 @@ namespace Net
                         NetMethodMessage netMethodMessage = new NetMethodMessage(data);
                         (int, List<(string, string)>) methodData = netMethodMessage.GetData();
                         debug += $"Method: {methodData.Item1}, Args: {string.Join(", ", methodData.Item2)}, Route: {netMethodMessage.GetMessageRoute()[0].route}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         InvokeReflectionMethod(methodData.Item1, methodData.Item2, netMethodMessage.GetMessageRoute()[0].route);
                         break;
 
@@ -678,7 +703,7 @@ namespace Net
                         (int, List<(string, string)>) eventData = netEventMessage.GetData();
                         debug += $"Method: {eventData.Item1}, Args: {string.Join(", ", eventData.Item2)}, Route: {netEventMessage.GetMessageRoute()[0].route}\n";
                         List<RouteInfo> route = netEventMessage.GetMessageRoute();
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         InvokeCSharpEvent(eventData.Item1, eventData.Item2, route[0].route);
                         break;
 
@@ -735,13 +760,14 @@ namespace Net
                 debug += $"NetworkEntity ClientID: {networkEntity.clientID}\n";
 
                 debug += "Proceeding with write operation\n";
+                //object a = NetObjFactory.GetObject(route[0].route);
+                InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+                //debug += $"InspectWrite completed. Result: {a}\n";
                 //consoleDebugger?.Invoke(debug);
-                object result = InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
-                debug += $"InspectWrite completed. Result: {result}\n";
             }
             catch (Exception ex)
             {
-                debug += $"VariableMapping error: {ex.Message}\n{ex.StackTrace}";
+                consoleDebugger?.Invoke($"VariableMapping error: {ex.Message}\n{ex.StackTrace}");
             }
 
             //consoleDebugger?.Invoke(debug);
@@ -775,7 +801,7 @@ namespace Net
 
             debug += "Processing write operation for null exception\n";
             //consoleDebugger?.Invoke(debug);
-            _ = InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+            InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
         }
 
         /// <summary>
@@ -805,7 +831,7 @@ namespace Net
             debug += $"Root Object: {objectRoot.GetType().Name}, OwnerID: {objectRoot.GetOwnerID()}, NetworkEntity ClientID: {networkEntity.clientID}\n";
 
             debug += "Processing empty collection\n";
-            _ = InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
+            InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
             //consoleDebugger?.Invoke(debug);
         }
 
@@ -863,22 +889,55 @@ namespace Net
 
                 RouteInfo currentRoute = idRoute[idToRead];
                 debug += $"Current Route Info: {currentRoute}\n";
-
                 // Regular fields check
-                foreach ((FieldInfo, NetVariable, RouteInfo) info in GetAllFieldsCustom(type))
+                foreach (FieldInfo info in GetAllFields(type))
                 {
-                    //consoleDebugger.Invoke("info and type: " + info.Item1.Name + type.Name);
-                    if (info.Item2.VariableId == currentRoute.route)
+                    NetVariable attributes = info.GetCustomAttribute<NetVariable>();
+                    if (attributes != null)
                     {
-                        //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
-                        //debug += $"Current field value: {info.GetValue(obj)}\n";
-                        //consoleDebugger?.Invoke(debug);
+                        if (attributes.VariableId == currentRoute.route)
+                        {
+                            if (extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
+                            {
+                                object structInstance = info.GetValue(obj);
+                                if (structInstance == null)
+                                {
+                                    structInstance = ConstructObject(info.FieldType);
+                                    info.SetValue(obj, structInstance);
+                                }
 
-                        object result = WriteValue(info.Item1, obj, info.Item2, idRoute, idToRead, value);
-                        //debug += $"WriteValue completed. New field value: {info.GetValue(result)}\n";
-                        debug += $"Final field value after WriteValue: {info.Item1.GetValue(obj)}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        return result;
+                                object fields = methodInfo.Invoke(null, new object[] { structInstance, attributes.syncAuthority });
+
+                                if (fields is List<(FieldInfo, NetVariable)> values)
+                                {
+                                    foreach ((FieldInfo, NetVariable) field in values)
+                                    {
+                                        if (idRoute[idToRead + 1].route == field.Item2.VariableId)
+                                        {
+                                            //consoleDebugger?.Invoke($"InspectWrite: Writing to {info.Name}.{field.Item1.Name}");
+
+                                            // Get fresh struct instance to ensure we're not working with a stale copy
+                                            object currentStruct = info.GetValue(obj);
+                                            return WriteValue(field.Item1, currentStruct, field.Item2, idRoute, idToRead + 1, value, info, obj);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                object structInstance = info.GetValue(obj);
+                                if (structInstance == null)
+                                {
+                                    structInstance = ConstructObject(info.FieldType);
+                                    info.SetValue(obj, structInstance);
+                                }
+                                //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
+                                //debug += $"Current field value: {info.GetValue(obj)}\n";
+                                //consoleDebugger?.Invoke(debug);
+                                return WriteValue(info, obj, attributes, idRoute, idToRead, value);
+                            }
+                        }
+                        // Extension fields check
                     }
                 }
 
@@ -985,7 +1044,7 @@ namespace Net
         /// <param name="idToRead">Current position in the route.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The modified object.</returns>
-        object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value, FieldInfo parentField = null, object parentObject = null)
         {
             //consoleDebugger?.Invoke($"WriteValue - Field: {info.Name}, ValueType: {value?.GetType().Name}");
 
@@ -1003,8 +1062,28 @@ namespace Net
             // Handle simple types
             if (IsSimpleType(fieldType))
             {
-                //consoleDebugger?.Invoke($"WriteValue: Setting field '{info.Name}' on '{obj.GetType().Name}' to '{value}' (Type: {value?.GetType()?.Name})");
-                info.SetValue(obj, value);
+                if (parentField != null && parentObject != null)
+                {
+                    //consoleDebugger?.Invoke($"Parent field: {parentField.Name}, Parent object: {parentObject}");
+
+                    object boxedStruct = parentField.GetValue(parentObject);
+                    //consoleDebugger?.Invoke($"Boxed struct before: {boxedStruct}");
+
+                    info.SetValue(boxedStruct, value);
+                    //consoleDebugger?.Invoke($"After field set (before parent set): {boxedStruct}");
+
+                    parentField.SetValue(parentObject, boxedStruct);
+
+                    object verifiedStruct = parentField.GetValue(parentObject);
+                    object verifiedValue = info.GetValue(verifiedStruct);
+                    //consoleDebugger?.Invoke($"Verification - Struct: {verifiedStruct}, Field: {verifiedValue}");
+                    info.SetValue(obj, verifiedValue);
+                }
+                else
+                {
+                    info.SetValue(obj, value);
+                    //consoleDebugger?.Invoke($"Direct field set completed");
+                }
                 return obj;
             }
 
@@ -1244,7 +1323,7 @@ namespace Net
             }
             else if (idRoute.Count > idToRead + 1)
             {
-                InspectWrite(info.FieldType, objReference, idRoute, idToRead + 1, value);
+                objReference = InspectWrite(info.FieldType, info.GetValue(obj), idRoute, idToRead + 1, value);
             }
 
             info.SetValue(obj, objReference);
@@ -1740,40 +1819,6 @@ namespace Net
             }
         }
 
-        private IEnumerable<(FieldInfo, NetVariable, RouteInfo)> GetAllFieldsCustom(Type type)
-        {
-            while (type != null)
-            {
-                foreach (FieldInfo? field in type.GetFields(bindingFlags))
-                {
-                    NetVariable aux = field.GetCustomAttribute<NetVariable>();
-                    if (aux != null)
-                    {
-                        if (extensionMethods.TryGetValue(type, out MethodInfo methodInfo))
-                        {
-                            object unitializedObject = FormatterServices.GetUninitializedObject(type);
-                            object fields = methodInfo.Invoke(null, new object[] { unitializedObject, aux.syncAuthority });
-
-                            if (fields != null)
-                            {
-                                List<(FieldInfo, NetVariable)> values = (List<(FieldInfo, NetVariable)>)fields;
-                                foreach ((FieldInfo, NetVariable) fieldAux in values)
-                                {
-                                    yield return (fieldAux.Item1, fieldAux.Item2, RouteInfo.CreateForProperty(aux.VariableId));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            yield return (field, aux, RouteInfo.CreateForProperty(-1));
-                        }
-                    }
-                }
-
-                type = type.BaseType;
-            }
-        }
-
         public void CheckAuthority(int owner, NETAUTHORITY auxAuthority, Action onClientAuthority, Action onServerAuthority)
         {
             if (netAuthority != auxAuthority)
@@ -1824,7 +1869,7 @@ namespace Net
                         object invokeMethod = method.Invoke(netObj, objectParameters);
                     }
                 }
-                consoleDebugger?.Invoke("Invoked reflection method");
+                //consoleDebugger?.Invoke("Invoked reflection method");
             }
         }
 
@@ -1851,7 +1896,6 @@ namespace Net
 
             void SendMethodMessageAction()
             {
-                consoleDebugger?.Invoke("Enter Send Method Action");
                 object invokeMethod = method.Invoke(iNetObj, parameters);
 
                 if (method.ReturnParameter.GetType() != typeof(void))
@@ -1887,7 +1931,6 @@ namespace Net
 
                 NetMethodMessage messageToSend = new NetMethodMessage(MessagePriority.Default, messageData, idRoute);
                 networkEntity.SendMessage(messageToSend.Serialize());
-                consoleDebugger?.Invoke("Sent Method Message");
             }
             return objectToReturn;
         }
@@ -1962,7 +2005,6 @@ namespace Net
 
             void ExecuteEvent(List<(string, string)> parameters, INetObj netObj, Type targetType, EventInfo evt, NetEvent netEventAttr)
             {
-                consoleDebugger?.Invoke("Execute event" + DateTime.UtcNow);
                 string backingFieldName = netEventAttr.BackingFieldName ?? $"on{evt.Name.Substring(2)}";
                 FieldInfo field = targetType.GetField(backingFieldName, bindingFlags);
                 if (field == null) return;
@@ -1984,6 +2026,30 @@ namespace Net
             }
         }
         #endregion
+    }
+
+    [CLSCompliant(true)]
+    static class Hlp
+    {
+        public static void SetValueForValueType(this FieldInfo field, object container, object value)
+        {
+            Type containerType = container.GetType();
+
+            dynamic typedContainer = Convert.ChangeType(container, containerType);
+            TypedReference reference = __makeref(typedContainer);
+
+            field.SetValueDirect(reference, value);
+        }
+
+        public static object GetValueForValueType(this FieldInfo field, object container)
+        {
+            Type containerType = container.GetType();
+
+            dynamic typedContainer = Convert.ChangeType(container, containerType);
+            TypedReference reference = __makeref(typedContainer);
+
+            return field.GetValueDirect(reference);
+        }
     }
 
     #region Attributes

@@ -46,6 +46,7 @@ public class TowerTurns : MonoBehaviour, INetObj
 
             NetObjFactory.AddINetObject(obj.GetID(), obj);
         }
+        Debug.Log("Shoot bullet");
     }
 
     public IEnumerator TurnTower(Transform cam)

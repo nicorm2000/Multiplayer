@@ -166,7 +166,7 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
-    //[NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
+    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
     [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
     [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
     [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;

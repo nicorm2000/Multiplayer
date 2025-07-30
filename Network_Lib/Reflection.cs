@@ -139,11 +139,6 @@ namespace Net
                                 void ReadValueEMAction()
                                 {
                                     object actualObject = info.GetValue(obj);
-                                    if (actualObject == null)
-                                    {
-                                        actualObject = ConstructObject(info.FieldType);
-                                        info.SetValue(obj, actualObject);
-                                    }
 
                                     object fields = methodInfo.Invoke(null, new object[] { actualObject, netVarAux.syncAuthority });
                                     if (fields is List<(FieldInfo, NetVariable)> values)
@@ -901,11 +896,6 @@ namespace Net
                             if (extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
                             {
                                 object structInstance = info.GetValue(obj);
-                                if (structInstance == null)
-                                {
-                                    structInstance = ConstructObject(info.FieldType);
-                                    info.SetValue(obj, structInstance);
-                                }
 
                                 object fields = methodInfo.Invoke(null, new object[] { structInstance, attributes.syncAuthority });
 

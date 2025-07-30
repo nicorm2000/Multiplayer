@@ -24,7 +24,7 @@ public class PlayerController : MonoBehaviour, INetObj
     {
         [NetVariable(42, NETAUTHORITY.CLIENT)] public int testInt = 0;
     }
-    [Serializable]
+
     public class TestingClass4
     {
         [NetVariable(0, NETAUTHORITY.CLIENT)] public int testInt = 0;
@@ -166,49 +166,49 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
-    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1,1,1);
+    //[NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
     [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
     [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
     [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
     [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
-    //[NetVariable(1, NETAUTHORITY.CLIENT)] public bool myBool = false;
-    //[NetVariable(2, NETAUTHORITY.CLIENT)] public string myString = "pepe";
-    //[NetVariable(3, NETAUTHORITY.CLIENT)] public char myChar = 'a';
-    //[NetVariable(4, NETAUTHORITY.CLIENT)] public decimal myDecimal = 1;
-    //[NetVariable(5, NETAUTHORITY.CLIENT)] public double myDouble = 1;
-    //[NetVariable(6, NETAUTHORITY.CLIENT)] public short myShort = 1;
-    //[NetVariable(7, NETAUTHORITY.CLIENT)] public ushort myUShort = 1;
-    //[NetVariable(8, NETAUTHORITY.CLIENT)] public int myInt = 1;
-    //[NetVariable(9, NETAUTHORITY.CLIENT)] public uint myUInt = 1;
-    //[NetVariable(10, NETAUTHORITY.CLIENT)] public long myLong = 1;
-    //[NetVariable(11, NETAUTHORITY.CLIENT)] public ulong myULong = 1;
-    //[NetVariable(12, NETAUTHORITY.CLIENT)] public byte myByte = 1;
-    //[NetVariable(13, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
-    //[NetVariable(14, NETAUTHORITY.CLIENT)] public TestEnum enumField;
-    //[NetVariable(15, NETAUTHORITY.CLIENT)] public List<int> testList;
-    //[NetVariable(16, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
-    [NetVariable(17, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    //[NetVariable(18, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
-    //[NetVariable(19, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
-    //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
-    [NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
-    //[NetVariable(22, NETAUTHORITY.CLIENT)] public Vector2 MyVector2 = Vector2.zero;
-    //[NetVariable(23, NETAUTHORITY.CLIENT)] public Vector3 MyVector3 = Vector3.zero;
-    //[NetVariable(24, NETAUTHORITY.CLIENT)] public Vector4 MyVector4 = Vector4.zero;
-    //[NetVariable(25, NETAUTHORITY.CLIENT)] public Quaternion MyQuaternion = new(0f, 0f, 0f, 1f);
-    //[NetVariable(26, NETAUTHORITY.CLIENT)] public Color MyColor = new(1f,0.5f,0f,1f);
-    //[NetVariable(27, NETAUTHORITY.CLIENT)] public Color32 MyColor32 = new(0, 0, 0, 255);
-    //[NetVariable(28, NETAUTHORITY.CLIENT)] public Rect MyRect = new(0, 0, 1, 1);
-    //[NetVariable(29, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one);
-    //[NetVariable(30, NETAUTHORITY.CLIENT)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
-    //[NetVariable(31, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
-    //[NetVariable(32, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
-    //[NetVariable(33, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
-    //[NetVariable(34, NETAUTHORITY.CLIENT)] public DictionaryTestClass dictionaryTest;
-    //[NetVariable(35, NETAUTHORITY.CLIENT)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
-    //[NetVariable(36, NETAUTHORITY.CLIENT)] public CustomCollection<int> _customCollection;
-    //[NetVariable(37, NETAUTHORITY.CLIENT)] public CustomCollection2<string> _customCollection2;
-    //[NetVariable(38, NETAUTHORITY.CLIENT)] public CustomCollection3<TestingClass3> _customCollection3;
+    //[NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
+    //[NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
+    //[NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
+    //[NetVariable(9, NETAUTHORITY.CLIENT)] public decimal myDecimal = 1;
+    //[NetVariable(10, NETAUTHORITY.CLIENT)] public double myDouble = 1;
+    //[NetVariable(11, NETAUTHORITY.CLIENT)] public short myShort = 1;
+    //[NetVariable(12, NETAUTHORITY.CLIENT)] public ushort myUShort = 1;
+    //[NetVariable(13, NETAUTHORITY.CLIENT)] public int myInt = 1;
+    //[NetVariable(14, NETAUTHORITY.CLIENT)] public uint myUInt = 1;
+    //[NetVariable(15, NETAUTHORITY.CLIENT)] public long myLong = 1;
+    //[NetVariable(16, NETAUTHORITY.CLIENT)] public ulong myULong = 1;
+    //[NetVariable(17, NETAUTHORITY.CLIENT)] public byte myByte = 1;
+    //[NetVariable(18, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
+    //[NetVariable(19, NETAUTHORITY.CLIENT)] public TestEnum enumField;
+    //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<int> testList;
+    //[NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
+    //[NetVariable(22, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
+    //[NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
+    //[NetVariable(24, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
+    //[NetVariable(25, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
+    //[NetVariable(26, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
+    //[NetVariable(27, NETAUTHORITY.CLIENT)] public Vector2 MyVector2 = Vector2.zero;
+    //[NetVariable(28, NETAUTHORITY.CLIENT)] public Vector3 MyVector3 = Vector3.zero;
+    //[NetVariable(29, NETAUTHORITY.CLIENT)] public Vector4 MyVector4 = Vector4.zero;
+    //[NetVariable(30, NETAUTHORITY.CLIENT)] public Quaternion MyQuaternion = new(0f, 0f, 0f, 1f);
+    //[NetVariable(31, NETAUTHORITY.CLIENT)] public Color MyColor = new(1f, 0.5f, 0f, 1f);
+    //[NetVariable(32, NETAUTHORITY.CLIENT)] public Color32 MyColor32 = new(0, 0, 0, 255);
+    //[NetVariable(33, NETAUTHORITY.CLIENT)] public Rect MyRect = new(0, 0, 1, 1);
+    //[NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
+    //[NetVariable(35, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
+    //[NetVariable(36, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
+    //[NetVariable(37, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
+    //[NetVariable(38, NETAUTHORITY.CLIENT)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
+    //[NetVariable(39, NETAUTHORITY.CLIENT)] public DictionaryTestClass dictionaryTest;
+    //[NetVariable(40, NETAUTHORITY.CLIENT)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
+    //[NetVariable(41, NETAUTHORITY.CLIENT)] public CustomCollection<int> _customCollection;
+    //[NetVariable(42, NETAUTHORITY.CLIENT)] public CustomCollection2<string> _customCollection2;
+    //[NetVariable(43, NETAUTHORITY.CLIENT)] public CustomCollection3<TestingClass3> _customCollection3;
     [SerializeField] TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
@@ -285,13 +285,11 @@ public class PlayerController : MonoBehaviour, INetObj
     //{
     //    try
     //    {
-    //        // Initialize if null
     //        if (dictionaryTest == null)
     //        {
     //            dictionaryTest = new DictionaryTestClass();
     //        }
     //
-    //        // Safe key generation
     //        int newKey = dictionaryTest.testDictionary.Count > 0 ?
     //                   dictionaryTest.testDictionary.Keys.Max() + 1 :
     //                   1;
@@ -305,7 +303,6 @@ public class PlayerController : MonoBehaviour, INetObj
     //    {
     //        Debug.LogError($"Error adding dictionary entry: {ex}");
     //
-    //        // Fallback to key 1 if empty
     //        dictionaryTest.testDictionary.Add(1, $"Fallback Entry (Client {clientID})");
     //    }
     //}
@@ -328,7 +325,6 @@ public class PlayerController : MonoBehaviour, INetObj
     //    if (dictionaryTest?.testDictionary.Count > 0)
     //    {
     //        int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
-    //        //int randomKey2 = UnityEngine.Random.Range(0, 1000);
     //        string oldValue = dictionaryTest.testDictionary[randomKey];
     //        string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
     //        dictionaryTest.testDictionary[randomKey] = newValue;
@@ -352,8 +348,8 @@ public class PlayerController : MonoBehaviour, INetObj
     //    dictionaryTest = null;
     //    Debug.Log($"Client {clientID} set dictionary to NULL");
     //}
-    //#endregion
-    //#region MULTIDIMENSIONALARRAYS
+    #endregion
+    #region MULTIDIMENSIONALARRAYS
     //[ContextMenu("Initialize Arrays")]
     //private void InitializeArrays()
     //{
@@ -728,8 +724,6 @@ public class PlayerController : MonoBehaviour, INetObj
         cam.gameObject.GetComponent<AudioListener>().enabled = false;
 #endif
         OnEventA += () => { Debug.Log("TestEvent"); };
-        movementSynced = Vector3.one;
-        Debug.Log($"Awake Initial movementSynced in Start(): {movementSynced}");
     }
 
     [ContextMenu("Test")]
@@ -822,7 +816,7 @@ public class PlayerController : MonoBehaviour, INetObj
             }
         }
         //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
-#region LIST
+        #region LIST
         //if (Input.GetKeyDown(KeyCode.Space))
         //{
         //    testList = null;
@@ -837,8 +831,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //        testList.Add(3);
         //    }
         //}
-#endregion
-#region CLASS
+        #endregion
+        #region CLASS
         //if (Input.GetKeyDown(KeyCode.P))
         //{
         //    testing = null;
@@ -850,14 +844,22 @@ public class PlayerController : MonoBehaviour, INetObj
         //}
         //if (testing != null)
         //{
-        //    Debug.Log($"Client {clientID} testing class IS NOT NULL");
+        //    Debug.Log($"Client {clientID} testingClass4 IS NOT");
         //}
-        //else
+        //else if (testing == null)
         //{
-        //    Debug.Log($"Client {clientID} testing class IS NULL");
+        //    Debug.Log($"Client {clientID} testingClass4 IS NULL");
         //}
-#endregion
-#region PLANE
+        //if (testingClass4 != null)
+        //{
+        //    Debug.Log($"Client {clientID} testingClass4 IS NOT");
+        //}
+        //else if (testingClass4 == null)
+        //{
+        //    Debug.Log($"Client {clientID} testingClass4 IS NULL");
+        //}
+        #endregion
+        #region PLANE
         //if (Input.GetKeyDown(KeyCode.M))
         //{
         //    Plane temp = MyPlane;
@@ -872,12 +874,12 @@ public class PlayerController : MonoBehaviour, INetObj
         //    Debug.Log("Normal: " + MyPlane.normal);
         //    Debug.Log("Distance: " + MyPlane.distance);
         //}
-#endregion
-#region DICTIONARY
+        #endregion
+        #region DICTIONARY
         //if (dictionaryTest != null)
         //{
         //    string dictContents = $"Client {clientID} Dictionary Contents:\n";
-        //    foreach (var kvp in dictionaryTest.testDictionary)
+        //    foreach (KeyValuePair<int, string> kvp in dictionaryTest.testDictionary)
         //    {
         //        dictContents += $"[{kvp.Key}] = {kvp.Value}\n";
         //    }
@@ -887,8 +889,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} Dictionary is NULL");
         //}
-#endregion
-#region MULTIDIMENSIONALARRAYS
+        #endregion
+        #region MULTIDIMENSIONALARRAYS
         //if (arrayTest != null)
         //{
         //    Debug.Log($"Client {clientID} Arrays are NOT NULL");
@@ -897,8 +899,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} Arrays are NULL");
         //}
-#endregion
-#region CUSTOM COLLECTION
+        #endregion
+        #region CUSTOM COLLECTION
         //if (_customCollection != null)
         //{
         //    Debug.Log($"Client {clientID} Collection Contents:");
@@ -911,8 +913,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} Collection is NULL");
         //}
-#endregion
-#region CUSTOM COLLECTION 2
+        #endregion
+        #region CUSTOM COLLECTION 2
         //if (_customCollection2 != null)
         //{
         //    Debug.Log($"Client {clientID} Printing _customCollection2 - Count: {_customCollection2.Count}");
@@ -926,8 +928,8 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} String Collection is NULL");
         //}
-#endregion
-#region CUSTOM COLLECTION 3
+        #endregion
+        #region CUSTOM COLLECTION 3
         //if (_customCollection3 != null)
         //{
         //    Debug.Log($"Client {clientID} TestingClass3 Collection Contents:");
@@ -940,7 +942,7 @@ public class PlayerController : MonoBehaviour, INetObj
         //{
         //    Debug.Log($"Client {clientID} TestingClass3 Collection is NULL");
         //}
-#endregion
+        #endregion
     }
 
     public void OnReceiveDamage()

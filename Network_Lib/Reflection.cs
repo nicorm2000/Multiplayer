@@ -129,7 +129,7 @@ namespace Net
                     {
                         debug += "___info field: " + info + "\n";
                         debug += "___info route: " + idRoute[0].route + "\n";
-                        consoleDebugger.Invoke(debug);
+                        //consoleDebugger.Invoke(debug);
                         if (netVarAux.syncAuthority == netAuthority)
                         {
                             //consoleDebugger.Invoke($"Inspect: {owner}, {networkEntity.clientID}");
@@ -155,6 +155,7 @@ namespace Net
                                             structRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
                                             object componentValue = field.Item1.GetValue(actualObject);
 
+                                            consoleDebugger?.Invoke($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
                                             ReadValue(field.Item1, actualObject, field.Item2, structRoute, owner);
 
                                             info.SetValue(obj, actualObject);
@@ -169,9 +170,8 @@ namespace Net
                                 {
                                     List<RouteInfo> extendedRoute = new List<RouteInfo>(idRoute);
                                     //extendedRoute.Add(RouteInfo.CreateForProperty(aux.VariableId));
-
-                                    consoleDebugger?.Invoke($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
-                                    consoleDebugger?.Invoke($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                    //consoleDebugger?.Invoke($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
+                                    //consoleDebugger?.Invoke($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
                                     ReadValue(info, obj, netVarAux, extendedRoute, owner);
                                 }
                             }
@@ -207,7 +207,7 @@ namespace Net
         {
             string debug = "ReadValue Start - ";
             debug += $"Field: {info.Name}, Type: {info.FieldType}, Current Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
-            consoleDebugger?.Invoke(debug);
+            //consoleDebugger?.Invoke(debug);
 
             object fieldValue = info.GetValue(obj);
             Type fieldType = info.FieldType;
@@ -223,7 +223,7 @@ namespace Net
             // Handle simple types
             if (IsSimpleType(info.FieldType))
             {
-                consoleDebugger?.Invoke("Simple Type: " + fieldValue + fieldType);
+                //consoleDebugger?.Invoke("Simple Type: " + fieldValue + fieldType);
                 idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
                 SendPackage(fieldValue, attribute, idRoute);
                 return;
@@ -413,9 +413,10 @@ namespace Net
             }
 
             // Handle complex objects
-            consoleDebugger?.Invoke("Handling complex object type\n");
+            //consoleDebugger?.Invoke("Handling complex object type\n");
             idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
-            consoleDebugger?.Invoke($"Full Route Read: {string.Join("->", idRoute.Select(r => r.route))}\n");
+            //consoleDebugger?.Invoke("Complex object: " + fieldValue + fieldType);
+            //consoleDebugger?.Invoke($"Full Route Read: {string.Join("->", idRoute.Select(r => r.route))}\n");
             Inspect(fieldType, fieldValue, idRoute, owner);
         }
         #endregion
@@ -604,7 +605,7 @@ namespace Net
                         debug += "Processing Int message\n";
                         NetIntMessage netIntMessage = new NetIntMessage(data);
                         debug += $"Data: {netIntMessage.GetData()}, Route: {string.Join("->", netIntMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        consoleDebugger?.Invoke(debug);
+                        //consoleDebugger?.Invoke(debug);
                         VariableMapping(netIntMessage.GetMessageRoute(), netIntMessage.GetData());
                         break;
 
@@ -767,7 +768,7 @@ namespace Net
             }
             catch (Exception ex)
             {
-                consoleDebugger?.Invoke($"VariableMapping error: {ex.Message}\n{ex.StackTrace}");
+                //consoleDebugger?.Invoke($"VariableMapping error: {ex.Message}\n{ex.StackTrace}");
             }
 
             //consoleDebugger?.Invoke(debug);
@@ -915,8 +916,6 @@ namespace Net
                                         if (idRoute[idToRead + 1].route == field.Item2.VariableId)
                                         {
                                             //consoleDebugger?.Invoke($"InspectWrite: Writing to {info.Name}.{field.Item1.Name}");
-
-                                            // Get fresh struct instance to ensure we're not working with a stale copy
                                             object currentStruct = info.GetValue(obj);
                                             return WriteValue(field.Item1, currentStruct, field.Item2, idRoute, idToRead + 1, value, info, obj);
                                         }

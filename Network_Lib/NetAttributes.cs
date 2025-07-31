@@ -2,6 +2,7 @@
 
 namespace Net
 {
+    #region Attributes
     /// <summary>
     /// Attribute for marking classes that handle specific message types.
     /// </summary>
@@ -179,6 +180,9 @@ namespace Net
         }
     }
 
+    /// <summary>
+    /// Attribute that marks a field for TRS (Transform/Rotation/Scale/IsActive) synchronization over the network.
+    /// </summary>
     public class NetTRS : Attribute
     {
         [Flags]
@@ -196,10 +200,16 @@ namespace Net
         public SYNC syncData = SYNC.DEFAULT;
         public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
 
+        /// <summary>
+        /// Initializes a new instance of the NetTRS attribute with sync flags and optional authority.
+        /// </summary>
+        /// <param name="value">The sync flags to apply.</param>
+        /// <param name="netAuthority">The authority level. Defaults to SERVER.</param>
         public NetTRS(SYNC value, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER)
         {
             syncData = value;
             syncAuthority = netAuthority;
         }
     }
+    #endregion
 }

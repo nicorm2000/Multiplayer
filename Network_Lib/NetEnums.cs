@@ -2,6 +2,10 @@
 
 namespace Net
 {
+    #region Enums
+    /// <summary>
+    /// Defines flags for message priority behavior in the reflection system.
+    /// </summary>
     [Flags]
     public enum MessagePriority
     {
@@ -10,6 +14,9 @@ namespace Net
         NonDisposable = 2
     }
 
+    /// <summary>
+    /// Represents different types of messages used in network communication and synchronization.
+    /// </summary>
     public enum MessageType
     {
         Default = -100,
@@ -69,9 +76,14 @@ namespace Net
         Remove
     }
 
+
+    /// <summary>
+    /// Defines whether the CLIENT or SERVER has authority over a variable or event.
+    /// </summary>
     public enum NETAUTHORITY
     {
         CLIENT = 0,
         SERVER = 1,
     }
+    #endregion
 }

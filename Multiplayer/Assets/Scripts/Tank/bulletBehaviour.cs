@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using NetworkServer;
 using System;
 using Net;
 
@@ -73,8 +72,6 @@ netObj.OwnerId = originPlayerID;
             ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventA));
             ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventB), GetID());
             ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
-
-            Debug.Log("Bullet owner: " + GetOwnerID());
         }
 
         [NetMethod(0, NETAUTHORITY.CLIENT)]
@@ -121,7 +118,6 @@ netObj.OwnerId = originPlayerID;
         {
             NetDestroyGO netDestroyGO = new NetDestroyGO(MessagePriority.Default, (GetID(), originPlayerID));
             nm.networkEntity.SendMessage(netDestroyGO.Serialize());
-            Debug.Log($"Origin & ID:  {GetOwnerID() } & { GetID()}");
             NetObjFactory.RemoveINetObject(GetID());
             Destroy(gameObject);
         }

@@ -3,8 +3,10 @@ using System.Net;
 using System;
 using Net;
 
-enum States { Init, Lobby, Game, Finish };
-
+/// <summary>
+/// Manages the network connection state and provides access to network functionality.
+/// Acts as a singleton bridge between game systems and network operations.
+/// </summary>
 public class NetworkManager : MonoBehaviourSingleton<NetworkManager>  
 {
     public NetworkEntity networkEntity;
@@ -22,11 +24,18 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
 
     DateTime appStartTime;
 
+    /// <summary>
+    /// Initializes the network manager and records the startup time.
+    /// </summary>
     private void Start()
     {
         appStartTime = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Gets the network client instance if running as a client.
+    /// </summary>
+    /// <returns>The NetworkClient instance, or null if running as server.</returns>
     public NetworkClient GetNetworkClient()
     {
         if (isServer)
@@ -38,22 +47,37 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         return (NetworkClient)networkEntity;
     }
 
+    /// <summary>
+    /// Starts a new network client connection.
+    /// </summary>
+    /// <param name="ip">The server IP address to connect to.</param>
+    /// <param name="port">The server port number.</param>
+    /// <param name="name">The name of this client.</param>
     public void StartClient(IPAddress ip, int port, string name)
     {
         networkEntity = new NetworkClient(ip, port, name);
         onInitEntity?.Invoke();
     }
 
+    /// <summary>
+    /// Performs per-frame updates for network operations.
+    /// </summary>
     private void Update()
     {
         networkEntity?.Update();
     }
 
+    /// <summary>
+    /// Handles cleanup when the application is quitting.
+    /// </summary>
     private void OnApplicationQuit()
     {
         networkEntity.OnApplicationQuit();
     }
 
+    /// <summary>
+    /// Switches to the menu screen (client-side only).
+    /// </summary>
     public void SwitchToMenuScreen()
     {
         #if CLIENT
@@ -61,6 +85,10 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         #endif
     }
 
+    /// <summary>
+    /// Writes text to the chat display (client-side only).
+    /// </summary>
+    /// <param name="text">The text to display.</param>
     public void WriteChat(string text)
     {
         #if CLIENT
@@ -68,6 +96,10 @@ public class NetworkManager : MonoBehaviourSingleton<NetworkManager>
         #endif
     }
 
+    /// <summary>
+    /// Shows an error panel with the specified message (client-side only).
+    /// </summary>
+    /// <param name="errorText">The error message to display.</param>
     public void ShowErrorPanel(string errorText)
     {
         #if CLIENT

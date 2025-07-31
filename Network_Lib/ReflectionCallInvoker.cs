@@ -10,6 +10,10 @@ namespace Net
     {
         private readonly Reflection reflection;
 
+        /// <summary>
+        /// Initializes the inspector with a reference to the core Reflection system.
+        /// </summary>
+        /// <param name="reflection">The main Reflection instance.</param>
         public ReflectionCallInvoker(Reflection reflection)
         {
             this.reflection = reflection;

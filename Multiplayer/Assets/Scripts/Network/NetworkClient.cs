@@ -5,6 +5,10 @@ using System.Net;
 using System;
 using Net;
 
+/// <summary>
+/// Represents a network client that handles communication with a game server.
+/// Manages player connections, message handling, and network synchronization.
+/// </summary>
 public class NetworkClient : NetworkEntity
 {
     /// <summary>
@@ -436,6 +440,9 @@ public class NetworkClient : NetworkEntity
         gm.UpdatePlayerPosition((clientId, new UnityEngine.Vector3(position.x, position.y, position.z)));
     }
 
+    /// <summary>
+    /// Performs per-frame updates for the network client.
+    /// </summary>
     public override void Update()
     {
         base.Update();
@@ -446,12 +453,21 @@ public class NetworkClient : NetworkEntity
         }
     }
 
+    /// <summary>
+    /// Sends a message to the server.
+    /// </summary>
+    /// <param name="data">The data to send.</param>
     public override void SendMessage(byte[] data)
     {
         SendToServer(data);
     }
 
-    public override void SendMessage(byte[] data, int id = -1) //Es una sobrecarga que solo usa el SERVER
+    /// <summary>
+    /// Sends a message to the server with an optional client ID.
+    /// </summary>
+    /// <param name="data">The data to send.</param>
+    /// <param name="id">The target client ID (unused in client implementation).</param>
+    public override void SendMessage(byte[] data, int id = -1)
     {
         SendToServer(data);
     }

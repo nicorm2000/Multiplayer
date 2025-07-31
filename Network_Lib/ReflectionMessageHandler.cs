@@ -10,6 +10,10 @@ namespace Net
     {
         private readonly Reflection reflection;
 
+        /// <summary>
+        /// Initializes the inspector with a reference to the core Reflection system.
+        /// </summary>
+        /// <param name="reflection">The main Reflection instance.</param>
         public ReflectionMessageHandler(Reflection reflection)
         {
             this.reflection = reflection;
@@ -34,8 +38,6 @@ namespace Net
                 //    return;
                 //}
                 MessageType messageType = MessageChecker.CheckMessageType(data);
-                //debugger?.Log($"Received MessageType: {messageType}");
-                //debugger?.Log($"\nRAW DATA RECEIVED ({data?.Length ?? 0} bytes): {BitConverter.ToString(data ?? new byte[0])}");
                 debug += $"Message Type: {messageType}\n";
 
                 switch (messageType)
@@ -45,7 +47,7 @@ namespace Net
                         NetULongMessage netULongMessage = new NetULongMessage(data);
                         debug += $"Data: {netULongMessage.GetData()}, Route: {string.Join("->", netULongMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netULongMessage.GetMessageRoute(), netULongMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netULongMessage.GetMessageRoute(), netULongMessage.GetData());
                         break;
 
                     case MessageType.Uint:
@@ -53,7 +55,7 @@ namespace Net
                         NetUIntMessage netUIntMessage = new NetUIntMessage(data);
                         debug += $"Data: {netUIntMessage.GetData()}, Route: {string.Join("->", netUIntMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netUIntMessage.GetMessageRoute(), netUIntMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netUIntMessage.GetMessageRoute(), netUIntMessage.GetData());
                         break;
 
                     case MessageType.Ushort:
@@ -61,7 +63,7 @@ namespace Net
                         NetUShortMessage netUShortMessage = new NetUShortMessage(data);
                         debug += $"Data: {netUShortMessage.GetData()}, Route: {string.Join("->", netUShortMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netUShortMessage.GetMessageRoute(), netUShortMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netUShortMessage.GetMessageRoute(), netUShortMessage.GetData());
                         break;
 
                     case MessageType.String:
@@ -69,7 +71,7 @@ namespace Net
                         NetStringMessage netStringMessage = new NetStringMessage(data);
                         debug += $"Data: {netStringMessage.GetData()}, Route: {string.Join("->", netStringMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
                         break;
 
                     case MessageType.Short:
@@ -77,7 +79,7 @@ namespace Net
                         NetShortMessage netShortMessage = new NetShortMessage(data);
                         debug += $"Data: {netShortMessage.GetData()}, Route: {string.Join("->", netShortMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netShortMessage.GetMessageRoute(), netShortMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netShortMessage.GetMessageRoute(), netShortMessage.GetData());
                         break;
 
                     case MessageType.Sbyte:
@@ -85,7 +87,7 @@ namespace Net
                         NetSByteMessage netSByteMessage = new NetSByteMessage(data);
                         debug += $"Data: {netSByteMessage.GetData()}, Route: {string.Join("->", netSByteMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netSByteMessage.GetMessageRoute(), netSByteMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netSByteMessage.GetMessageRoute(), netSByteMessage.GetData());
                         break;
 
                     case MessageType.Long:
@@ -93,7 +95,7 @@ namespace Net
                         NetLongMessage netLongMessage = new NetLongMessage(data);
                         debug += $"Data: {netLongMessage.GetData()}, Route: {string.Join("->", netLongMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netLongMessage.GetMessageRoute(), netLongMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netLongMessage.GetMessageRoute(), netLongMessage.GetData());
                         break;
 
                     case MessageType.Int:
@@ -101,7 +103,7 @@ namespace Net
                         NetIntMessage netIntMessage = new NetIntMessage(data);
                         debug += $"Data: {netIntMessage.GetData()}, Route: {string.Join("->", netIntMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netIntMessage.GetMessageRoute(), netIntMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netIntMessage.GetMessageRoute(), netIntMessage.GetData());
                         break;
 
                     case MessageType.Float:
@@ -109,7 +111,7 @@ namespace Net
                         NetFloatMessage netFloatMessage = new NetFloatMessage(data);
                         debug += $"Data: {netFloatMessage.GetData()}, Route: {string.Join("->", netFloatMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netFloatMessage.GetMessageRoute(), netFloatMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netFloatMessage.GetMessageRoute(), netFloatMessage.GetData());
                         break;
 
                     case MessageType.Double:
@@ -117,7 +119,7 @@ namespace Net
                         NetDoubleMessage netDoubleMessage = new NetDoubleMessage(data);
                         debug += $"Data: {netDoubleMessage.GetData()}, Route: {string.Join("->", netDoubleMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netDoubleMessage.GetMessageRoute(), netDoubleMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netDoubleMessage.GetMessageRoute(), netDoubleMessage.GetData());
                         break;
 
                     case MessageType.Decimal:
@@ -125,7 +127,7 @@ namespace Net
                         NetDecimalMessage netDecimalMessage = new NetDecimalMessage(data);
                         debug += $"Data: {netDecimalMessage.GetData()}, Route: {string.Join("->", netDecimalMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netDecimalMessage.GetMessageRoute(), netDecimalMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netDecimalMessage.GetMessageRoute(), netDecimalMessage.GetData());
                         break;
 
                     case MessageType.Char:
@@ -133,7 +135,7 @@ namespace Net
                         NetCharMessage netCharMessage = new NetCharMessage(data);
                         debug += $"Data: {netCharMessage.GetData()}, Route: {string.Join("->", netCharMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netCharMessage.GetMessageRoute(), netCharMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netCharMessage.GetMessageRoute(), netCharMessage.GetData());
                         break;
 
                     case MessageType.Byte:
@@ -141,7 +143,7 @@ namespace Net
                         NetByteMessage netByteMessage = new NetByteMessage(data);
                         debug += $"Data: {netByteMessage.GetData()}, Route: {string.Join("->", netByteMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netByteMessage.GetMessageRoute(), netByteMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netByteMessage.GetMessageRoute(), netByteMessage.GetData());
                         break;
 
                     case MessageType.Bool:
@@ -149,7 +151,7 @@ namespace Net
                         NetBoolMessage netBoolMessage = new NetBoolMessage(data);
                         debug += $"Data: {netBoolMessage.GetData()}, Route: {string.Join("->", netBoolMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netBoolMessage.GetMessageRoute(), netBoolMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netBoolMessage.GetMessageRoute(), netBoolMessage.GetData());
                         break;
 
                     case MessageType.Null:
@@ -157,7 +159,7 @@ namespace Net
                         NetNullMessage netNullMessage = new NetNullMessage(data);
                         debug += $"Data: {netNullMessage.GetData()}, Route: {string.Join("->", netNullMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMappingNullException(netNullMessage.GetMessageRoute(), netNullMessage.GetData());
+                        reflection.reflectionMapping.VariableMappingNullException(netNullMessage.GetMessageRoute(), netNullMessage.GetData());
                         break;
 
                     case MessageType.Empty:
@@ -165,7 +167,7 @@ namespace Net
                         NetEmptyMessage netEmptyMessage = new NetEmptyMessage(data);
                         debug += $"Data: {netEmptyMessage.GetData()}, Route: {string.Join("->", netEmptyMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMappingEmpty(netEmptyMessage.GetMessageRoute(), netEmptyMessage.GetData());
+                        reflection.reflectionMapping.VariableMappingEmpty(netEmptyMessage.GetMessageRoute(), netEmptyMessage.GetData());
                         break;
 
                     case MessageType.Method:
@@ -182,7 +184,7 @@ namespace Net
                         NetRemoveMessage removeMessage = new NetRemoveMessage(data);
                         debug += $"Data: {removeMessage.GetData()}, Route: {string.Join("->", removeMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(removeMessage.GetMessageRoute(), removeMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(removeMessage.GetMessageRoute(), removeMessage.GetData());
                         break;
 
                     case MessageType.Enum:
@@ -190,7 +192,7 @@ namespace Net
                         NetEnumMessage netEnumMessage = new NetEnumMessage(data);
                         debug += $"Enum: {netEnumMessage.GetData()}, Route: {string.Join("->", netEnumMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.VariableMapping(netEnumMessage.GetMessageRoute(), netEnumMessage.GetData());
+                        reflection.reflectionMapping.VariableMapping(netEnumMessage.GetMessageRoute(), netEnumMessage.GetData());
                         break;
 
                     case MessageType.Event:
@@ -208,7 +210,7 @@ namespace Net
                         NetTRSMessage netTRSMessage = new NetTRSMessage(data);
                         debug += $"Enum: {netTRSMessage.GetData()}, Route: {string.Join("->", netTRSMessage.GetMessageRoute().Select(r => r.route))}\n";
                         //debugger?.Log(debug);
-                        reflection.TRSMapping(netTRSMessage.GetMessageRoute(), netTRSMessage.GetData());
+                        reflection.reflectionMapping.TRSMapping(netTRSMessage.GetMessageRoute(), netTRSMessage.GetData());
                         break;
 
                     default:

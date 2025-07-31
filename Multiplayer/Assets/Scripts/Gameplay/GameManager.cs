@@ -4,6 +4,10 @@ using UnityEngine;
 using System;
 using Net;
 
+/// <summary>
+/// Manages core game logic, player spawning, and network synchronization.
+/// Handles player instances, game state, and match progression.
+/// </summary>
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
     public static Action<int, int> OnBulletHit;
@@ -22,6 +26,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     NetworkManager nm;
     public bool isGameplay;
 
+    /// <summary>
+    /// Initializes the GameManager and sets up event subscriptions.
+    /// </summary>
     void Start()
     {
         nm = NetworkManager.Instance;
@@ -34,6 +41,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         OnInitGameplayTimer += ActivePlayerControllers;
     }
 
+    /// <summary>
+    /// Initializes network-related actions and event handlers.
+    /// </summary>
     void InitNetworkEntityActions()
     {
         nm.networkEntity.OnNewPlayer += SpawnPlayerPefab;
@@ -41,6 +51,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         nm.networkEntity.OnInstantiateBullet += InstantiatePlayerBullets;
     }
 
+    /// <summary>
+    /// Spawns a player prefab at the next available spawn position.
+    /// </summary>
+    /// <param name="index">The ID of the player to spawn.</param>
     public void SpawnPlayerPefab(int index)
     {
         if (!playerList.ContainsKey(index))
@@ -115,6 +129,11 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
+    /// <summary>
+    /// Handles the creation of a network-synchronized game object instance.
+    /// </summary>
+    /// <param name="owner">The owner ID of the instance.</param>
+    /// <param name="gameObject">The game object that was created.</param>
     void CheckForInstanceCreated(int owner, GameObject gameObject)
     {
         if (playerList.ContainsKey(owner))
@@ -130,7 +149,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
-
+    /// <summary>
+    /// Removes a player from the game by their ID.
+    /// </summary>
+    /// <param name="index">The ID of the player to remove.</param>
     void RemovePlayer(int index)
     {
         if (playerList.ContainsKey(index))
@@ -147,6 +169,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
+    /// <summary>
+    /// Removes all players from the game and resets spawn positions.
+    /// </summary>
     public void RemoveAllPlayers()
     {
         foreach (int id in playerList.Keys)
@@ -158,12 +183,21 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         spawnCounter = 0;
     }
 
+    /// <summary>
+    /// Instantiates bullet effects for a player's shooting action.
+    /// </summary>
+    /// <param name="id">The ID of the shooting player.</param>
+    /// <param name="bulletDir">The direction of the bullet.</param>
     void InstantiatePlayerBullets(int id, Vec3 bulletDir)
     {
         playerList[id].GetComponent<AudioSource>().Play();
         playerList[id].GetComponent<Animator>().SetTrigger("Shoot");
     }
 
+    /// <summary>
+    /// Updates a player's position in the game world.
+    /// </summary>
+    /// <param name="playerData">Tuple containing player ID and new position.</param>
     public void UpdatePlayerPosition((int index, Vector3 newPosition) playerData)
     {
         if (playerList.ContainsKey(playerData.index))
@@ -172,6 +206,11 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
+    /// <summary>
+    /// Handles damage received by a player from another player.
+    /// </summary>
+    /// <param name="playerReciveDamage">ID of the player receiving damage.</param>
+    /// <param name="otherPlayer">ID of the player causing damage.</param>
     void OnHitRecieved(int playerReciveDamage, int otherPlayer)
     {
 #if SERVER
@@ -195,6 +234,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 #endif
     }
 
+    /// <summary>
+    /// Activates all player controllers when gameplay begins.
+    /// </summary>
     public void ActivePlayerControllers()
     {
         foreach (int index in playerList.Keys)
@@ -206,6 +248,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
+    /// <summary>
+    /// Cleans up and resets the game state when a match ends.
+    /// </summary>
     public void EndMatch()
     {
         RemoveAllPlayers();

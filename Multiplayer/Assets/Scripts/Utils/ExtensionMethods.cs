@@ -8,6 +8,12 @@ public static class ExtensionMethods
 {
     private static BindingFlags INSTANCE_NONPUBLIC_FLAGS = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    /// <summary>
+    /// Gets the fields of a Vector2 with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="vector2">The Vector2 to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Vector2))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Vector2 vector2, NETAUTHORITY netAuthority)
     {
@@ -20,6 +26,12 @@ public static class ExtensionMethods
         return vector2Values;
     }
 
+    /// <summary>
+    /// Gets the fields of a Vector3 with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="vector3">The Vector3 to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Vector3))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Vector3 vector3, NETAUTHORITY netAuthority)
     {
@@ -33,6 +45,12 @@ public static class ExtensionMethods
         return vector3Values;
     }
 
+    /// <summary>
+    /// Gets the fields of a Vector4 with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="vector4">The Vector4 to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Vector4))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Vector4 vector4, NETAUTHORITY netAuthority)
     {
@@ -47,6 +65,12 @@ public static class ExtensionMethods
         return vector4Values;
     }
 
+    /// <summary>
+    /// Gets the fields of a Vector2Int with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="vector2Int">The Vector2Int to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Vector2Int))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Vector2Int vector2Int, NETAUTHORITY netAuthority)
     {
@@ -59,6 +83,12 @@ public static class ExtensionMethods
         return vector2IntValues;
     }
 
+    /// <summary>
+    /// Gets the fields of a Vector3Int with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="vector3Int">The Vector3Int to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Vector3Int))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Vector3Int vector3Int, NETAUTHORITY netAuthority)
     {
@@ -72,6 +102,12 @@ public static class ExtensionMethods
         return vector3IntValues;
     }
 
+    /// <summary>
+    /// Gets the fields of a Quaternion with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="quaternion">The Quaternion to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Quaternion))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Quaternion quaternion, NETAUTHORITY netAuthority)
     {
@@ -86,6 +122,12 @@ public static class ExtensionMethods
         return quaternionValues;
     }
 
+    /// <summary>
+    /// Gets the fields of a Color with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="color">The Color to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Color))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Color color, NETAUTHORITY netAuthority)
     {
@@ -99,7 +141,13 @@ public static class ExtensionMethods
 
         return colorValues;
     }
-    
+
+    /// <summary>
+    /// Gets the fields of a Color32 with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="color32">The Color32 to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Color32))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Color32 color32, NETAUTHORITY netAuthority)
     {
@@ -114,6 +162,12 @@ public static class ExtensionMethods
         return color32Values;
     }
 
+    /// <summary>
+    /// Gets the fields of a Rect with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="rect">The Rect to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Rect))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Rect rect, NETAUTHORITY netAuthority)
     {
@@ -128,6 +182,12 @@ public static class ExtensionMethods
         return rectValues;
     }
 
+    /// <summary>
+    /// Gets the fields of a Bounds with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="bounds">The Bounds to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Bounds))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Bounds bounds, NETAUTHORITY netAuthority)
     {
@@ -140,6 +200,12 @@ public static class ExtensionMethods
         return boundValues;
     }
 
+    /// <summary>
+    /// Gets the fields of a Matrix4x4 with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="matrix">The Matrix4x4 to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Matrix4x4))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Matrix4x4 matrix, NETAUTHORITY netAuthority)
     {
@@ -166,6 +232,12 @@ public static class ExtensionMethods
         return matrix4x4Values;
     }
 
+    /// <summary>
+    /// Gets the fields of a Plane with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="plane">The Plane to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
     [NetExtensionMethod(typeof(Plane))]
     public static List<(FieldInfo, NetVariable)> GetFields(this Plane plane, NETAUTHORITY netAuthority)
     {
@@ -178,6 +250,11 @@ public static class ExtensionMethods
         return planeValues;
     }
 
+    /// <summary>
+    /// Converts a Transform's position, rotation, and scale into a TRS (Transform-Rotation-Scale) structure.
+    /// </summary>
+    /// <param name="transform">The Transform to convert.</param>
+    /// <returns>A TRS structure containing the transform's position, rotation, scale, and active state.</returns>
     public static TRS TranslateTRS(this Transform transform)
     {
         TRS trs = new TRS();
@@ -190,6 +267,12 @@ public static class ExtensionMethods
         return trs;
     }
 
+    /// <summary>
+    /// Applies a TRS (Transform-Rotation-Scale) structure to a Transform, with optional synchronization flags.
+    /// </summary>
+    /// <param name="transform">The Transform to modify.</param>
+    /// <param name="tRS">The TRS structure containing the new values.</param>
+    /// <param name="syncValue">Flags indicating which components should be synchronized.</param>
     public static void FromTRS(this Transform transform, TRS tRS, NetTRS.SYNC syncValue)
     {
         if (!syncValue.HasFlag(NetTRS.SYNC.NOTPOSITION))

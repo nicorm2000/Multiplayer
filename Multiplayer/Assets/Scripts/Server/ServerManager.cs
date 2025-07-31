@@ -1,9 +1,11 @@
 using NetworkServer;
-using Network_Lib;
 using UnityEngine;
 using System;
 using Net;
 
+/// <summary>
+/// Manages the server lifecycle and network operations for the application.
+/// </summary>
 public class ServerManager : MonoBehaviour
 {
     public static ServerManager Instance { get; private set; }
@@ -13,6 +15,9 @@ public class ServerManager : MonoBehaviour
     public GameManager gm;
     private DateTime appStartTime;
 
+    /// <summary>
+    /// Initializes the singleton instance and ensures persistence across scenes.
+    /// </summary>
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -25,6 +30,9 @@ public class ServerManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    /// <summary>
+    /// Starts the server with command line arguments for port configuration.
+    /// </summary>
     void Start()
     {
         string[] args = Environment.GetCommandLineArgs();
@@ -47,6 +55,9 @@ public class ServerManager : MonoBehaviour
 #endif
     }
 
+    /// <summary>
+    /// Cleans up event subscriptions when the object is destroyed.
+    /// </summary>
     private void OnDestroy()
     {
 #if SERVER
@@ -55,6 +66,10 @@ public class ServerManager : MonoBehaviour
 #endif
     }
 
+    /// <summary>
+    /// Starts the server on the specified port.
+    /// </summary>
+    /// <param name="port">The port number to start the server on.</param>
     public void StartServer(int port)
     {
         if (isServerRunning) return;
@@ -66,6 +81,9 @@ public class ServerManager : MonoBehaviour
         Debug.Log($"Server started on port {port}");
     }
 
+    /// <summary>
+    /// Stops the server if it is currently running.
+    /// </summary>
     public void StopServer()
     {
         if (!isServerRunning) return;
@@ -76,6 +94,9 @@ public class ServerManager : MonoBehaviour
         Debug.Log("Server stopped");
     }
 
+    /// <summary>
+    /// Updates the server state during each physics frame.
+    /// </summary>
     private void FixedUpdate()
     {
         if (isServerRunning)
@@ -84,6 +105,9 @@ public class ServerManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handles cleanup when the application is quitting.
+    /// </summary>
     private void OnApplicationQuit()
     {
         if (isServerRunning)

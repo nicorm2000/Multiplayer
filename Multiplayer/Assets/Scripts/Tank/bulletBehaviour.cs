@@ -5,7 +5,7 @@ using Net;
 
 namespace Game
 {
-    [NetTRS(NetTRS.SYNC.DEFAULT)]
+    [NetTRS(NetTRS.SYNC.DEFAULT, NETAUTHORITY.CLIENT)]
     public class bulletBehaviour : MonoBehaviour, INetObj
     {
         [SerializeField] float velocity;
@@ -62,17 +62,17 @@ netObj.OwnerId = originPlayerID;
 #endif
 
             OnEventA += () => Debug.Log("C# Event: OnEventA triggered! " + netObj.OwnerId);
-            //OnEventB += (value) => Debug.Log($"C# Event: OnEventB({value}) triggered!");
-            //OnEventC += (text, weight) => Debug.Log($"C# Event: OnEventC(\"{text}\", {weight}) triggered!");
+            OnEventB += (value) => Debug.Log($"C# Event: OnEventB({value}) triggered!");
+            OnEventC += (text, weight) => Debug.Log($"C# Event: OnEventC(\"{text}\", {weight}) triggered!");
 
             Debug.Log("Shoot Game");
-            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMR));
-            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRB), false);
-            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRI), 3);
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendMethodMessage(this, nameof(TestMR));
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendMethodMessage(this, nameof(TestMRB), false);
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendMethodMessage(this, nameof(TestMRI), 3);
 
-            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
-            //ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), GetID());
-            //ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventA));
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventB), GetID());
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
 
             Debug.Log("Bullet owner: " + GetOwnerID());
         }

@@ -1,7 +1,6 @@
 ﻿using System.Runtime.Serialization;
 using System.Collections.Generic;
 using Network_Lib.BasicMessages;
-using System.ComponentModel;
 using System.Collections;
 using System.Reflection;
 using System.Linq;
@@ -11,37 +10,26 @@ using System;
 namespace Net
 {
     /// <summary>
-    /// Represents the possible states for null, empty or remove values in network communication.
-    /// </summary>
-    public enum PossibleStates
-    {
-        Null,
-        Empty,
-        Remove
-    }
-
-    public enum NETAUTHORITY
-    {
-        CLIENT = 0,
-        SERVER = 1,
-    }
-
-    /// <summary>
     /// Provides reflection-based inspection and manipulation of network objects.
     /// Handles serialization, deserialization, and network communication of object states.
     /// </summary>
     public class Reflection
     {
         #region Fields and Properties
-        private BindingFlags bindingFlags;
         private Assembly executeAssembly;
         private Assembly gameAssembly;
-        private NetworkEntity networkEntity;
         private NETAUTHORITY netAuthority;
+        private ReflectionCollectionHelper reflectionCollectionHelper;
+        private ReflectionInspector reflectionInspector;
+        private ReflectionMapping reflectionMapping;
+        private ReflectionReader reflectionReader;
+        private ReflectionWriter reflectionWriter;
+        public ReflectionMessageHandler reflectionMessageHandler;
+        public ReflectionCallInvoker reflectionCallInvoker;
+        public NetworkEntity networkEntity { get; private set; }
+        public BindingFlags bindingFlags { get; private set; }
 
-        public static Action<string> consoleDebugger;
-        public static Action consoleDebuggerPause;
-
+        public IReflectionDebugger debugger;
         public Dictionary<Type, MethodInfo> extensionMethods = new Dictionary<Type, MethodInfo>();
         private Dictionary<object, Dictionary<object, int>> previousDictionaryStates = new Dictionary<object, Dictionary<object, int>>();
         private readonly Dictionary<object, int> previousCollectionCounts = new Dictionary<object, int>();
@@ -52,12 +40,21 @@ namespace Net
         /// Provides reflection-based inspection and manipulation of network objects.
         /// Handles serialization, deserialization, and network communication of object states.
         /// </summary>
-        public Reflection(NetworkEntity entity, NETAUTHORITY netAuthority)
+        public Reflection(NetworkEntity entity, NETAUTHORITY netAuthority, IReflectionDebugger debugger)
         {
+            reflectionCollectionHelper = new ReflectionCollectionHelper(this);
+            reflectionInspector = new ReflectionInspector(this);
+            reflectionMapping = new ReflectionMapping(this);
+            reflectionMessageHandler = new ReflectionMessageHandler(this);
+            reflectionReader = new ReflectionReader(this);
+            reflectionWriter = new ReflectionWriter(this);
+            reflectionCallInvoker = new ReflectionCallInvoker(this);
+
             networkEntity = entity;
             if (netAuthority == NETAUTHORITY.CLIENT)
-                networkEntity.OnReceivedMessage += OnReceivedReflectionMessage;
+                networkEntity.OnReceivedMessage += reflectionMessageHandler.OnReceivedReflectionMessage;
             this.netAuthority = netAuthority;
+            this.debugger = debugger;
 
             executeAssembly = Assembly.GetExecutingAssembly();
             gameAssembly = Assembly.GetCallingAssembly();
@@ -74,12 +71,11 @@ namespace Net
                         if (netExtensionMethod != null)
                         {
                             extensionMethods.TryAdd(netExtensionMethod.extensionMethod, methodInfo);
-                            //consoleDebugger?.Invoke($"Registered extension for: {netExtensionMethod.extensionMethod.Name}");
+                            debugger?.Log($"Registered extension for: {netExtensionMethod.extensionMethod.Name}");
                         }
                     }
                 }
             }
-
         }
         #endregion
 
@@ -122,17 +118,17 @@ namespace Net
             string debug = "";
             if (obj != null)
             {
-                foreach (FieldInfo info in GetAllFields(type))
+                foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, bindingFlags))
                 {
                     NetVariable netVarAux = info.GetCustomAttribute<NetVariable>();
                     if (netVarAux != null)
                     {
                         debug += "___info field: " + info + "\n";
                         debug += "___info route: " + idRoute[0].route + "\n";
-                        //consoleDebugger.Invoke(debug);
+                        //debugger?.Log(debug);
                         if (netVarAux.syncAuthority == netAuthority)
                         {
-                            //consoleDebugger.Invoke($"Inspect: {owner}, {networkEntity.clientID}");
+                            //debugger?.Log($"Inspect: {owner}, {networkEntity.clientID}");
                             if (extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
                             {
                                 CheckAuthority(owner, netVarAux.syncAuthority, ReadValueEMAction, ReadValueEMAction);
@@ -150,7 +146,7 @@ namespace Net
                                             structRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
                                             object componentValue = field.Item1.GetValue(actualObject);
 
-                                            consoleDebugger?.Invoke($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                            //debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
                                             ReadValue(field.Item1, actualObject, field.Item2, structRoute, owner);
 
                                             info.SetValue(obj, actualObject);
@@ -165,8 +161,8 @@ namespace Net
                                 {
                                     List<RouteInfo> extendedRoute = new List<RouteInfo>(idRoute);
                                     //extendedRoute.Add(RouteInfo.CreateForProperty(aux.VariableId));
-                                    //consoleDebugger?.Invoke($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
-                                    //consoleDebugger?.Invoke($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                    //debugger?.Log($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
+                                    //debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
                                     ReadValue(info, obj, netVarAux, extendedRoute, owner);
                                 }
                             }
@@ -179,12 +175,12 @@ namespace Net
                     }
                 }
                 debug += "Exit foreach: " + obj + "\n";
-                //consoleDebugger.Invoke(debug);
+                //debugger?.Log(debug);
             }
             else
             {
                 debug += "Object is NULL";
-                //consoleDebugger.Invoke(debug);
+                //debugger?.Log(debug);
             }
         }
 
@@ -202,7 +198,7 @@ namespace Net
         {
             string debug = "ReadValue Start - ";
             debug += $"Field: {info.Name}, Type: {info.FieldType}, Current Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
 
             object fieldValue = info.GetValue(obj);
             Type fieldType = info.FieldType;
@@ -216,9 +212,9 @@ namespace Net
             }
 
             // Handle simple types
-            if (IsSimpleType(info.FieldType))
+            if (ReflectionHelperMethods.IsSimpleType(info.FieldType))
             {
-                //consoleDebugger?.Invoke("Simple Type: " + fieldValue + fieldType);
+                //debugger?.Log("Simple Type: " + fieldValue + fieldType);
                 idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
                 SendPackage(fieldValue, attribute, idRoute);
                 return;
@@ -237,7 +233,7 @@ namespace Net
                         dimensions[i] = mdArray.GetLength(i);
                     }
 
-                    foreach (int[] indices in GetArrayIndices(mdArray))
+                    foreach (int[] indices in ReflectionHelperMethods.GetArrayIndices(mdArray))
                     {
                         object element = mdArray.GetValue(indices);
                         List<RouteInfo> currentRoute = new List<RouteInfo>(idRoute)
@@ -271,7 +267,7 @@ namespace Net
                         {
                             foreach (object? key in removedKeys)
                             {
-                                int keyHash = GetStableKeyHash(key);
+                                int keyHash = ReflectionHelperMethods.GetStableKeyHash(key);
                                 debug += ($"Sending Remove for Key: {key} (Hash: {keyHash})\n");
 
                                 List<RouteInfo> removeRoute = new List<RouteInfo>(idRoute)
@@ -286,14 +282,14 @@ namespace Net
                                     removeRoute);
 
                                 byte[] serialized = removeMessage.Serialize();
-                                //consoleDebugger?.Invoke($"Sending Remove - Full Data: {BitConverter.ToString(serialized)}");
+                                //debugger?.Log($"Sending Remove - Full Data: {BitConverter.ToString(serialized)}");
                                 networkEntity.SendMessage(serialized);
                             }
 
                             // Update state and RETURN after processing removals
-                            previousDictionaryStates[dictionary] = currentKeys.ToDictionary(k => k, GetStableKeyHash);
+                            previousDictionaryStates[dictionary] = currentKeys.ToDictionary(k => k, ReflectionHelperMethods.GetStableKeyHash);
                             debug += ("--- REMOVALS PROCESSED ---");
-                            //consoleDebugger?.Invoke(debug.ToString());
+                            //debugger?.Log(debug.ToString());
                             return;
                         }
                     }
@@ -303,7 +299,7 @@ namespace Net
                     {
                         ProcessValue(entry.Value, new List<RouteInfo>(idRoute)
                         {
-                            RouteInfo.CreateForDictionary(attribute.VariableId, GetStableKeyHash(entry.Key), valueType)
+                            RouteInfo.CreateForDictionary(attribute.VariableId, ReflectionHelperMethods.GetStableKeyHash(entry.Key), valueType)
                         }, attribute, owner);
                     }
 
@@ -317,15 +313,15 @@ namespace Net
                     }
 
                     // Update state
-                    previousDictionaryStates[dictionary] = currentKeys.ToDictionary(k => k, GetStableKeyHash);
+                    previousDictionaryStates[dictionary] = currentKeys.ToDictionary(k => k, ReflectionHelperMethods.GetStableKeyHash);
 
                     debug += ("--- INSPECTION COMPLETE ---");
-                    //consoleDebugger?.Invoke(debug);
+                    //debugger?.Log(debug);
                     return;
                 }
                 else
                 {
-                    //consoleDebugger?.Invoke($"Processing as generic collection: {fieldType.Name}");
+                    //debugger?.Log($"Processing as generic collection: {fieldType.Name}");
 
                     IEnumerable collection = (IEnumerable)fieldValue;
                     int count = 0;
@@ -355,7 +351,7 @@ namespace Net
                                         routeId: attribute.VariableId,
                                         index: removedIndex,
                                         size: count,
-                                        elementType: GetElementType(fieldType))
+                                        elementType: ReflectionHelperMethods.GetElementType(fieldType))
                                 };
 
                                 NetRemoveMessage removeMessage = new NetRemoveMessage(
@@ -364,7 +360,7 @@ namespace Net
                                     removeRoute);
 
                                 byte[] serialized = removeMessage.Serialize();
-                                //consoleDebugger?.Invoke($"[ReadValue] Sending Remove for index {removedIndex} (count reduced) - Data: {BitConverter.ToString(serialized)}");
+                                //debugger?.Log($"[ReadValue] Sending Remove for index {removedIndex} (count reduced) - Data: {BitConverter.ToString(serialized)}");
                                 networkEntity.SendMessage(serialized);
                             }
                         }
@@ -384,10 +380,10 @@ namespace Net
                                 routeId: attribute.VariableId,
                                 index: index++,
                                 size: count,
-                                elementType: item?.GetType() ?? GetElementType(fieldType))
+                                elementType: item?.GetType() ?? ReflectionHelperMethods.GetElementType(fieldType))
                         };
 
-                        //consoleDebugger?.Invoke($"Processing collection item [{index - 1}]: " +
+                        //debugger?.Log($"Processing collection item [{index - 1}]: " +
                         //                      $"Type: {item?.GetType()?.Name ?? "null"}, " +
                         //                      $"Value: {item ?? "null"}");
 
@@ -396,22 +392,22 @@ namespace Net
 
                     if (count == 0)
                     {
-                        //consoleDebugger?.Invoke("Collection is empty");
+                        //debugger?.Log("Collection is empty");
                         idRoute.Add(new RouteInfo(
                             attribute.VariableId,
                             collectionKey: -1,
                             collectionSize: 0,
-                            elementType: GetElementType(fieldType)));
+                            elementType: ReflectionHelperMethods.GetElementType(fieldType)));
                         SendPackage(PossibleStates.Empty, attribute, idRoute);
                     }
                 }
             }
 
             // Handle complex objects
-            //consoleDebugger?.Invoke("Handling complex object type\n");
+            //debugger?.Log("Handling complex object type\n");
             idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
-            //consoleDebugger?.Invoke("Complex object: " + fieldValue + fieldType);
-            //consoleDebugger?.Invoke($"Full Route Read: {string.Join("->", idRoute.Select(r => r.route))}\n");
+            //debugger?.Log("Complex object: " + fieldValue + fieldType);
+            //debugger?.Log($"Full Route Read: {string.Join("->", idRoute.Select(r => r.route))}\n");
             Inspect(fieldType, fieldValue, idRoute, owner);
         }
         #endregion
@@ -428,11 +424,11 @@ namespace Net
             string debug = "SendPackage - ";
             debug += $"Value Type: {value?.GetType().Name ?? "null"}";
             debug += $"Route: {string.Join("->", idRoute.Select(r => $"{r.route}[{r.collectionKey}]"))}";
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
 
             if (value is PossibleStates.Null)
             {
-                //consoleDebugger?.Invoke("Sending NullMessage\n");
+                //debugger?.Log("Sending NullMessage\n");
                 NetNullMessage netNullMessage = new NetNullMessage(attribute.MessagePriority, null, idRoute);
                 networkEntity.SendMessage(netNullMessage.Serialize());
                 return;
@@ -440,7 +436,7 @@ namespace Net
 
             if (value is PossibleStates.Empty)
             {
-                //consoleDebugger?.Invoke("Sending EmptyMessage\n");
+                //debugger?.Log("Sending EmptyMessage\n");
                 NetEmptyMessage netEmptyMessage = new NetEmptyMessage(attribute.MessagePriority, new Empty(), idRoute);
                 networkEntity.SendMessage(netEmptyMessage.Serialize());
                 return;
@@ -448,18 +444,18 @@ namespace Net
 
             if (value is PossibleStates.Remove)
             {
-                //consoleDebugger?.Invoke("Sending RemoveMessage\n");
+                //debugger?.Log("Sending RemoveMessage\n");
                 int keyHash = idRoute.Last().collectionKey;
                 NetRemoveMessage netRemoveMessage = new NetRemoveMessage(attribute.MessagePriority, keyHash, idRoute);
                 byte[] serialized = netRemoveMessage.Serialize();
-                //consoleDebugger?.Invoke($"Sending Remove - KeyHash: {keyHash}, Data: {BitConverter.ToString(serialized)}");
+                //debugger?.Log($"Sending Remove - KeyHash: {keyHash}, Data: {BitConverter.ToString(serialized)}");
                 networkEntity.SendMessage(serialized);
                 return;
             }
 
             if (value is Enum enumValue)
             {
-                //consoleDebugger?.Invoke("Sending Enum package\n");
+                //debugger?.Log("Sending Enum package\n");
                 NetEnumMessage enumMessage = new NetEnumMessage(attribute.MessagePriority, enumValue, idRoute);
                 networkEntity.SendMessage(enumMessage.Serialize());
                 return;
@@ -486,7 +482,7 @@ namespace Net
                                 {
                                     ParentBaseMessage message = (ParentBaseMessage)ctor.Invoke(parameters);
                                     debug += $"Message created successfully. Serializing...\n";
-                                    //consoleDebugger?.Invoke(debug);
+                                    //debugger?.Log(debug);
                                     networkEntity.SendMessage(message.Serialize());
                                     return;
                                 }
@@ -505,224 +501,8 @@ namespace Net
             }
 
             debug += $"No suitable message type found for {packageType.Name}\n";
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
         }
-        #endregion
-
-        #region Message Handling
-        /// <summary>
-        /// Handles received reflection messages and routes them to appropriate processing methods.
-        /// </summary>
-        /// <param name="data">The raw message data.</param>
-        /// <param name="ip">The endpoint from which the message was received.</param>
-        public void OnReceivedReflectionMessage(byte[] data, IPEndPoint ip)
-        {
-            try
-            {
-                //consoleDebugger?.Invoke($"Received {data.Length} bytes: {BitConverter.ToString(data)}");
-                //int rawType = BitConverter.ToInt32(data, 0);
-                //consoleDebugger?.Invoke($"First 4 bytes: {rawType} ({(MessageType)rawType})");
-
-                string debug = "OnReceivedReflectionMessage - ";
-                //// Verify minimum length
-                //if (data == null || data.Length < 4)
-                //{
-                //    consoleDebugger?.Invoke("ERROR: Message too short");
-                //    return;
-                //}
-
-                // Directly read message type from first 4 bytes
-                //MessageType messageType = (MessageType)BitConverter.ToInt32(data, 0);
-                MessageType messageType = MessageChecker.CheckMessageType(data);
-                //consoleDebugger?.Invoke($"Received MessageType: {messageType}");
-                //consoleDebugger?.Invoke($"\nRAW DATA RECEIVED ({data?.Length ?? 0} bytes): {BitConverter.ToString(data ?? new byte[0])}");
-                debug += $"Message Type: {messageType}\n";
-
-                switch (messageType)
-                {
-                    case MessageType.Ulong:
-                        debug += "Processing Ulong message\n";
-                        NetULongMessage netULongMessage = new NetULongMessage(data);
-                        debug += $"Data: {netULongMessage.GetData()}, Route: {string.Join("->", netULongMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netULongMessage.GetMessageRoute(), netULongMessage.GetData());
-                        break;
-
-                    case MessageType.Uint:
-                        debug += "Processing Uint message\n";
-                        NetUIntMessage netUIntMessage = new NetUIntMessage(data);
-                        debug += $"Data: {netUIntMessage.GetData()}, Route: {string.Join("->", netUIntMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netUIntMessage.GetMessageRoute(), netUIntMessage.GetData());
-                        break;
-
-                    case MessageType.Ushort:
-                        debug += "Processing Ushort message\n";
-                        NetUShortMessage netUShortMessage = new NetUShortMessage(data);
-                        debug += $"Data: {netUShortMessage.GetData()}, Route: {string.Join("->", netUShortMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netUShortMessage.GetMessageRoute(), netUShortMessage.GetData());
-                        break;
-
-                    case MessageType.String:
-                        debug += "Processing String message\n";
-                        NetStringMessage netStringMessage = new NetStringMessage(data);
-                        debug += $"Data: {netStringMessage.GetData()}, Route: {string.Join("->", netStringMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netStringMessage.GetMessageRoute(), netStringMessage.GetData());
-                        break;
-
-                    case MessageType.Short:
-                        debug += "Processing Short message\n";
-                        NetShortMessage netShortMessage = new NetShortMessage(data);
-                        debug += $"Data: {netShortMessage.GetData()}, Route: {string.Join("->", netShortMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netShortMessage.GetMessageRoute(), netShortMessage.GetData());
-                        break;
-
-                    case MessageType.Sbyte:
-                        debug += "Processing Sbyte message\n";
-                        NetSByteMessage netSByteMessage = new NetSByteMessage(data);
-                        debug += $"Data: {netSByteMessage.GetData()}, Route: {string.Join("->", netSByteMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netSByteMessage.GetMessageRoute(), netSByteMessage.GetData());
-                        break;
-
-                    case MessageType.Long:
-                        debug += "Processing Long message\n";
-                        NetLongMessage netLongMessage = new NetLongMessage(data);
-                        debug += $"Data: {netLongMessage.GetData()}, Route: {string.Join("->", netLongMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netLongMessage.GetMessageRoute(), netLongMessage.GetData());
-                        break;
-
-                    case MessageType.Int:
-                        debug += "Processing Int message\n";
-                        NetIntMessage netIntMessage = new NetIntMessage(data);
-                        debug += $"Data: {netIntMessage.GetData()}, Route: {string.Join("->", netIntMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netIntMessage.GetMessageRoute(), netIntMessage.GetData());
-                        break;
-
-                    case MessageType.Float:
-                        debug += "Processing Float message\n";
-                        NetFloatMessage netFloatMessage = new NetFloatMessage(data);
-                        debug += $"Data: {netFloatMessage.GetData()}, Route: {string.Join("->", netFloatMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netFloatMessage.GetMessageRoute(), netFloatMessage.GetData());
-                        break;
-
-                    case MessageType.Double:
-                        debug += "Processing Double message\n";
-                        NetDoubleMessage netDoubleMessage = new NetDoubleMessage(data);
-                        debug += $"Data: {netDoubleMessage.GetData()}, Route: {string.Join("->", netDoubleMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netDoubleMessage.GetMessageRoute(), netDoubleMessage.GetData());
-                        break;
-
-                    case MessageType.Decimal:
-                        debug += "Processing Decimal message\n";
-                        NetDecimalMessage netDecimalMessage = new NetDecimalMessage(data);
-                        debug += $"Data: {netDecimalMessage.GetData()}, Route: {string.Join("->", netDecimalMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netDecimalMessage.GetMessageRoute(), netDecimalMessage.GetData());
-                        break;
-
-                    case MessageType.Char:
-                        debug += "Processing Char message\n";
-                        NetCharMessage netCharMessage = new NetCharMessage(data);
-                        debug += $"Data: {netCharMessage.GetData()}, Route: {string.Join("->", netCharMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netCharMessage.GetMessageRoute(), netCharMessage.GetData());
-                        break;
-
-                    case MessageType.Byte:
-                        debug += "Processing Byte message\n";
-                        NetByteMessage netByteMessage = new NetByteMessage(data);
-                        debug += $"Data: {netByteMessage.GetData()}, Route: {string.Join("->", netByteMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netByteMessage.GetMessageRoute(), netByteMessage.GetData());
-                        break;
-
-                    case MessageType.Bool:
-                        debug += "Processing Bool message\n";
-                        NetBoolMessage netBoolMessage = new NetBoolMessage(data);
-                        debug += $"Data: {netBoolMessage.GetData()}, Route: {string.Join("->", netBoolMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netBoolMessage.GetMessageRoute(), netBoolMessage.GetData());
-                        break;
-
-                    case MessageType.Null:
-                        debug += "Processing Null message\n";
-                        NetNullMessage netNullMessage = new NetNullMessage(data);
-                        debug += $"Data: {netNullMessage.GetData()}, Route: {string.Join("->", netNullMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMappingNullException(netNullMessage.GetMessageRoute(), netNullMessage.GetData());
-                        break;
-
-                    case MessageType.Empty:
-                        debug += "Processing Empty message\n";
-                        NetEmptyMessage netEmptyMessage = new NetEmptyMessage(data);
-                        debug += $"Data: {netEmptyMessage.GetData()}, Route: {string.Join("->", netEmptyMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMappingEmpty(netEmptyMessage.GetMessageRoute(), netEmptyMessage.GetData());
-                        break;
-
-                    case MessageType.Method:
-                        debug += "Processing Method message\n";
-                        NetMethodMessage netMethodMessage = new NetMethodMessage(data);
-                        (int, List<(string, string)>) methodData = netMethodMessage.GetData();
-                        debug += $"Method: {methodData.Item1}, Args: {string.Join(", ", methodData.Item2)}, Route: {netMethodMessage.GetMessageRoute()[0].route}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        InvokeReflectionMethod(methodData.Item1, methodData.Item2, netMethodMessage.GetMessageRoute()[0].route);
-                        break;
-
-                    case MessageType.Remove:
-                        debug += "Processing Remove message\n";
-                        NetRemoveMessage removeMessage = new NetRemoveMessage(data);
-                        debug += $"Data: {removeMessage.GetData()}, Route: {string.Join("->", removeMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(removeMessage.GetMessageRoute(), removeMessage.GetData());
-                        break;
-
-                    case MessageType.Enum:
-                        debug += "Processing Enum message\n";
-                        NetEnumMessage netEnumMessage = new NetEnumMessage(data);
-                        debug += $"Enum: {netEnumMessage.GetData()}, Route: {string.Join("->", netEnumMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        VariableMapping(netEnumMessage.GetMessageRoute(), netEnumMessage.GetData());
-                        break;
-
-                    case MessageType.Event:
-                        debug += "Processing Event message\n";
-                        NetEventMessage netEventMessage = new NetEventMessage(data);
-                        (int, List<(string, string)>) eventData = netEventMessage.GetData();
-                        debug += $"Method: {eventData.Item1}, Args: {string.Join(", ", eventData.Item2)}, Route: {netEventMessage.GetMessageRoute()[0].route}\n";
-                        List<RouteInfo> route = netEventMessage.GetMessageRoute();
-                        //consoleDebugger?.Invoke(debug);
-                        InvokeCSharpEvent(eventData.Item1, eventData.Item2, route[0].route);
-                        break;
-
-                    case MessageType.TRS:
-                        debug += "Processing TRS message\n";
-                        NetTRSMessage netTRSMessage = new NetTRSMessage(data);
-                        debug += $"Enum: {netTRSMessage.GetData()}, Route: {string.Join("->", netTRSMessage.GetMessageRoute().Select(r => r.route))}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        TRSMapping(netTRSMessage.GetMessageRoute(), netTRSMessage.GetData());
-                        break;
-
-                    default:
-                        debug += $"Unhandled message type: {messageType}\n";
-                        //consoleDebugger?.Invoke(debug);
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                //consoleDebugger?.Invoke($"ERROR Processing Message: {ex.Message}");
-            }
-        }
-
         #endregion
 
         #region Variable Mapping
@@ -731,7 +511,7 @@ namespace Net
         /// </summary>
         /// <param name="route">Route information for the value.</param>
         /// <param name="variableValue">The value to map.</param>
-        void VariableMapping(List<RouteInfo> route, object variableValue)
+        public void VariableMapping(List<RouteInfo> route, object variableValue)
         {
             string debug = $"VariableMapping - Start\n";
             debug += $"Type: {variableValue?.GetType()?.Name ?? "null"}, Value: {variableValue}\n";
@@ -741,14 +521,14 @@ namespace Net
             {
                 if (route == null || route.Count == 0)
                 {
-                    //consoleDebugger?.Invoke("Empty route, aborting\n");
+                    //debugger?.Log("Empty route, aborting\n");
                     return;
                 }
 
                 INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
                 if (objectRoot == null)
                 {
-                    //consoleDebugger?.Invoke($"No INetObj found for ID: {route[0].route}\n");
+                    //debugger?.Log($"No INetObj found for ID: {route[0].route}\n");
                     return;
                 }
 
@@ -759,14 +539,14 @@ namespace Net
                 //object a = NetObjFactory.GetObject(route[0].route);
                 InspectWrite(objectRoot.GetType(), objectRoot, route, 1, variableValue);
                 //debug += $"InspectWrite completed. Result: {a}\n";
-                //consoleDebugger?.Invoke(debug);
+                //debugger?.Log(debug);
             }
             catch (Exception ex)
             {
-                //consoleDebugger?.Invoke($"VariableMapping error: {ex.Message}\n{ex.StackTrace}");
+                //debugger?.Log($"VariableMapping error: {ex.Message}\n{ex.StackTrace}");
             }
 
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
         }
 
         /// <summary>
@@ -774,7 +554,7 @@ namespace Net
         /// </summary>
         /// <param name="route">Route information for the value.</param>
         /// <param name="variableValue">The null value to map.</param>
-        void VariableMappingNullException(List<RouteInfo> route, object variableValue)
+        public void VariableMappingNullException(List<RouteInfo> route, object variableValue)
         {
             string debug = "VariableMappingNullException - ";
             debug += $"Value: {variableValue}, Type: {variableValue?.GetType()?.Name ?? "null"}, ";
@@ -782,21 +562,21 @@ namespace Net
 
             if (route == null || route.Count == 0)
             {
-                //consoleDebugger?.Invoke("Empty route\n");
+                //debugger?.Log("Empty route\n");
                 return;
             }
 
             INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
             if (objectRoot == null)
             {
-                //consoleDebugger?.Invoke($"No INetObj found for ID: {route[0].route}\n");
+                //debugger?.Log($"No INetObj found for ID: {route[0].route}\n");
                 return;
             }
 
             debug += $"Root Object: {objectRoot.GetType().Name}, OwnerID: {objectRoot.GetOwnerID()}, NetworkEntity ClientID: {networkEntity.clientID}\n";
 
             debug += "Processing write operation for null exception\n";
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
             InspectWriteNullException(objectRoot.GetType(), objectRoot, route, 1, variableValue);
         }
 
@@ -805,7 +585,7 @@ namespace Net
         /// </summary>
         /// <param name="route">Route information for the value.</param>
         /// <param name="variableValue">The empty value to map.</param>
-        void VariableMappingEmpty(List<RouteInfo> route, object variableValue)
+        public void VariableMappingEmpty(List<RouteInfo> route, object variableValue)
         {
             string debug = "VariableMappingEmpty - ";
             debug += $"Value: {variableValue}, Type: {variableValue?.GetType()?.Name ?? "null"}, ";
@@ -813,14 +593,14 @@ namespace Net
 
             if (route == null || route.Count == 0)
             {
-                //consoleDebugger?.Invoke("Empty route\n");
+                //debugger?.Log("Empty route\n");
                 return;
             }
 
             INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
             if (objectRoot == null)
             {
-                //consoleDebugger?.Invoke($"No INetObj found for ID: {route[0].route}\n");
+                //debugger?.Log($"No INetObj found for ID: {route[0].route}\n");
                 return;
             }
 
@@ -828,21 +608,21 @@ namespace Net
 
             debug += "Processing empty collection\n";
             InspectWriteEmpty(objectRoot.GetType(), objectRoot, route, 1, variableValue);
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
         }
 
-        private void TRSMapping(List<RouteInfo> route, TRS data)
+        public void TRSMapping(List<RouteInfo> route, TRS data)
         {
             if (route == null || route.Count == 0)
             {
-                //consoleDebugger?.Invoke("Empty route\n");
+                //debugger?.Log("Empty route\n");
                 return;
             }
 
             INetObj objectRoot = NetObjFactory.GetINetObject(route[0].route);
             if (objectRoot == null)
             {
-                //consoleDebugger?.Invoke($"No INetObj found for ID: {route[0].route}\n");
+                //debugger?.Log($"No INetObj found for ID: {route[0].route}\n");
                 return;
             }
 
@@ -873,20 +653,20 @@ namespace Net
             {
                 if (obj == null)
                 {
-                    //consoleDebugger?.Invoke("Target object is null\n");
+                    //debugger?.Log("Target object is null\n");
                     return null;
                 }
 
                 if (idRoute.Count <= idToRead)
                 {
-                    //consoleDebugger?.Invoke("Route exhausted without finding target\n");
+                    //debugger?.Log("Route exhausted without finding target\n");
                     return obj;
                 }
 
                 RouteInfo currentRoute = idRoute[idToRead];
                 debug += $"Current Route Info: {currentRoute}\n";
                 // Regular fields check
-                foreach (FieldInfo info in GetAllFields(type))
+                foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, bindingFlags))
                 {
                     NetVariable attributes = info.GetCustomAttribute<NetVariable>();
                     if (attributes != null)
@@ -905,7 +685,7 @@ namespace Net
                                     {
                                         if (idRoute[idToRead + 1].route == field.Item2.VariableId)
                                         {
-                                            //consoleDebugger?.Invoke($"InspectWrite: Writing to {info.Name}.{field.Item1.Name}");
+                                            //debugger?.Log($"InspectWrite: Writing to {info.Name}.{field.Item1.Name}");
                                             object currentStruct = info.GetValue(obj);
                                             return WriteValue(field.Item1, currentStruct, field.Item2, idRoute, idToRead + 1, value, info, obj);
                                         }
@@ -917,12 +697,12 @@ namespace Net
                                 object structInstance = info.GetValue(obj);
                                 if (structInstance == null)
                                 {
-                                    structInstance = ConstructObject(info.FieldType);
+                                    structInstance = ReflectionHelperMethods.ConstructObject(info.FieldType, bindingFlags);
                                     info.SetValue(obj, structInstance);
                                 }
                                 //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
                                 //debug += $"Current field value: {info.GetValue(obj)}\n";
-                                //consoleDebugger?.Invoke(debug);
+                                //debugger?.Log(debug);
                                 return WriteValue(info, obj, attributes, idRoute, idToRead, value);
                             }
                         }
@@ -937,7 +717,7 @@ namespace Net
                 debug += $"InspectWrite error: {ex.Message}\n{ex.StackTrace}";
             }
 
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
             return obj;
         }
 
@@ -958,26 +738,26 @@ namespace Net
 
             if (obj == null || idRoute.Count <= idToRead)
             {
-                //consoleDebugger?.Invoke($"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n");
+                //debugger?.Log($"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n");
                 return obj;
             }
 
             RouteInfo currentRoute = idRoute[idToRead];
             debug += $"Current Route Info: {currentRoute}\n";
 
-            foreach (FieldInfo info in GetAllFields(type))
+            foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, bindingFlags))
             {
                 NetVariable attributes = info.GetCustomAttribute<NetVariable>();
                 if (attributes != null && attributes.VariableId == currentRoute.route)
                 {
                     debug += $"Found matching field: {info.Name}, VariableId: {attributes.VariableId}\n";
-                    //consoleDebugger?.Invoke(debug);
+                    //debugger?.Log(debug);
                     return WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
                 }
             }
 
             debug += "No matching field found\n";
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
             return obj;
         }
 
@@ -998,26 +778,26 @@ namespace Net
 
             if (obj == null || idRoute.Count <= idToRead)
             {
-                //consoleDebugger?.Invoke($"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n");
+                //debugger?.Log($"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n");
                 return obj;
             }
 
             RouteInfo currentRoute = idRoute[idToRead];
             debug += $"Current Route Info: {currentRoute}\n";
 
-            foreach (FieldInfo info in GetAllFields(type))
+            foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, bindingFlags))
             {
                 NetVariable attributes = info.GetCustomAttribute<NetVariable>();
                 if (attributes != null && attributes.VariableId == currentRoute.route)
                 {
                     debug += $"Found matching field: {info.Name}, VariableId: {attributes.VariableId}\n";
-                    //consoleDebugger?.Invoke(debug);
+                    //debugger?.Log(debug);
                     return WriteValueNullException(info, obj, attributes, idRoute, idToRead, value);
                 }
             }
 
             debug += "No matching field found\n";
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
             return obj;
         }
         #endregion
@@ -1033,9 +813,9 @@ namespace Net
         /// <param name="idToRead">Current position in the route.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The modified object.</returns>
-        object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value, FieldInfo parentField = null, object parentObject = null)
+        public object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value, FieldInfo parentField = null, object parentObject = null)
         {
-            //consoleDebugger?.Invoke($"WriteValue - Field: {info.Name}, ValueType: {value?.GetType().Name}");
+            //debugger?.Log($"WriteValue - Field: {info.Name}, ValueType: {value?.GetType().Name}");
 
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
@@ -1049,29 +829,29 @@ namespace Net
             }
 
             // Handle simple types
-            if (IsSimpleType(fieldType))
+            if (ReflectionHelperMethods.IsSimpleType(fieldType))
             {
                 if (parentField != null && parentObject != null)
                 {
-                    //consoleDebugger?.Invoke($"Parent field: {parentField.Name}, Parent object: {parentObject}");
+                    //debugger?.Log($"Parent field: {parentField.Name}, Parent object: {parentObject}");
 
                     object boxedStruct = parentField.GetValue(parentObject);
-                    //consoleDebugger?.Invoke($"Boxed struct before: {boxedStruct}");
+                    //debugger?.Log($"Boxed struct before: {boxedStruct}");
 
                     info.SetValue(boxedStruct, value);
-                    //consoleDebugger?.Invoke($"After field set (before parent set): {boxedStruct}");
+                    //debugger?.Log($"After field set (before parent set): {boxedStruct}");
 
                     parentField.SetValue(parentObject, boxedStruct);
 
                     object verifiedStruct = parentField.GetValue(parentObject);
                     object verifiedValue = info.GetValue(verifiedStruct);
-                    //consoleDebugger?.Invoke($"Verification - Struct: {verifiedStruct}, Field: {verifiedValue}");
+                    //debugger?.Log($"Verification - Struct: {verifiedStruct}, Field: {verifiedValue}");
                     info.SetValue(obj, verifiedValue);
                 }
                 else
                 {
                     info.SetValue(obj, value);
-                    //consoleDebugger?.Invoke($"Direct field set completed");
+                    //debugger?.Log($"Direct field set completed");
                 }
                 return obj;
             }
@@ -1091,12 +871,12 @@ namespace Net
                     IList? list = fieldValue as IList;
                     if (list != null && currentRoute.collectionKey >= 0 && currentRoute.collectionKey < list.Count)
                     {
-                        //consoleDebugger?.Invoke($"[WriteValue] Removing item at index {currentRoute.collectionKey} from '{info.Name}'");
+                        //debugger?.Log($"[WriteValue] Removing item at index {currentRoute.collectionKey} from '{info.Name}'");
                         list.RemoveAt(currentRoute.collectionKey);
                     }
                     else
                     {
-                        //consoleDebugger?.Invoke($"[WriteValue] Cannot remove at index {currentRoute.collectionKey} — out of bounds or invalid list");
+                        //debugger?.Log($"[WriteValue] Cannot remove at index {currentRoute.collectionKey} — out of bounds or invalid list");
                     }
                     return obj;
                 }
@@ -1110,7 +890,7 @@ namespace Net
 
             if (typeof(IEnumerable).IsAssignableFrom(fieldType))
             {
-                //consoleDebugger?.Invoke($"[WriteValue] Attempting to assign collection element at index {currentRoute.collectionKey} with value: {value}");
+                //debugger?.Log($"[WriteValue] Attempting to assign collection element at index {currentRoute.collectionKey} with value: {value}");
                 // Get current collection size
                 int currentSize = (currentValue as ICollection)?.Count ?? 0;
                 int newSize = currentRoute.collectionSize;
@@ -1143,7 +923,7 @@ namespace Net
                             object element = newArray.GetValue(indices);
                             if (element == null)
                             {
-                                element = ConstructObject(fieldType.GetElementType());
+                                element = ReflectionHelperMethods.ConstructObject(fieldType.GetElementType(), bindingFlags);
                                 newArray.SetValue(element, indices);
                             }
                             InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
@@ -1171,15 +951,15 @@ namespace Net
                 {
                     if (currentValue == null)
                     {
-                        //consoleDebugger?.Invoke($"[WriteValue] Field '{info.Name}' is null on receiver. Attempting to construct new instance of {fieldType.Name}.");
-                        currentValue = ConstructObject(fieldType);
+                        //debugger?.Log($"[WriteValue] Field '{info.Name}' is null on receiver. Attempting to construct new instance of {fieldType.Name}.");
+                        currentValue = ReflectionHelperMethods.ConstructObject(fieldType, bindingFlags);
                         info.SetValue(obj, currentValue);
                     }
 
                     // Always check if we need to prefill it
                     if (currentRoute.IsCollection && (currentValue as ICollection)?.Count < currentRoute.collectionSize)
                     {
-                        Type elementTypeToFill = GetElementType(fieldType) ?? typeof(object);
+                        Type elementTypeToFill = ReflectionHelperMethods.GetElementType(fieldType) ?? typeof(object);
                         MethodInfo addMethod = fieldType.GetMethod("Add");
 
                         int currentCount = (currentValue as ICollection)?.Count ?? 0;
@@ -1192,7 +972,7 @@ namespace Net
                             addMethod?.Invoke(currentValue, new object[] { defaultValue });
                         }
 
-                        //consoleDebugger?.Invoke($"[WriteValue] Pre-filled {fieldType.Name} with {fillCount} additional default elements (now has {currentRoute.collectionSize})");
+                        //debugger?.Log($"[WriteValue] Pre-filled {fieldType.Name} with {fillCount} additional default elements (now has {currentRoute.collectionSize})");
                     }
 
                     if (idRoute.Count <= idToRead + 1)
@@ -1208,8 +988,8 @@ namespace Net
 
                         if (nestedElement == null)
                         {
-                            Type nestedElementType = GetElementType(fieldType) ?? typeof(object);
-                            nestedElement = ConstructObject(nestedElementType);
+                            Type nestedElementType = ReflectionHelperMethods.GetElementType(fieldType) ?? typeof(object);
+                            nestedElement = ReflectionHelperMethods.ConstructObject(nestedElementType, bindingFlags);
                             TrySetCollectionIndexValue(currentValue, currentRoute.collectionKey, nestedElement);
                         }
 
@@ -1217,7 +997,7 @@ namespace Net
                         return obj;
                     }
 
-                    Type elementType = GetElementType(fieldType);
+                    Type elementType = ReflectionHelperMethods.GetElementType(fieldType);
                     object[] arrayCopy = new object[newSize];
 
                     if (currentValue != null)
@@ -1235,7 +1015,7 @@ namespace Net
                         }
                     }
 
-                    //consoleDebugger?.Invoke($"[WriteValue] Successfully constructed and assigned new {fieldType.Name} to field '{info.Name}'");
+                    //debugger?.Log($"[WriteValue] Successfully constructed and assigned new {fieldType.Name} to field '{info.Name}'");
 
                     if (fieldType.IsGenericType)
                     {
@@ -1257,7 +1037,7 @@ namespace Net
 
                 if (currentRoute.collectionKey < 0)
                 {
-                    //consoleDebugger?.Invoke($"[WriteValue] Skipping write to invalid index {currentRoute.collectionKey} in collection '{info.Name}'");
+                    //debugger?.Log($"[WriteValue] Skipping write to invalid index {currentRoute.collectionKey} in collection '{info.Name}'");
                     return obj;
                 }
 
@@ -1278,7 +1058,7 @@ namespace Net
                     {
                         if (currentRoute.collectionKey < 0)
                         {
-                            //consoleDebugger?.Invoke($"[WriteValue] Skipping InspectWrite for invalid collectionKey {currentRoute.collectionKey} in '{info.Name}'");
+                            //debugger?.Log($"[WriteValue] Skipping InspectWrite for invalid collectionKey {currentRoute.collectionKey} in '{info.Name}'");
                             return obj;
                         }
 
@@ -1286,7 +1066,7 @@ namespace Net
 
                         if (element == null)
                         {
-                            element = ConstructObject(GetElementType(fieldType));
+                            element = ReflectionHelperMethods.ConstructObject(ReflectionHelperMethods.GetElementType(fieldType), bindingFlags);
                             if (fieldType.IsArray)
                             {
                                 ((Array)newCollection).SetValue(element, currentRoute.collectionKey);
@@ -1308,7 +1088,7 @@ namespace Net
             object objReference = info.GetValue(obj);
             if (objReference == null)
             {
-                objReference = ConstructObject(info.FieldType);
+                objReference = ReflectionHelperMethods.ConstructObject(info.FieldType, bindingFlags);
             }
             else if (idRoute.Count > idToRead + 1)
             {
@@ -1325,7 +1105,7 @@ namespace Net
         /// <param name="collection">The collection to read from.</param>
         /// <param name="index">The index to read.</param>
         /// <returns>The value at the specified index, or null if not found.</returns>
-        private object? TryGetCollectionIndexValue(object collection, int index)
+        public object? TryGetCollectionIndexValue(object collection, int index)
         {
             if (collection == null || index < 0)
                 return null;
@@ -1359,7 +1139,7 @@ namespace Net
         /// <param name="index">The index to write to.</param>
         /// <param name="value">The value to set.</param>
         /// <returns>True if the operation succeeded, false otherwise.</returns>
-        private bool TrySetCollectionIndexValue(object collection, int index, object value)
+        public bool TrySetCollectionIndexValue(object collection, int index, object value)
         {
             if (collection == null || index < 0) return false;
 
@@ -1372,12 +1152,12 @@ namespace Net
                 try
                 {
                     indexer.SetValue(collection, value, new object[] { index });
-                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Set via indexer [{index}] = {value} on {type.Name}");
+                    //debugger?.Log($"[TrySetCollectionIndexValue] Set via indexer [{index}] = {value} on {type.Name}");
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Indexer set failed: {ex.Message}");
+                    //debugger?.Log($"[TrySetCollectionIndexValue] Indexer set failed: {ex.Message}");
                 }
             }
 
@@ -1387,12 +1167,12 @@ namespace Net
                 try
                 {
                     list[index] = value;
-                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Set via IList at index {index} to {value}");
+                    //debugger?.Log($"[TrySetCollectionIndexValue] Set via IList at index {index} to {value}");
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] IList set failed: {ex.Message}");
+                    //debugger?.Log($"[TrySetCollectionIndexValue] IList set failed: {ex.Message}");
                 }
             }
 
@@ -1403,16 +1183,16 @@ namespace Net
                 try
                 {
                     insertMethod.Invoke(collection, new object[] { index, value });
-                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Inserted value at index {index}");
+                    //debugger?.Log($"[TrySetCollectionIndexValue] Inserted value at index {index}");
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Insert failed: {ex.Message}");
+                    //debugger?.Log($"[TrySetCollectionIndexValue] Insert failed: {ex.Message}");
                 }
             }
 
-            //consoleDebugger?.Invoke($"[TrySetCollectionIndexValue] Failed to set index {index} on {type.Name}");
+            //debugger?.Log($"[TrySetCollectionIndexValue] Failed to set index {index} on {type.Name}");
             return false;
         }
 
@@ -1423,25 +1203,25 @@ namespace Net
         /// <param name="obj">Parent object containing the dictionary.</param>
         /// <param name="keyHash">Hash of the key to remove.</param>
         /// <returns>The modified object.</returns>
-        private object HandleDictionaryRemove(FieldInfo info, object obj, int keyHash)
+        public object HandleDictionaryRemove(FieldInfo info, object obj, int keyHash)
         {
             IDictionary dictionary = (IDictionary)info.GetValue(obj);
             if (dictionary == null)
             {
-                //consoleDebugger?.Invoke("ERROR: Dictionary is null");
+                //debugger?.Log("ERROR: Dictionary is null");
                 return obj;
             }
 
-            //consoleDebugger?.Invoke($"Target Dictionary: {info.Name} | Current Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
-            //consoleDebugger?.Invoke($"Searching for key with hash: {keyHash}");
+            //debugger?.Log($"Target Dictionary: {info.Name} | Current Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
+            //debugger?.Log($"Searching for key with hash: {keyHash}");
 
             bool found = false;
             foreach (object key in dictionary.Keys)
             {
-                int currentHash = GetStableKeyHash(key);
+                int currentHash = ReflectionHelperMethods.GetStableKeyHash(key);
                 if (currentHash == keyHash)
                 {
-                    //consoleDebugger?.Invoke($"FOUND KEY: {key} (Hash: {currentHash}) - REMOVING");
+                    //debugger?.Log($"FOUND KEY: {key} (Hash: {currentHash}) - REMOVING");
                     dictionary.Remove(key);
                     found = true;
 
@@ -1454,8 +1234,8 @@ namespace Net
                 }
             }
 
-            //if (!found) consoleDebugger?.Invoke("WARNING: No matching key found");
-            //consoleDebugger?.Invoke($"Final Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
+            //if (!found) debugger?.Log("WARNING: No matching key found");
+            //debugger?.Log($"Final Keys: {string.Join(",", dictionary.Keys.Cast<object>())}");
             return obj;
         }
 
@@ -1469,7 +1249,7 @@ namespace Net
         /// <param name="idToRead">Current position in the route.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The modified object.</returns>
-        private object HandleDictionaryWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        public object HandleDictionaryWrite(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
             string debug = "HandleDictionaryWrite - ";
             debug += $"Field: {info.Name}, Current Route Index: {idToRead}\n";
@@ -1488,9 +1268,9 @@ namespace Net
             }
 
             debug += $"Looking for key with hash: {currentRoute.collectionKey}\n";
-            debug += $"Current dictionary keys: {string.Join(", ", dictionary.Keys.Cast<object>().Select(k => $"{k}(hash:{GetStableKeyHash(k)})"))}\n";
+            debug += $"Current dictionary keys: {string.Join(", ", dictionary.Keys.Cast<object>().Select(k => $"{k}(hash:{ReflectionHelperMethods.GetStableKeyHash(k)})"))}\n";
 
-            object matchingKey = FindMatchingKey(dictionary, currentRoute.collectionKey);
+            object matchingKey = ReflectionHelperMethods.FindMatchingKey(dictionary, currentRoute.collectionKey);
             debug += matchingKey != null ? $"Found matching key: {matchingKey}\n" : "No matching key found!\n";
 
             if (idRoute.Count <= idToRead + 1)
@@ -1508,7 +1288,7 @@ namespace Net
             else
             {
                 debug += $"Nested inspection for value\n";
-                object element = dictionary[matchingKey] ?? ConstructObject(valueType);
+                object element = dictionary[matchingKey] ?? ReflectionHelperMethods.ConstructObject(valueType, bindingFlags);
                 dictionary[matchingKey] = element;
                 InspectWrite(element.GetType(), element, idRoute, idToRead + 1, value);
             }
@@ -1516,7 +1296,7 @@ namespace Net
             info.SetValue(obj, dictionary);
             debug += $"Final dictionary state: {string.Join(", ", dictionary.Keys.Cast<object>().Select(k => $"{k}={dictionary[k]}"))}\n";
 
-            //consoleDebugger?.Invoke(debug);
+            //debugger?.Log(debug);
             return obj;
         }
 
@@ -1530,15 +1310,15 @@ namespace Net
         /// <param name="idToRead">Current position in the route.</param>
         /// <param name="value">The null/empty value to write.</param>
         /// <returns>The modified object.</returns>
-        object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        public object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            //consoleDebugger?.Invoke($"WriteValueNullException - Field: {info.Name}, Type: {info.FieldType}, Value: {value}");
+            //debugger?.Log($"WriteValueNullException - Field: {info.Name}, Type: {info.FieldType}, Value: {value}");
 
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
 
             // Handle simple types
-            if (IsSimpleType(fieldType))
+            if (ReflectionHelperMethods.IsSimpleType(fieldType))
             {
                 info.SetValue(obj, null);
                 return obj;
@@ -1548,28 +1328,28 @@ namespace Net
 
             if (isEmpty)
             {
-                //consoleDebugger?.Invoke("Processing EMPTY state");
+                //debugger?.Log("Processing EMPTY state");
 
                 object currentValue = info.GetValue(obj);
                 if (currentValue is IEnumerable enumerable && currentValue != null)
                 {
-                    //consoleDebugger?.Invoke("Processing collection");
+                    //debugger?.Log("Processing collection");
                     MethodInfo clearMethod = currentValue.GetType().GetMethod("Clear");
                     if (clearMethod != null)
                     {
-                        //consoleDebugger?.Invoke("Invoking Clear()");
+                        //debugger?.Log("Invoking Clear()");
                         clearMethod.Invoke(currentValue, null);
                     }
                     else
                     {
-                        //consoleDebugger?.Invoke("No Clear() found - creating new instance");
+                        //debugger?.Log("No Clear() found - creating new instance");
                         currentValue = FormatterServices.GetUninitializedObject(info.FieldType);
                         info.SetValue(obj, currentValue);
                     }
                 }
                 else if (currentValue == null)
                 {
-                    //consoleDebugger?.Invoke("Creating new empty instance");
+                    //debugger?.Log("Creating new empty instance");
                     currentValue = FormatterServices.GetUninitializedObject(info.FieldType);
                     info.SetValue(obj, currentValue);
                 }
@@ -1595,48 +1375,6 @@ namespace Net
 
         #region Reflection Utilities
         /// <summary>
-        /// Finds a dictionary key that matches the specified hash value.
-        /// </summary>
-        /// <param name="dictionary">The dictionary to search.</param>
-        /// <param name="keyHash">The hash value to match.</param>
-        /// <returns>The matching key, or null if not found.</returns>
-        private object FindMatchingKey(IDictionary dictionary, int keyHash)
-        {
-            foreach (object key in dictionary.Keys)
-            {
-                if (GetStableKeyHash(key) == keyHash) return key;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Gets a stable hash code for a dictionary key.
-        /// </summary>
-        /// <param name="key">The key to hash.</param>
-        /// <returns>A stable hash code for the key.</returns>
-        private int GetStableKeyHash(object key)
-        {
-            // For types that can be reliably hashed
-            if (key is string strKey) return strKey.GetHashCode();
-            if (key is int intKey) return intKey;
-            if (key is float floatKey) return floatKey.GetHashCode();
-            if (key.GetType().IsEnum) return (int)key;
-
-            // Fallback to standard hash code
-            return key.GetHashCode();
-        }
-
-        /// <summary>
-        /// Determines if a type is a simple type (value type, string, or enum).
-        /// </summary>
-        /// <param name="type">The type to check.</param>
-        /// <returns>True if the type is simple, false otherwise.</returns>
-        private bool IsSimpleType(Type type)
-        {
-            return (type.IsValueType && type.IsPrimitive) || type == typeof(string) || type.IsEnum;
-        }
-
-        /// <summary>
         /// Processes a value and sends appropriate network messages.
         /// </summary>
         /// <param name="value">The value to process.</param>
@@ -1651,7 +1389,7 @@ namespace Net
             if (value == null)
             {
                 debug += "Sending NULL package\n";
-                //consoleDebugger?.Invoke(debug);
+                //debugger?.Log(debug);
                 SendPackage(PossibleStates.Null, attribute, route);
                 return;
             }
@@ -1685,126 +1423,14 @@ namespace Net
             if ((valueType.IsValueType && valueType.IsPrimitive) || valueType == typeof(string) || valueType.IsEnum)
             {
                 debug += "Sending primitive/string/enum package\n";
-                //consoleDebugger?.Invoke(debug);
+                //debugger?.Log(debug);
                 SendPackage(value, attribute, route);
             }
             else
             {
                 debug += "Inspecting complex object\n";
-                //consoleDebugger?.Invoke(debug);
+                //debugger?.Log(debug);
                 Inspect(valueType, value, route, owner);
-            }
-        }
-
-        /// <summary>
-        /// Gets all indices for a multi-dimensional array.
-        /// </summary>
-        /// <param name="array">The array to process.</param>
-        /// <returns>An enumerable of index arrays.</returns>
-        private IEnumerable<int[]> GetArrayIndices(Array array)
-        {
-            int[] indices = new int[array.Rank];
-            yield return indices; // Return first index (0,0,...)
-
-            while (IncrementIndices(array, indices))
-            {
-                yield return (int[])indices.Clone();
-            }
-        }
-
-        /// <summary>
-        /// Increments multi-dimensional array indices.
-        /// </summary>
-        /// <param name="array">The array being processed.</param>
-        /// <param name="indices">The current indices to increment.</param>
-        /// <returns>True if indices were successfully incremented, false if at end of array.</returns>
-        private bool IncrementIndices(Array array, int[] indices)
-        {
-            for (int dim = array.Rank - 1; dim >= 0; dim--)
-            {
-                indices[dim]++;
-                if (indices[dim] < array.GetLength(dim))
-                {
-                    return true;
-                }
-                indices[dim] = 0;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Gets the element type of a collection or array.
-        /// </summary>
-        /// <param name="type">The collection/array type.</param>
-        /// <returns>The element type, or typeof(object) if not determinable.</returns>
-        private Type GetElementType(Type type)
-        {
-            if (type.IsArray)
-                return type.GetElementType();
-            else if (type.IsGenericType)
-                return type.GetGenericArguments()[0];
-            return typeof(object);
-        }
-
-        /// <summary>
-        /// Constructs an instance of the specified type.
-        /// </summary>
-        /// <param name="type">The type to instantiate.</param>
-        /// <returns>A new instance of the type.</returns>
-        private object ConstructObject(Type type)
-        {
-            ConstructorInfo[] constructors = type.GetConstructors(bindingFlags);
-            ConstructorInfo constructorInfo = null;
-
-            foreach (ConstructorInfo constructor in constructors)
-            {
-                if (constructor.GetParameters().Length == 0)
-                {
-                    return constructor.Invoke(new object[0]);
-                }
-                else
-                {
-                    foreach (ParameterInfo parametersInfo in constructor.GetParameters())
-                    {
-                        if (parametersInfo.ParameterType == type)
-                        {
-                            continue;
-                        }
-                    }
-                    constructorInfo = constructor;
-                }
-            }
-
-            ParameterInfo[] parameterInfos = constructorInfo.GetParameters();
-            object[] parameters = new object[parameterInfos.Length];
-
-            for (int i = 0; i < parameterInfos.Length; i++)
-            {
-                if (parameterInfos[i].ParameterType.IsValueType || parameterInfos[i].ParameterType == typeof(string) || parameterInfos[i].ParameterType.IsEnum)
-                {
-                    parameters[i] = default;
-                }
-                else
-                {
-                    parameters[i] = ConstructObject(parameterInfos[i].ParameterType);
-                }
-            }
-            return constructorInfo.Invoke(parameters);
-        }
-
-        /// <summary>
-        /// Gets all fields of a type, including inherited fields.
-        /// </summary>
-        /// <param name="type">The type to inspect.</param>
-        /// <returns>An enumerable of FieldInfo objects.</returns>
-        private IEnumerable<FieldInfo> GetAllFields(Type type)
-        {
-            while (type != null)
-            {
-                foreach (FieldInfo? field in type.GetFields(bindingFlags))
-                    yield return field;
-
-                type = type.BaseType;
             }
         }
 
@@ -1823,423 +1449,5 @@ namespace Net
             }
         }
         #endregion
-
-        #region Method Invocation
-        // When I get the message invoke this
-        /// <summary>
-        /// Invokes a method on a network object when a method message is received.
-        /// </summary>
-        /// <param name="id">The method ID from the NetMethod attribute.</param>
-        /// <param name="parameters">List of parameter type-value pairs.</param>
-        /// <param name="objectId">The ID of the target network object.</param>
-        private void InvokeReflectionMethod(int id, List<(string, string)> parameters, int objectId)
-        {
-            foreach (INetObj netObj in NetObjFactory.NetObjects())
-            {
-                List<object> parametersToApply = new List<object>();
-
-                foreach ((string, string) param in parameters)
-                {
-                    TypeConverter converter = TypeDescriptor.GetConverter(Type.GetType(param.Item1));
-                    object parameterValue = converter.ConvertFromInvariantString(param.Item2);
-                    parametersToApply.Add(parameterValue);
-                }
-                int length = netObj.GetType().GetMethods(bindingFlags).Length;
-
-                for (int i = 0; i < length; i++)
-                {
-                    MethodInfo method = netObj.GetType().GetMethods(bindingFlags)[i];
-
-                    NetMethod netMethod = method.GetCustomAttribute<NetMethod>();
-
-                    if (netMethod != null && netMethod.MethodId == id)
-                    {
-                        object[] objectParameters = parametersToApply.ToArray();
-                        object invokeMethod = method.Invoke(netObj, objectParameters);
-                    }
-                }
-                //consoleDebugger?.Invoke("Invoked reflection method");
-            }
-        }
-
-        // Invoke this in the game
-        /// <summary>
-        /// Sends a method invocation message over the network.
-        /// </summary>
-        /// <param name="iNetObj">The network object containing the method.</param>
-        /// <param name="methodName">The name of the method to invoke.</param>
-        /// <param name="parameters">The parameters to pass to the method.</param>
-        /// <returns>The method's return value, or null for void methods.</returns>
-        public object SendMethodMessage(INetObj iNetObj, string methodName, params object[] parameters)
-        {
-            string debug = "";
-            object objectToReturn = null;
-
-            MethodInfo method = iNetObj.GetType().GetMethod(methodName, bindingFlags);
-            NetMethod netmethod = method.GetCustomAttribute<NetMethod>();
-
-            if (netmethod != null)
-            {
-                CheckAuthority(iNetObj.GetOwnerID(), netmethod.syncAuthority, SendMethodMessageAction, SendMethodMessageAction);
-            }
-
-            void SendMethodMessageAction()
-            {
-                object invokeMethod = method.Invoke(iNetObj, parameters);
-
-                if (method.ReturnParameter.GetType() != typeof(void))
-                {
-                    objectToReturn = invokeMethod;
-                }
-
-                List<(string, string)> parametersList = new List<(string, string)>();
-
-                foreach (object parameter in parameters)
-                {
-                    (string, string) param;
-                    param.Item1 = parameter.GetType().ToString();
-                    param.Item2 = parameter.ToString();
-
-                    parametersList.Add(param);
-                }
-
-                (int, List<(string, string)>) messageData;
-
-                messageData.Item1 = netmethod.MethodId;
-                messageData.Item2 = parametersList;
-                List<RouteInfo> idRoute = new List<RouteInfo>
-                    {
-                        new RouteInfo(iNetObj.GetID())
-                    };
-
-                foreach ((string, string) item in messageData.Item2)
-                {
-                    debug += "Parameter List: " + item;
-                }
-                //consoleDebugger.Invoke(debug);
-
-                NetMethodMessage messageToSend = new NetMethodMessage(MessagePriority.Default, messageData, idRoute);
-                networkEntity.SendMessage(messageToSend.Serialize());
-            }
-            return objectToReturn;
-        }
-        #endregion
-
-        #region Event Invocation
-        /// <summary>
-        /// Sends a C# event invocation message from the owner of a network object to all other clients.
-        /// </summary>
-        /// <param name="iNetObj">The network object that owns the event.</param>
-        /// <param name="eventName">The name of the event to invoke (e.g. "OnEventX").</param>
-        /// <param name="parameters">Optional parameters to serialize and send to listeners.</param>
-        public void SendCSharpEventMessage(INetObj iNetObj, string eventName, params object[] parameters)
-        {
-            EventInfo eventInfo = iNetObj.GetType().GetEvent(eventName, bindingFlags);
-            if (eventInfo == null) return;
-
-            NetEvent netEvent = eventInfo.GetCustomAttribute<NetEvent>();
-            if (netEvent == null) return;
-
-            // Then check authority for network sending
-            CheckAuthority(iNetObj.GetOwnerID(), netEvent.syncAuthority, SendEventMessageAction, SendEventMessageAction);
-
-            void SendEventMessageAction()
-            {
-                string backingFieldName = netEvent.BackingFieldName ?? $"on{eventInfo.Name.Substring(2)}";
-                FieldInfo field = iNetObj.GetType().GetField(backingFieldName, bindingFlags);
-                if (field != null)
-                {
-                    Delegate eventDelegate = field.GetValue(iNetObj) as Delegate;
-                    eventDelegate?.DynamicInvoke(parameters);
-                }
-                // Serialize and send the network message
-                List<(string, string)> parametersList = new List<(string, string)>();
-                foreach (object param in parameters)
-                {
-                    parametersList.Add((param.GetType().ToString(), param.ToString()));
-                }
-
-                (int EventId, List<(string, string)> parametersList) messageData = (netEvent.EventId, parametersList);
-                List<RouteInfo> idRoute = new List<RouteInfo> { new RouteInfo(iNetObj.GetID()) };
-
-                NetEventMessage messageToSend = new NetEventMessage(netEvent.MessagePriority, messageData, idRoute);
-                networkEntity.SendMessage(messageToSend.Serialize());
-            }
-        }
-
-        /// <summary>
-        /// Invokes a previously declared C# event on a target network object by matching its event ID.
-        /// </summary>
-        /// <param name="eventId">The unique event ID specified in the NetEvent attribute.</param>
-        /// <param name="parameters">Serialized parameter values sent from the sender.</param>
-        /// <param name="objectId">The target network object ID whose event should be invoked.</param>
-        public void InvokeCSharpEvent(int eventId, List<(string, string)> parameters, int objectId)
-        {
-            foreach (INetObj netObj in NetObjFactory.NetObjects())
-            {
-                Type targetType = netObj.GetType();
-                EventInfo[] events = targetType.GetEvents(bindingFlags);
-
-                if (netObj.GetID() != objectId)
-                    continue;
-
-                foreach (EventInfo evt in events)
-                {
-                    NetEvent netEventAttr = evt.GetCustomAttribute<NetEvent>();
-                    if (netEventAttr == null || netEventAttr.EventId != eventId)
-                        continue;
-                    ExecuteEvent(parameters, netObj, targetType, evt, netEventAttr);
-                }
-            }
-
-            void ExecuteEvent(List<(string, string)> parameters, INetObj netObj, Type targetType, EventInfo evt, NetEvent netEventAttr)
-            {
-                string backingFieldName = netEventAttr.BackingFieldName ?? $"on{evt.Name.Substring(2)}";
-                FieldInfo field = targetType.GetField(backingFieldName, bindingFlags);
-                if (field == null) return;
-
-                Delegate eventDelegate = field.GetValue(netObj) as Delegate;
-                if (eventDelegate == null) return;
-
-                List<object> parsedParameters = new List<object>();
-                for (int i = 0; i < parameters.Count; i++)
-                {
-                    Type type = Type.GetType(parameters[i].Item1);
-                    if (type == null) continue;
-
-                    TypeConverter converter = TypeDescriptor.GetConverter(type);
-                    parsedParameters.Add(converter.ConvertFromInvariantString(parameters[i].Item2));
-                }
-
-                eventDelegate.DynamicInvoke(parsedParameters.ToArray());
-            }
-        }
-        #endregion
     }
-
-    [CLSCompliant(true)]
-    static class Hlp
-    {
-        public static void SetValueForValueType(this FieldInfo field, object container, object value)
-        {
-            Type containerType = container.GetType();
-
-            dynamic typedContainer = Convert.ChangeType(container, containerType);
-            TypedReference reference = __makeref(typedContainer);
-
-            field.SetValueDirect(reference, value);
-        }
-
-        public static object GetValueForValueType(this FieldInfo field, object container)
-        {
-            Type containerType = container.GetType();
-
-            dynamic typedContainer = Convert.ChangeType(container, containerType);
-            TypedReference reference = __makeref(typedContainer);
-
-            return field.GetValueDirect(reference);
-        }
-    }
-
-    #region Attributes
-    /// <summary>
-    /// Attribute for marking classes that handle specific message types.
-    /// </summary>
-    public class NetMessageClass : Attribute
-    {
-        Type type;
-        MessageType messageType;
-
-        /// <summary>
-        /// Initializes a new instance of the NetMessageClass attribute.
-        /// </summary>
-        /// <param name="type">The message type.</param>
-        /// <param name="messageType">The network message type enum value.</param>
-        public NetMessageClass(Type type, MessageType messageType)
-        {
-            this.type = type;
-            this.messageType = messageType;
-        }
-
-        /// <summary>
-        /// Gets the network message type.
-        /// </summary>
-        public MessageType MessageType
-        {
-            get { return messageType; }
-        }
-
-        /// <summary>
-        /// Gets the message class type.
-        /// </summary>
-        public Type Type
-        {
-            get { return type; }
-        }
-    }
-
-    /// <summary>
-    /// Attribute for marking fields that should be synchronized over the network.
-    /// </summary>
-    public class NetVariable : Attribute
-    {
-        int variableId;
-        MessagePriority messagePriority;
-        public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
-
-        /// <summary>
-        /// Initializes a new instance of the NetVariable attribute.
-        /// </summary>
-        /// <param name="id">The unique identifier for this variable.</param>
-        /// <param name="netAuthority">The authority for this variable.</param>
-        /// <param name="messagePriority">The priority for network messages.</param>
-        public NetVariable(int id, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER, MessagePriority messagePriority = MessagePriority.Default)
-        {
-            variableId = id;
-            syncAuthority = netAuthority;
-            this.messagePriority = messagePriority;
-        }
-
-        /// <summary>
-        /// Gets the message priority for this variable.
-        /// </summary>
-        public MessagePriority MessagePriority
-        {
-            get { return messagePriority; }
-        }
-
-        /// <summary>
-        /// Gets the unique identifier for this variable.
-        /// </summary>
-        public int VariableId
-        {
-            get { return variableId; }
-        }
-    }
-
-    /// <summary>
-    /// Attribute for marking methods that should be invokable over the network.
-    /// </summary>
-    public class NetMethod : Attribute
-    {
-        int methodId;
-        MessagePriority messagePriority;
-        public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
-
-        /// <summary>
-        /// Initializes a new instance of the NetMethod attribute.
-        /// </summary>
-        /// <param name="id">The unique identifier for this method.</param>
-        /// <param name="netAuthority">The authority for this method.</param>
-        /// <param name="messagePriority">The priority for network messages.</param>
-        public NetMethod(int id, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER, MessagePriority messagePriority = MessagePriority.Default)
-        {
-            methodId = id;
-            syncAuthority = netAuthority;
-            this.messagePriority = messagePriority;
-        }
-
-        /// <summary>
-        /// Gets the message priority for this method.
-        /// </summary>
-        public MessagePriority MessagePriority
-        {
-            get { return messagePriority; }
-        }
-
-        /// <summary>
-        /// Gets the unique identifier for this method.
-        /// </summary>
-        public int MethodId
-        {
-            get { return methodId; }
-        }
-    }
-
-    /// <summary>
-    /// Attribute for marking classes that contain extension methods for network reflection.
-    /// </summary>
-    public class NetExtensionClass : Attribute
-    {
-        /// <summary>
-        /// Initializes a new instance of the NetExtensionClass attribute.
-        /// </summary>
-        public NetExtensionClass()
-        {
-
-        }
-    }
-
-    /// <summary>
-    /// Attribute for marking extension methods used in network reflection.
-    /// </summary>
-    public class NetExtensionMethod : Attribute
-    {
-        /// <summary>
-        /// Gets the type that this extension method extends.
-        /// </summary>
-        public Type extensionMethod;
-
-        /// <summary>
-        /// Initializes a new instance of the NetExtensionMethod attribute.
-        /// </summary>
-        /// <param name="type">The type that this method extends.</param>
-        public NetExtensionMethod(Type type)
-        {
-            extensionMethod = type;
-        }
-    }
-
-    /// <summary>
-    /// Marks a C# event as network-synchronized. When invoked by the owner of the network object,
-    /// it will be triggered on all other clients that have subscribed to it.
-    /// </summary>
-    public class NetEvent : Attribute
-    {
-        public int EventId { get; }
-        public MessagePriority MessagePriority { get; }
-        public string? BackingFieldName { get; }
-        public NETAUTHORITY syncAuthority = NETAUTHORITY.SERVER;
-
-        /// <summary>
-        /// Creates a new NetEvent attribute instance.
-        /// </summary>
-        /// <param name="eventId">Unique identifier for the event.</param>
-        /// <param name="netAuthority">The authority for this event.</param>
-        /// <param name="priority">The priority of the network message.</param>
-        /// <param name="backingFieldName">
-        /// Optional backing field name (e.g. "onEventX"). If omitted, the system falls back to a convention.
-        /// </param>
-        public NetEvent(int eventId, NETAUTHORITY netAuthority = NETAUTHORITY.SERVER, MessagePriority priority = MessagePriority.Default, string? backingFieldName = null)
-        {
-            EventId = eventId;
-            syncAuthority = netAuthority;
-            MessagePriority = priority;
-            BackingFieldName = backingFieldName;
-        }
-    }
-
-    public class NetTRS : Attribute
-    {
-        [Flags]
-        public enum SYNC
-        {
-            DEFAULT = 0,
-            NOTPOSITION = 1,
-            NOTROTATION = 2,
-            NOTSCALE = 4,
-            NOTTRS = 7,
-            NOTISACTIVE = 8,
-            NOTALL = 15
-        }
-
-        public SYNC syncData = SYNC.DEFAULT;
-
-        public NetTRS(SYNC value)
-        {
-            syncData = value;
-        }
-    }
-
-    #endregion
 }

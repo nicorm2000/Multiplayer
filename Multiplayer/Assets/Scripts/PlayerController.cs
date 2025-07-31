@@ -6,7 +6,7 @@ using UnityEngine;
 using System;
 using Net;
 
-[NetTRS(NetTRS.SYNC.DEFAULT)]
+[NetTRS(NetTRS.SYNC.DEFAULT, NETAUTHORITY.CLIENT)]
 public class PlayerController : MonoBehaviour, INetObj
 {
     [Serializable]
@@ -188,7 +188,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<int> testList;
     //[NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
     //[NetVariable(22, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    //[NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
+    [NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
     //[NetVariable(24, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
     //[NetVariable(25, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
     //[NetVariable(26, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
@@ -729,7 +729,7 @@ public class PlayerController : MonoBehaviour, INetObj
     [ContextMenu("Test")]
     private void TriggerEvent()
     {
-        ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
+        ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventA));
     }
 
     private void Start()

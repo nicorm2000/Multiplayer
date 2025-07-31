@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using Net;
 
+[NetTRS(NetTRS.SYNC.DEFAULT, NETAUTHORITY.CLIENT)]
 public class TowerTurns : MonoBehaviour, INetObj
 {
     [SerializeField] float duration;

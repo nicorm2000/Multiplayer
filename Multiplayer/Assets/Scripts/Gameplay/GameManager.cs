@@ -59,7 +59,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             if (isFirstTime)
             {
                 NetworkManager.Instance.onInitEntity.Invoke();
-                ((Server)nm.networkEntity).OnReflectionMsg += ReflectionSystem.Instance.reflection.OnReceivedReflectionMessage;
+                ((Server)nm.networkEntity).OnReflectionMsg += ReflectionSystem.Instance.reflection.reflectionMessageHandler.OnReceivedReflectionMessage;
                 isFirstTime = !isFirstTime;
             }
             IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();

@@ -6,11 +6,12 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
     public Reflection reflection;
     public NETAUTHORITY netAuthority;
     public bool showDebugs = true;
+    private UnityReflectionDebugger debugger;
 
     private void Start()
     {
-        Reflection.consoleDebugger += WriteConsoleDebugger;
-        Reflection.consoleDebuggerPause += PauseConsoleDebugger;
+        debugger = new UnityReflectionDebugger(showDebugs);
+
         NetworkManager.Instance.onInitEntity += StartReflection;
     }
 
@@ -21,22 +22,11 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
 #elif CLIENT
         netAuthority = NETAUTHORITY.CLIENT;
 #endif
-        reflection = new(NetworkManager.Instance.networkEntity, netAuthority);
+        reflection = new(NetworkManager.Instance.networkEntity, netAuthority, debugger);
     }
 
     private void LateUpdate()
     {
         reflection?.UpdateReflection();
-    }
-
-    void PauseConsoleDebugger()
-    {
-        Debug.Break();
-    }
-
-    void WriteConsoleDebugger(string message)
-    {
-        if (showDebugs)
-            Debug.Log(message);
     }
 }

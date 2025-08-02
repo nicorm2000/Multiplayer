@@ -166,29 +166,29 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
-    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
+    //[NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
     [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
     [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
     [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
     [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
-    [NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
-    [NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
-    [NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
-    [NetVariable(9, NETAUTHORITY.CLIENT)] public decimal myDecimal = 1;
-    [NetVariable(10, NETAUTHORITY.CLIENT)] public double myDouble = 1;
-    [NetVariable(11, NETAUTHORITY.CLIENT)] public short myShort = 1;
-    [NetVariable(12, NETAUTHORITY.CLIENT)] public ushort myUShort = 1;
-    [NetVariable(13, NETAUTHORITY.CLIENT)] public int myInt = 1;
-    [NetVariable(14, NETAUTHORITY.CLIENT)] public uint myUInt = 1;
-    [NetVariable(15, NETAUTHORITY.CLIENT)] public long myLong = 1;
-    [NetVariable(16, NETAUTHORITY.CLIENT)] public ulong myULong = 1;
-    [NetVariable(17, NETAUTHORITY.CLIENT)] public byte myByte = 1;
-    [NetVariable(18, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
-    [NetVariable(19, NETAUTHORITY.CLIENT)] public TestEnum enumField;
+    //[NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
+    //[NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
+    //[NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
+    //[NetVariable(9, NETAUTHORITY.CLIENT)] public decimal myDecimal = 1;
+    //[NetVariable(10, NETAUTHORITY.CLIENT)] public double myDouble = 1;
+    //[NetVariable(11, NETAUTHORITY.CLIENT)] public short myShort = 1;
+    //[NetVariable(12, NETAUTHORITY.CLIENT)] public ushort myUShort = 1;
+    //[NetVariable(13, NETAUTHORITY.CLIENT)] public int myInt = 1;
+    //[NetVariable(14, NETAUTHORITY.CLIENT)] public uint myUInt = 1;
+    //[NetVariable(15, NETAUTHORITY.CLIENT)] public long myLong = 1;
+    //[NetVariable(16, NETAUTHORITY.CLIENT)] public ulong myULong = 1;
+    //[NetVariable(17, NETAUTHORITY.CLIENT)] public byte myByte = 1;
+    //[NetVariable(18, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
+    //[NetVariable(19, NETAUTHORITY.CLIENT)] public TestEnum enumField;
     //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<int> testList;
     //[NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
     //[NetVariable(22, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    [NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
+    //[NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
     //[NetVariable(24, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
     //[NetVariable(25, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
     //[NetVariable(26, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
@@ -199,7 +199,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(31, NETAUTHORITY.CLIENT)] public Color MyColor = new(1f, 0.5f, 0f, 1f);
     //[NetVariable(32, NETAUTHORITY.CLIENT)] public Color32 MyColor32 = new(0, 0, 0, 255);
     //[NetVariable(33, NETAUTHORITY.CLIENT)] public Rect MyRect = new(0, 0, 1, 1);
-    //[NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
+    [NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
     //[NetVariable(35, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
     //[NetVariable(36, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(37, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
@@ -743,6 +743,13 @@ public class PlayerController : MonoBehaviour, INetObj
         {
             cam.enabled = false;
         }
+#if SERVER
+        if (towerTurns != null)
+        {
+            towerTurns.GetNetObj().SetValues(NetObjFactory.NetObjectsCount, clientID);
+            NetObjFactory.AddINetObject(towerTurns.GetID(), towerTurns);
+        }
+#endif
         //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
         //enumField = TestEnum.Special;
         //testList.Add(1);
@@ -761,7 +768,7 @@ public class PlayerController : MonoBehaviour, INetObj
         //    new() { testInt = 17 }
         //};
     }
-
+    
     void FixedUpdate()
     {
         if (currentPlayer)
@@ -797,7 +804,6 @@ public class PlayerController : MonoBehaviour, INetObj
         }
     }
 
-    private Vector3 _lastMovementSynced;
     private void Update()
     {
 #if CLIENT
@@ -812,6 +818,8 @@ public class PlayerController : MonoBehaviour, INetObj
             Debug.Log("Try to shoot");
             if (!towerTurns.isRunning)
             {
+                if (turnTowerCoroutine != null)
+                    StopCoroutine(turnTowerCoroutine);
                 turnTowerCoroutine = StartCoroutine(towerTurns.TurnTower(cam.transform));
             }
         }
@@ -945,6 +953,18 @@ public class PlayerController : MonoBehaviour, INetObj
         #endregion
     }
 
+    private void OnApplicationQuit()
+    {
+#if SERVER
+        NetDestroyGO netDestroyGO = new NetDestroyGO(MessagePriority.Default, (GetID(), clientID));
+        nm.networkEntity.SendMessage(netDestroyGO.Serialize());
+        NetObjFactory.RemoveINetObject(GetID());
+        NetIDMessage netDisconnection = new(MessagePriority.Default, clientID);
+        nm.networkEntity.SendMessage(netDisconnection.Serialize());
+        Destroy(gameObject);
+#endif
+    }
+
     public void OnReceiveDamage()
     {
         health--;
@@ -967,7 +987,7 @@ public class PlayerController : MonoBehaviour, INetObj
 
     public TRS GetTRS()
     {
-        return transform.TranslateTRS();
+         return transform.TranslateTRS();
     }
 
     public void SetTRS(TRS trs, NetTRS.SYNC sync)

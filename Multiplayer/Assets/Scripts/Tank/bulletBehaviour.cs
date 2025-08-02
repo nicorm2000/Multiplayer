@@ -108,7 +108,7 @@ netObj.OwnerId = originPlayerID;
 #if SERVER
             if (collision.transform.TryGetComponent(out PlayerController pc))
             {
-                GameManager.OnBulletHit.Invoke(pc.clientID, originPlayerID);
+                GameManager.OnBulletHit.Invoke(pc.clientID, netObj.OwnerId);
             }
             DestroyBehaviour();
 #endif

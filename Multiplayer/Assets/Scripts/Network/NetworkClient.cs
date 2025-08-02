@@ -108,8 +108,8 @@ public class NetworkClient : NetworkEntity
         OnRemovePlayer?.Invoke(idToRemove);
 
         Debug.Log("Removing client: " + idToRemove);
+        NetObjFactory.RemoveINetObject(idToRemove);
         players.Remove(idToRemove);
-
         if (clientID == idToRemove)
         {
             CloseConnection();
@@ -281,8 +281,9 @@ public class NetworkClient : NetworkEntity
                 int playerID = netDisconnection.GetData();
 
                 Console.WriteLine("Remove player " + playerID);
-                RemoveClient(playerID);
 
+                RemoveClient(playerID);
+                
                 break;
 
             case MessageType.UpdateLobbyTimer:
@@ -305,6 +306,7 @@ public class NetworkClient : NetworkEntity
                 NetworkScreen.Instance.SwitchToMenuScreen();
                 NetworkScreen.Instance.ShowErrorPanel(netErrorMessage.GetData());
 #endif
+                NetObjFactory.RemoveAllINetObject();
                 CloseConnection();
 
                 break;
@@ -406,7 +408,7 @@ public class NetworkClient : NetworkEntity
     {
         // Notify the server about the client's disconnection
         NetIDMessage netDisconnection = new(MessagePriority.Default, clientID);
-        SendToServer(netDisconnection.Serialize());
+        SendMessage(netDisconnection.Serialize());
     }
 
     /// <summary>

@@ -183,24 +183,6 @@ public static class ExtensionMethods
     }
 
     /// <summary>
-    /// Gets the fields of a Bounds with NetVariable attributes for network synchronization.
-    /// </summary>
-    /// <param name="bounds">The Bounds to inspect.</param>
-    /// <param name="netAuthority">The network authority level for the fields.</param>
-    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
-    [NetExtensionMethod(typeof(Bounds))]
-    public static List<(FieldInfo, NetVariable)> GetFields(this Bounds bounds, NETAUTHORITY netAuthority)
-    {
-        List<(FieldInfo, NetVariable)> boundValues = new()
-        {
-            (bounds.GetType().GetField("m_Center", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0, netAuthority)),
-            (bounds.GetType().GetField("m_Extents", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1, netAuthority))
-        };
-
-        return boundValues;
-    }
-
-    /// <summary>
     /// Gets the fields of a Matrix4x4 with NetVariable attributes for network synchronization.
     /// </summary>
     /// <param name="matrix">The Matrix4x4 to inspect.</param>
@@ -230,6 +212,24 @@ public static class ExtensionMethods
         };
 
         return matrix4x4Values;
+    }
+
+    /// <summary>
+    /// Gets the fields of a Bounds with NetVariable attributes for network synchronization.
+    /// </summary>
+    /// <param name="bounds">The Bounds to inspect.</param>
+    /// <param name="netAuthority">The network authority level for the fields.</param>
+    /// <returns>A list of tuples containing FieldInfo and NetVariable attributes for each field.</returns>
+    [NetExtensionMethod(typeof(Bounds))]
+    public static List<(FieldInfo, NetVariable)> GetFields(this Bounds bounds, NETAUTHORITY netAuthority)
+    {
+        List<(FieldInfo, NetVariable)> boundValues = new()
+        {
+            (bounds.GetType().GetField("m_Center", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (bounds.GetType().GetField("m_Extents", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1, netAuthority))
+        };
+
+        return boundValues;
     }
 
     /// <summary>

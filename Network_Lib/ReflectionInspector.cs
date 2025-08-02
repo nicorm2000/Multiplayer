@@ -63,6 +63,13 @@ namespace Net
                 {
                     NetVariable netVarAux = info.GetCustomAttribute<NetVariable>();
 
+                    //if (parentVar != null && netVarAux == null)
+                    //{
+                    //    netVarAux = parentVar;
+                    //    idRoute.Add(RouteInfo.CreateForProperty(netVarAux.childCount));
+                    //    reflection.debugger.Log("Added parent var " + netVarAux.childCount + info.GetValue(obj));
+                    //}
+
                     if (netVarAux != null)
                     {
                         debug += "___info field: " + info + "\n";
@@ -86,8 +93,8 @@ namespace Net
                                             newRoute.Add(RouteInfo.CreateForProperty(netVarAux.VariableId));
                                             newRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
                                             object componentValue = field.Item1.GetValue(actualObject);
-                                            reflection.debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
-                                            reflection.debugger?.Log($"Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
+                                            //reflection.debugger?.Log($"EM Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                            //reflection.debugger?.Log($"EM Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
                                             reflection.reflectionReader.ReadValue(field.Item1, actualObject, field.Item2, newRoute, owner);
                                             info.SetValue(obj, actualObject);
                                         }

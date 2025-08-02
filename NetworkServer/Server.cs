@@ -122,6 +122,7 @@ namespace NetworkServer
 
             if (clients.ContainsKey(idToRemove))
             {
+                NetObjFactory.RemoveINetObject(idToRemove);
                 Console.WriteLine("Removing client: " + idToRemove);
                 pingPong.RemoveClientForList(idToRemove);
                 ipToId.Remove(clients[idToRemove].ipEndPoint);

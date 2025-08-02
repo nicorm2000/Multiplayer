@@ -226,11 +226,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0b97fea4e9394a42b2aa429dfa690d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  duration: 0.5
+  duration: 0.25
   initialPositionShooting: {fileID: 6190912716761482191}
   bulletPrefab: {fileID: 9065385898612094083, guid: 28dd34ace8586d649af728a6704955dd,
     type: 3}
   playerController: {fileID: 2649511967912427814}
+  isRunning: 0
 --- !u!1 &2771723475687813403
 GameObject:
   m_ObjectHideFlags: 0
@@ -329,7 +330,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   health: 3
-  movementSynced: {x: 0, y: 0}
+  movementSynced: {x: 0, y: 0, z: 1}
   movementXSynced: 0
   movementYSynced: 0
   shouldShoot: 0

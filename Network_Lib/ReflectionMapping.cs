@@ -123,6 +123,11 @@ namespace Net
             //debugger?.Log(debug);
         }
 
+        /// <summary>
+        /// Handles TRS mapping of every INetObj synced.
+        /// </summary>
+        /// <param name="route">Route information for the TRS.</param>
+        /// <param name="data">The TRS data.</param>
         public void TRSMapping(List<RouteInfo> route, TRS data)
         {
             if (route == null || route.Count == 0)

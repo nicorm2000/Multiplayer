@@ -1,14 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
 
 namespace Net
 {
+    /// <summary>
+    /// Initializes a new instance of the Empty class.
+    /// </summary>
     [NetMessageClass(typeof(NetEnumMessage), MessageType.Enum)]
     public class NetEnumMessage : BaseReflectionMessage<Enum>
     {
         private Enum data;
         private string enumTypeName;
 
+        /// <summary>
+        /// Initializes a new instance of the NetEnumMessage class with the specified priority, data, and route.
+        /// </summary>
+        /// <param name="messagePriority">The priority of the message.</param>
+        /// <param name="data">The enumeration value to send.</param>
+        /// <param name="messageRoute">The route information for the message.</param>
         public NetEnumMessage(MessagePriority messagePriority, Enum data, List<RouteInfo> messageRoute)
             : base(messagePriority, messageRoute)
         {
@@ -17,12 +26,21 @@ namespace Net
             this.enumTypeName = data.GetType().AssemblyQualifiedName;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the NetEnumMessage class from serialized data.
+        /// </summary>
+        /// <param name="data">The serialized message data.</param>
         public NetEnumMessage(byte[] data) : base(MessagePriority.Default, new List<RouteInfo>())
         {
             currentMessageType = MessageType.Enum;
             this.data = Deserialize(data);
         }
 
+        /// <summary>
+        /// Deserializes the message data into an enumeration value.
+        /// </summary>
+        /// <param name="message">The serialized message data.</param>
+        /// <returns>The deserialized enumeration value.</returns>
         public override Enum Deserialize(byte[] message)
         {
             DeserializeHeader(message);
@@ -47,11 +65,19 @@ namespace Net
             return (Enum)Enum.ToObject(enumType, enumValue);
         }
 
+        /// <summary>
+        /// Gets the enumeration data contained in the message.
+        /// </summary>
+        /// <returns>The enumeration value.</returns>
         public Enum GetData()
         {
             return data;
         }
 
+        /// <summary>
+        /// Gets the enumeration data contained in the message.
+        /// </summary>
+        /// <returns>The enumeration value.</returns>
         public override byte[] Serialize()
         {
             List<byte> outData = new List<byte>();

@@ -171,24 +171,24 @@ public class PlayerController : MonoBehaviour, INetObj
     [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
     [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
     [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
-    //[NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
-    //[NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
-    //[NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
-    //[NetVariable(9, NETAUTHORITY.CLIENT)] public decimal myDecimal = 1;
-    //[NetVariable(10, NETAUTHORITY.CLIENT)] public double myDouble = 1;
-    //[NetVariable(11, NETAUTHORITY.CLIENT)] public short myShort = 1;
-    //[NetVariable(12, NETAUTHORITY.CLIENT)] public ushort myUShort = 1;
-    //[NetVariable(13, NETAUTHORITY.CLIENT)] public int myInt = 1;
-    //[NetVariable(14, NETAUTHORITY.CLIENT)] public uint myUInt = 1;
-    //[NetVariable(15, NETAUTHORITY.CLIENT)] public long myLong = 1;
-    //[NetVariable(16, NETAUTHORITY.CLIENT)] public ulong myULong = 1;
-    //[NetVariable(17, NETAUTHORITY.CLIENT)] public byte myByte = 1;
-    //[NetVariable(18, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
-    //[NetVariable(19, NETAUTHORITY.CLIENT)] public TestEnum enumField;
+    [NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
+    [NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
+    [NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
+    [NetVariable(9, NETAUTHORITY.CLIENT)] public decimal myDecimal = 1;
+    [NetVariable(10, NETAUTHORITY.CLIENT)] public double myDouble = 1;
+    [NetVariable(11, NETAUTHORITY.CLIENT)] public short myShort = 1;
+    [NetVariable(12, NETAUTHORITY.CLIENT)] public ushort myUShort = 1;
+    [NetVariable(13, NETAUTHORITY.CLIENT)] public int myInt = 1;
+    [NetVariable(14, NETAUTHORITY.CLIENT)] public uint myUInt = 1;
+    [NetVariable(15, NETAUTHORITY.CLIENT)] public long myLong = 1;
+    [NetVariable(16, NETAUTHORITY.CLIENT)] public ulong myULong = 1;
+    [NetVariable(17, NETAUTHORITY.CLIENT)] public byte myByte = 1;
+    [NetVariable(18, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
+    [NetVariable(19, NETAUTHORITY.CLIENT)] public TestEnum enumField;
     //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<int> testList;
     //[NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
     //[NetVariable(22, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    //[NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
+    [NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
     //[NetVariable(24, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
     //[NetVariable(25, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
     //[NetVariable(26, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
@@ -199,8 +199,8 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(31, NETAUTHORITY.CLIENT)] public Color MyColor = new(1f, 0.5f, 0f, 1f);
     //[NetVariable(32, NETAUTHORITY.CLIENT)] public Color32 MyColor32 = new(0, 0, 0, 255);
     //[NetVariable(33, NETAUTHORITY.CLIENT)] public Rect MyRect = new(0, 0, 1, 1);
-    [NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
-    [NetVariable(35, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
+    //[NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
+    //[NetVariable(35, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
     //[NetVariable(36, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(37, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
     //[NetVariable(38, NETAUTHORITY.CLIENT)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
@@ -860,20 +860,20 @@ public class PlayerController : MonoBehaviour, INetObj
         //}
         #endregion
         #region PLANE
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            Plane temp = MyPlane;
-            temp.normal += new Vector3(1, 0, 1);
-            temp.distance += 2.67f;
-            MyPlane = temp;
-            Debug.Log("Normal: " + MyPlane.normal);
-            Debug.Log("Distance: " + MyPlane.distance);
-        }
-        if (MyPlane.normal != null && MyPlane.distance != null)
-        {
-            Debug.Log("Normal: " + MyPlane.normal);
-            Debug.Log("Distance: " + MyPlane.distance);
-        }
+        //if (Input.GetKeyDown(KeyCode.M))
+        //{
+        //    Plane temp = MyPlane;
+        //    temp.normal += new Vector3(1, 0, 1);
+        //    temp.distance += 2.67f;
+        //    MyPlane = temp;
+        //    Debug.Log("Normal: " + MyPlane.normal);
+        //    Debug.Log("Distance: " + MyPlane.distance);
+        //}
+        //if (MyPlane.normal != null && MyPlane.distance != null)
+        //{
+        //    Debug.Log("Normal: " + MyPlane.normal);
+        //    Debug.Log("Distance: " + MyPlane.distance);
+        //}
         #endregion
         #region DICTIONARY
         //if (dictionaryTest != null)

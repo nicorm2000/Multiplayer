@@ -112,6 +112,7 @@ public class ServerManager : MonoBehaviour
     {
         if (isServerRunning)
         {
+            Debug.Log("Server Closing");
             server.OnApplicationQuit();
         }
     }

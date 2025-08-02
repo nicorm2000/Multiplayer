@@ -71,6 +71,7 @@ public class TowerTurns : MonoBehaviour, INetObj
         }
 
         transform.rotation = newRotation;
+        yield return new WaitUntil(() => Quaternion.Angle(transform.rotation, newRotation) < 1f);
 #if SERVER
         Shoot();
 #endif

@@ -36,7 +36,7 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
     /// <summary>
     /// Updates the reflection system during the late update phase of each frame.
     /// </summary>
-    private void LateUpdate()
+    private void Update()
     {
         reflection?.UpdateReflection();
     }

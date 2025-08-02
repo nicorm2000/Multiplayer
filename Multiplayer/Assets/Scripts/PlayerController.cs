@@ -188,7 +188,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<int> testList;
     //[NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
     //[NetVariable(22, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    [NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
+    //[NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
     //[NetVariable(24, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
     //[NetVariable(25, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
     //[NetVariable(26, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
@@ -199,8 +199,8 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(31, NETAUTHORITY.CLIENT)] public Color MyColor = new(1f, 0.5f, 0f, 1f);
     //[NetVariable(32, NETAUTHORITY.CLIENT)] public Color32 MyColor32 = new(0, 0, 0, 255);
     //[NetVariable(33, NETAUTHORITY.CLIENT)] public Rect MyRect = new(0, 0, 1, 1);
-    //[NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
-    //[NetVariable(35, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
+    [NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
+    [NetVariable(35, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
     //[NetVariable(36, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(37, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
     //[NetVariable(38, NETAUTHORITY.CLIENT)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
@@ -860,20 +860,20 @@ public class PlayerController : MonoBehaviour, INetObj
         //}
         #endregion
         #region PLANE
-        //if (Input.GetKeyDown(KeyCode.M))
-        //{
-        //    Plane temp = MyPlane;
-        //    temp.normal += new Vector3(1, 0, 1);
-        //    temp.distance += 2.67f;
-        //    MyPlane = temp;
-        //    Debug.Log("Normal: " + MyPlane.normal);
-        //    Debug.Log("Distance: " + MyPlane.distance);
-        //}
-        //if (MyPlane.normal != null && MyPlane.distance != null)
-        //{
-        //    Debug.Log("Normal: " + MyPlane.normal);
-        //    Debug.Log("Distance: " + MyPlane.distance);
-        //}
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            Plane temp = MyPlane;
+            temp.normal += new Vector3(1, 0, 1);
+            temp.distance += 2.67f;
+            MyPlane = temp;
+            Debug.Log("Normal: " + MyPlane.normal);
+            Debug.Log("Distance: " + MyPlane.distance);
+        }
+        if (MyPlane.normal != null && MyPlane.distance != null)
+        {
+            Debug.Log("Normal: " + MyPlane.normal);
+            Debug.Log("Distance: " + MyPlane.distance);
+        }
         #endregion
         #region DICTIONARY
         //if (dictionaryTest != null)

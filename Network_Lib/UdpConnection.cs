@@ -1,10 +1,13 @@
-using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Sockets;
+using System.Net;
+using System;
 
 namespace Net
 {
+    /// <summary>
+    /// Manages UDP network connections for sending and receiving data.
+    /// </summary>
     public class UdpConnection
     {
         private struct DataReceived
@@ -19,6 +22,11 @@ namespace Net
         private bool isClosed = false;
         object handler = new object();
 
+        /// <summary>
+        /// Initializes a new instance of the UdpConnection class for listening on a specific port.
+        /// </summary>
+        /// <param name="port">The port to listen on.</param>
+        /// <param name="receiver">The receiver for incoming data.</param>
         public UdpConnection(int port, IReceiveData receiver = null)
         {
             const int maxRetries = 3;
@@ -43,6 +51,12 @@ namespace Net
             connection.BeginReceive(OnReceive, null);
         }
 
+        /// <summary>
+        /// Initializes a new instance of the UdpConnection class for connecting to a specific IP and port.
+        /// </summary>
+        /// <param name="ip">The IP address to connect to.</param>
+        /// <param name="port">The port to connect to.</param>
+        /// <param name="receiver">The receiver for incoming data.</param>
         public UdpConnection(IPAddress ip, int port, IReceiveData receiver = null)
         {
             connection = new UdpClient();
@@ -53,6 +67,9 @@ namespace Net
             connection.BeginReceive(OnReceive, null);
         }
 
+        /// <summary>
+        /// Closes the UDP connection.
+        /// </summary>
         public void Close()
         {
             if (isClosed) return;
@@ -66,6 +83,9 @@ namespace Net
             catch (ObjectDisposedException) { }
         }
 
+        /// <summary>
+        /// Processes all received data in the queue.
+        /// </summary>
         public void FlushReceiveData()
         {
             lock (handler)
@@ -79,6 +99,10 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Callback for when data is received.
+        /// </summary>
+        /// <param name="ar">The async result.</param>
         void OnReceive(IAsyncResult ar)
         {
             DataReceived dataReceived = new DataReceived();
@@ -105,18 +129,33 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Sends data to the connected endpoint.
+        /// </summary>
+        /// <param name="data">The data to send.</param>
+
         public void Send(byte[] data)
         {
             if (isClosed) return;
             connection.Send(data, data.Length);
         }
 
+        /// <summary>
+        /// Sends data to a specific endpoint.
+        /// </summary>
+        /// <param name="data">The data to send.</param>
+        /// <param name="ipEndpoint">The target endpoint.</param>
         public void Send(byte[] data, IPEndPoint ipEndpoint)
         {
             if (isClosed) return;
             connection.Send(data, data.Length, ipEndpoint);
         }
 
+        /// <summary>
+        /// Converts an IP address to a long value.
+        /// </summary>
+        /// <param name="ipAddress">The IP address to convert.</param>
+        /// <returns>The long representation of the IP address.</returns>
         public static long IPToLong(IPAddress ipAddress)
         {
             byte[] bytes = ipAddress.GetAddressBytes();

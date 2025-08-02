@@ -224,6 +224,11 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Processes received data based on its priority.
+        /// </summary>
+        /// <param name="data">The received data.</param>
+        /// <param name="ip">The IP endpoint of the sender.</param>
         void OnReceivedMessagePriority(byte[] data, IPEndPoint ip)
         {
             if (ipToId.ContainsKey(ip))
@@ -347,11 +352,21 @@ namespace Match_Maker
             return true;
         }
 
+        /// <summary>
+        /// Checks if a username is in uppercase.
+        /// </summary>
+        /// <param name="userName">The username to check.</param>
+        /// <returns>True if the username is in uppercase; otherwise, false.</returns>
         bool IsToUpper(string userName)
         {
             return userName.All(c => !char.IsLetter(c) || char.IsUpper(c));
         }
 
+        /// <summary>
+        /// Checks if a username is in lowercase.
+        /// </summary>
+        /// <param name="userName">The username to check.</param>
+        /// <returns>True if the username is in lowercase; otherwise, false.</returns>
         bool IsToLower(string userName)
         {
             return userName.All(c => !char.IsLetter(c) || char.IsLower(c));
@@ -402,6 +417,9 @@ namespace Match_Maker
             connection.Close();
         }
 
+        /// <summary>
+        /// Updates the MatchMaker state, including resending non-disposable messages.
+        /// </summary>
         public override void Update()
         {
             base.Update();
@@ -412,11 +430,20 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Sends a message to all connected clients.
+        /// </summary>
+        /// <param name="data">The message data.</param>
         public override void SendMessage(byte[] data)
         {
             Broadcast(data);
         }
 
+        /// <summary>
+        /// Sends a message to a specific client by ID.
+        /// </summary>
+        /// <param name="data">The message data.</param>
+        /// <param name="id">The client ID.</param>
         public override void SendMessage(byte[] data, int id)
         {
             if (clients.ContainsKey(id))
@@ -425,6 +452,9 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Checks the lobby for players and starts a game if conditions are met.
+        /// </summary>
         void CheckPlayerInLobby()
         {
             Console.WriteLine("Clients count: " + clients.Count);
@@ -478,6 +508,10 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Creates a new game server instance.
+        /// </summary>
+        /// <returns>The port number of the new server.</returns>
         int CreateNewServer()
         {
             do
@@ -506,6 +540,11 @@ namespace Match_Maker
             return serverPort;
         }
 
+        /// <summary>
+        /// Creates a new server process on the specified port.
+        /// </summary>
+        /// <param name="numberPort">The port number for the new server.</param>
+        /// <returns>The created server process.</returns>
         Process CreateServerProcess(int numberPort)
         {
             Process currentServer;

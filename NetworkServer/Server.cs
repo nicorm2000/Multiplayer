@@ -314,6 +314,11 @@ namespace NetworkServer
 
         }
 
+        /// <summary>
+        /// Handles an instance request from a client.
+        /// </summary>
+        /// <param name="data">The request data.</param>
+        /// <param name="ownerID">The ID of the requesting client.</param>
         public void HandleInstanceRequest(byte[] data, int ownerID)
         {
             InstanceRequestPayload instanceRequest = new InstanceRequestMenssage(data).GetData();
@@ -334,6 +339,11 @@ namespace NetworkServer
             instancesIdCount++;
         }
 
+        /// <summary>
+        /// Processes received data based on its priority.
+        /// </summary>
+        /// <param name="data">The received data.</param>
+        /// <param name="ip">The IP endpoint of the sender.</param>
         void OnReceivedMessagePriority(byte[] data, IPEndPoint ip)
         {
             if (ipToId.ContainsKey(ip))
@@ -367,6 +377,10 @@ namespace NetworkServer
             connection.Send(data, ip);
         }
 
+        /// <summary>
+        /// Broadcasts data to the MatchMaker.
+        /// </summary>
+        /// <param name="data">The data to broadcast.</param>
         public void BroadcastToMatchMaker(byte[] data)
         {
             connection.Send(data, matchmMakerIp);
@@ -571,6 +585,9 @@ namespace NetworkServer
             }
         }
 
+        /// <summary>
+        /// Updates the server state, including resending non-disposable messages.
+        /// </summary>
         public override void Update()
         {
             base.Update();
@@ -581,11 +598,20 @@ namespace NetworkServer
             }
         }
 
+        /// <summary>
+        /// Sends a message to all connected clients.
+        /// </summary>
+        /// <param name="data">The message data.</param>
         public override void SendMessage(byte[] data)
         {
             Broadcast(data);
         }
 
+        /// <summary>
+        /// Sends a message to a specific client by ID.
+        /// </summary>
+        /// <param name="data">The message data.</param>
+        /// <param name="id">The client ID.</param>
         public override void SendMessage(byte[] data, int id)
         {
             if (clients.ContainsKey(id))
@@ -594,6 +620,9 @@ namespace NetworkServer
             }
         }
 
+        /// <summary>
+        /// Broadcasts the current player list to the MatchMaker.
+        /// </summary>
         private void BroadcastPlayerListToMatchMaker()
         {
             if (matchmMakerIp == null) return;

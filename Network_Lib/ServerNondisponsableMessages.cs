@@ -1,19 +1,31 @@
-using System;
 using System.Collections.Generic;
+using System;
 
 namespace Net
 {
+    /// <summary>
+    /// Handles non-disposable messages for the server, ensuring reliable delivery.
+    /// </summary>
     public class ServerNondisponsableMessage : NondisponsableMessageBase
     {
         private Dictionary<int, Dictionary<MessageType, Queue<byte[]>>> LastMessageBroadcastToClients = new Dictionary<int, Dictionary<MessageType, Queue<byte[]>>>();
         private Dictionary<int, Dictionary<MessageType, float>> resendPackageCounterToClients = new Dictionary<int, Dictionary<MessageType, float>>();
 
+        /// <summary>
+        /// Initializes a new instance of the ServerNondisponsableMessage class.
+        /// </summary>
+        /// <param name="networkEntity">The network entity to associate with.</param>
         public ServerNondisponsableMessage(NetworkEntity networkEntity) : base(networkEntity)
         {
             networkEntity.OnNewPlayer += AddNewClient;
             networkEntity.OnRemovePlayer += RemoveClient;
         }
 
+        /// <summary>
+        /// Handles confirmation messages from clients.
+        /// </summary>
+        /// <param name="netConfirm">The confirmation message.</param>
+        /// <param name="id">The client ID.</param>
         protected override void HandleConfirmationMessage(NetConfirmMessage netConfirm, int id)
         {
             if (LastMessageBroadcastToClients.ContainsKey(id))
@@ -36,6 +48,11 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Adds a sent message to the tracking queue.
+        /// </summary>
+        /// <param name="data">The message data.</param>
+        /// <param name="clientId">The client ID.</param>
         public override void AddSentMessages(byte[] data, int clientId)
         {
             MessagePriority messagePriority = MessageChecker.CheckMessagePriority(data);
@@ -58,6 +75,11 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Adds a sent message to the tracking queue.
+        /// </summary>
+        /// <param name="data">The message data.</param>
+        /// <param name="clientId">The client ID.</param>
         public override void ResendPackages()
         {
             if (resendPackageCounterToClients.Count > 0)
@@ -83,18 +105,31 @@ namespace Net
 
             CleanupMessageHistory();
         }
+
+        /// <summary>
+        /// Adds a sent message to the tracking queue.
+        /// </summary>
+        /// <param name="data">The message data.</param>
+        /// <param name="clientId">The client ID.</param>
         private void AddNewClient(int clientID)
         {
             LastMessageBroadcastToClients.Add(clientID, new Dictionary<MessageType, Queue<byte[]>>());
             resendPackageCounterToClients.Add(clientID, new Dictionary<MessageType, float>());
         }
 
+        /// <summary>
+        /// Removes a client from the tracking system.
+        /// </summary>
+        /// <param name="clientID">The client ID to remove.</param>
         private void RemoveClient(int clientID)
         {
             LastMessageBroadcastToClients.Remove(clientID);
             resendPackageCounterToClients.Remove(clientID);
         }
 
+        /// <summary>
+        /// Cleans up old messages from the message history.
+        /// </summary>
         private void CleanupMessageHistory()
         {
             if (MessagesHistory.Count > 0 && pingPong != null)
@@ -118,6 +153,11 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Sends a confirmation message to a client.
+        /// </summary>
+        /// <param name="messageType">The message type to confirm.</param>
+        /// <param name="id">The client ID.</param>
         public override void SendConfirmationMessage(MessageType messageType, int id = -1)
         {
             NetConfirmMessage netConfirmMessage = new NetConfirmMessage(MessagePriority.Default, messageType);

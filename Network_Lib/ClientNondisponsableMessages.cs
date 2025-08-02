@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using System;
 
 namespace Net
 {
@@ -8,8 +8,17 @@ namespace Net
         private Dictionary<MessageType, Queue<byte[]>> LastMessageSendToServer = new Dictionary<MessageType, Queue<byte[]>>();
         private Dictionary<MessageType, float> resendPackageCounterToServer = new Dictionary<MessageType, float>();
 
+        /// <summary>
+        /// Initializes a new instance of the ClientNondisponsableMessage class with the specified network entity.
+        /// </summary>
+        /// <param name="networkEntity">The network entity associated with this message handler.</param>
         public ClientNondisponsableMessage(NetworkEntity networkEntity) : base(networkEntity) { }
 
+        /// <summary>
+        /// Handles confirmation messages from the server.
+        /// </summary>
+        /// <param name="netConfirm">The confirmation message.</param>
+        /// <param name="id">The client ID associated with the message.</param>
         protected override void HandleConfirmationMessage(NetConfirmMessage netConfirm, int id)
         {
             if (LastMessageSendToServer.ContainsKey(netConfirm.GetData()) && LastMessageSendToServer[netConfirm.GetData()].Count > 0)
@@ -27,6 +36,11 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Adds a sent message to the queue for potential resending.
+        /// </summary>
+        /// <param name="data">The message data.</param>
+        /// <param name="clientId">The client ID associated with the message.</param>
         public override void AddSentMessages(byte[] data, int clientId = -1)
         {
             MessagePriority messagePriority = MessageChecker.CheckMessagePriority(data);
@@ -43,6 +57,10 @@ namespace Net
                 LastMessageSendToServer[messageType].Enqueue(data);
             }
         }
+
+        /// <summary>
+        /// Resends packages that haven't been confirmed by the server.
+        /// </summary>
         public override void ResendPackages()
         {
             if (resendPackageCounterToServer.Count > 0)
@@ -66,6 +84,9 @@ namespace Net
             CleanupMessageHistory();
         }
 
+        /// <summary>
+        /// Cleans up old messages from the message history.
+        /// </summary>
         private void CleanupMessageHistory()
         {
             if (MessagesHistory.Count > 0 && pingPong != null)
@@ -89,6 +110,11 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Sends a confirmation message to the server for a specific message type.
+        /// </summary>
+        /// <param name="messageType">The type of message to confirm.</param>
+        /// <param name="id">The client ID associated with the message.</param>
         public override void SendConfirmationMessage(MessageType messageType, int id = -1)
         {
             NetConfirmMessage netConfirmMessage = new NetConfirmMessage(MessagePriority.Default, messageType);

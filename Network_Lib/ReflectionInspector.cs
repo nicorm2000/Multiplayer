@@ -62,14 +62,14 @@ namespace Net
                 foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, reflection.bindingFlags))
                 {
                     NetVariable netVarAux = info.GetCustomAttribute<NetVariable>();
+
                     if (netVarAux != null)
                     {
                         debug += "___info field: " + info + "\n";
                         debug += "___info route: " + idRoute[0].route + "\n";
-                        //debugger?.Log(debug);
+                        //reflection.debugger?.Log(debug);
                         if (netVarAux.syncAuthority == reflection.netAuthority)
                         {
-                            //debugger?.Log($"Inspect: {owner}, {networkEntity.clientID}");
                             if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
                             {
                                 reflection.CheckAuthority(owner, netVarAux.syncAuthority, ReadValueEMAction, ReadValueEMAction);
@@ -82,12 +82,13 @@ namespace Net
                                     {
                                         foreach ((FieldInfo, NetVariable) field in values)
                                         {
-                                            List<RouteInfo> structRoute = new List<RouteInfo>(idRoute);
-                                            structRoute.Add(RouteInfo.CreateForProperty(netVarAux.VariableId));
-                                            structRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
+                                            List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
+                                            newRoute.Add(RouteInfo.CreateForProperty(netVarAux.VariableId));
+                                            newRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
                                             object componentValue = field.Item1.GetValue(actualObject);
-                                            //debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
-                                            reflection.reflectionReader.ReadValue(field.Item1, actualObject, field.Item2, structRoute, owner);
+                                            reflection.debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                            reflection.debugger?.Log($"Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
+                                            reflection.reflectionReader.ReadValue(field.Item1, actualObject, field.Item2, newRoute, owner);
                                             info.SetValue(obj, actualObject);
                                         }
                                     }
@@ -99,9 +100,8 @@ namespace Net
                                 void ReadValueAction()
                                 {
                                     List<RouteInfo> extendedRoute = new List<RouteInfo>(idRoute);
-                                    //extendedRoute.Add(RouteInfo.CreateForProperty(aux.VariableId));
-                                    //debugger?.Log($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
-                                    //debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                    //reflection.debugger?.Log($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
+                                    //reflection.debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
                                     reflection.reflectionReader.ReadValue(info, obj, netVarAux, extendedRoute, owner);
                                 }
                             }
@@ -114,12 +114,12 @@ namespace Net
                     }
                 }
                 debug += "Exit foreach: " + obj + "\n";
-                //debugger?.Log(debug);
+                //reflection.debugger?.Log(debug);
             }
             else
             {
                 debug += "Object is NULL";
-                //debugger?.Log(debug);
+                //reflection.debugger?.Log(debug);
             }
         }
 

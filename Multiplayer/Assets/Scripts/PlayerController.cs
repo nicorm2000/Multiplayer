@@ -167,10 +167,10 @@ public class PlayerController : MonoBehaviour, INetObj
 
     [NetVariable(0)] public float health = 3;
     //[NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
-    [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
-    [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
-    [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
-    [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
+    /*[NetVariable(2, NETAUTHORITY.CLIENT)]*/ public float movementXSynced;
+    /*[NetVariable(3, NETAUTHORITY.CLIENT)]*/ public float movementYSynced;
+    /*[NetVariable(4, NETAUTHORITY.CLIENT)]*/ public bool shouldShoot = false;
+    /*[NetVariable(5, NETAUTHORITY.CLIENT)]*/ public float cameraHor = 0;
     //[NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
     //[NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
     //[NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
@@ -209,10 +209,10 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(41, NETAUTHORITY.CLIENT)] public CustomCollection<int> _customCollection;
     //[NetVariable(42, NETAUTHORITY.CLIENT)] public CustomCollection2<string> _customCollection2;
     //[NetVariable(43, NETAUTHORITY.CLIENT)] public CustomCollection3<TestingClass3> _customCollection3;
-    [SerializeField] TowerTurns towerTurns;
+    [NetVariable(44, NETAUTHORITY.CLIENT), SerializeField] public TowerTurns towerTurns;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
-    [SerializeField] CameraOrbit cameraOrbit;
+    [SerializeField] public CameraOrbit cameraOrbit;
 
     public bool currentPlayer = false;
     public int clientID = -1;
@@ -743,13 +743,6 @@ public class PlayerController : MonoBehaviour, INetObj
         {
             cam.enabled = false;
         }
-#if SERVER
-        if (towerTurns != null)
-        {
-            towerTurns.GetNetObj().SetValues(NetObjFactory.NetObjectsCount, clientID);
-            NetObjFactory.AddINetObject(towerTurns.GetID(), towerTurns);
-        }
-#endif
         //Debug.Log($"Initial list values: {string.Join(", ", testList)}");
         //enumField = TestEnum.Special;
         //testList.Add(1);
@@ -816,12 +809,9 @@ public class PlayerController : MonoBehaviour, INetObj
         if (shouldShoot)
         {
             Debug.Log("Try to shoot");
-            if (!towerTurns.isRunning)
-            {
-                if (turnTowerCoroutine != null)
-                    StopCoroutine(turnTowerCoroutine);
-                turnTowerCoroutine = StartCoroutine(towerTurns.TurnTower(cam.transform));
-            }
+#if SERVER
+            towerTurns.Shoot();
+#endif
         }
         //Debug.Log($"Client {clientID} myDecimal: " + myDecimal);
         #region LIST

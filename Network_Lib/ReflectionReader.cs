@@ -87,7 +87,7 @@ namespace Net
         /// <param name="obj">Parent object containing the field.</param>
         /// <param name="attribute">NetVariable attribute of the field.</param>
         /// <param name="idRoute">Route information for network message routing.</param>
-        public void ReadValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int owner)
+        public void ReadValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int owner, bool skipRouteAppend = false)
         {
             string debug = "ReadValue Start - ";
             debug += $"Field: {info.Name}, Type: {info.FieldType}, Current Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
@@ -107,8 +107,10 @@ namespace Net
             // Handle simple types
             if (ReflectionHelperMethods.IsSimpleType(info.FieldType))
             {
-                //debugger?.Log("Simple Type: " + fieldValue + fieldType);
-                idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
+                //reflection.debugger?.Log("Simple Type: " + fieldValue + fieldType);
+                if (!skipRouteAppend)
+                    idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
+                //reflection.debugger?.Log($"SimpleType Full Route: {string.Join("->", idRoute.Select(r => r.route))}\n");
                 reflection.SendPackage(fieldValue, attribute, idRoute);
                 return;
             }
@@ -294,6 +296,31 @@ namespace Net
                         reflection.SendPackage(PossibleStates.Empty, attribute, idRoute);
                     }
                 }
+            }
+
+            if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
+            {
+                reflection.CheckAuthority(owner, attribute.syncAuthority, ReadValueEMAction, ReadValueEMAction);
+                void ReadValueEMAction()
+                {
+                    object actualObject = info.GetValue(obj);
+
+                    object fields = methodInfo.Invoke(null, new object[] { actualObject, attribute.syncAuthority });
+                    if (fields is List<(FieldInfo, NetVariable)> values)
+                    {
+                        foreach ((FieldInfo, NetVariable) field in values)
+                        {
+                            List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
+                            newRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
+                            object componentValue = field.Item1.GetValue(actualObject);
+                            reflection.debugger?.Log($"EM RV: {info.FieldType} {info.GetValue(obj)}\n");
+                            reflection.debugger?.Log($"EM Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
+                            reflection.reflectionReader.ReadValue(field.Item1, actualObject, field.Item2, newRoute, owner, true);
+                        }
+                        return;
+                    }
+                }
+                return;
             }
 
             // Handle complex objects

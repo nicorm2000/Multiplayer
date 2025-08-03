@@ -6,7 +6,7 @@ using Net;
 [NetExtensionClass]
 public static class ExtensionMethods
 {
-    private static BindingFlags INSTANCE_NONPUBLIC_FLAGS = BindingFlags.Instance | BindingFlags.NonPublic;
+    private static BindingFlags INSTANCE_NONPUBLIC_PUBLIC_FLAGS = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
     /// <summary>
     /// Gets the fields of a Vector2 with NetVariable attributes for network synchronization.
@@ -19,8 +19,8 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> vector2Values = new()
         {
-            (vector2.GetType().GetField(nameof(vector2.x)), new NetVariable(0, netAuthority)),
-            (vector2.GetType().GetField(nameof(vector2.y)), new NetVariable(1, netAuthority))
+            (vector2.GetType().GetField(nameof(vector2.x), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (vector2.GetType().GetField(nameof(vector2.y), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority))
         };
         
         return vector2Values;
@@ -37,9 +37,9 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> vector3Values = new()
         {
-            (vector3.GetType().GetField(nameof(vector3.x)), new NetVariable(0, netAuthority)),
-            (vector3.GetType().GetField(nameof(vector3.y)), new NetVariable(1, netAuthority)),
-            (vector3.GetType().GetField(nameof(vector3.z)), new NetVariable(2, netAuthority))
+            (vector3.GetType().GetField(nameof(vector3.x), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (vector3.GetType().GetField(nameof(vector3.y), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority)),
+            (vector3.GetType().GetField(nameof(vector3.z), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(2, netAuthority))
         };
 
         return vector3Values;
@@ -56,10 +56,10 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> vector4Values = new()
         {
-            (vector4.GetType().GetField(nameof(vector4.x)), new NetVariable(0, netAuthority)),
-            (vector4.GetType().GetField(nameof(vector4.y)), new NetVariable(1, netAuthority)),
-            (vector4.GetType().GetField(nameof(vector4.z)), new NetVariable(2, netAuthority)),
-            (vector4.GetType().GetField(nameof(vector4.w)), new NetVariable(3, netAuthority))
+            (vector4.GetType().GetField(nameof(vector4.x), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (vector4.GetType().GetField(nameof(vector4.y), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority)),
+            (vector4.GetType().GetField(nameof(vector4.z), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(2, netAuthority)),
+            (vector4.GetType().GetField(nameof(vector4.w), INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(3, netAuthority))
         };
 
         return vector4Values;
@@ -76,8 +76,8 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> vector2IntValues = new()
         {
-            (vector2Int.GetType().GetField("m_X", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0, netAuthority)),
-            (vector2Int.GetType().GetField("m_Y", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1, netAuthority))
+            (vector2Int.GetType().GetField("m_X", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (vector2Int.GetType().GetField("m_Y", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority))
         };
 
         return vector2IntValues;
@@ -94,9 +94,9 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> vector3IntValues = new()
         {
-            (vector3Int.GetType().GetField("m_X", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0, netAuthority)),
-            (vector3Int.GetType().GetField("m_Y", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1, netAuthority)),
-            (vector3Int.GetType().GetField("m_Z", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(2, netAuthority))
+            (vector3Int.GetType().GetField("m_X", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (vector3Int.GetType().GetField("m_Y", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority)),
+            (vector3Int.GetType().GetField("m_Z", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(2, netAuthority))
         };
 
         return vector3IntValues;
@@ -173,10 +173,10 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> rectValues = new()
         {
-            (rect.GetType().GetField("m_XMin", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0, netAuthority)),
-            (rect.GetType().GetField("m_YMin", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1, netAuthority)),
-            (rect.GetType().GetField("m_Width", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(2, netAuthority)),
-            (rect.GetType().GetField("m_Height", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(3, netAuthority))
+            (rect.GetType().GetField("m_XMin", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (rect.GetType().GetField("m_YMin", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority)),
+            (rect.GetType().GetField("m_Width", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(2, netAuthority)),
+            (rect.GetType().GetField("m_Height", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(3, netAuthority))
         };
 
         return rectValues;
@@ -225,8 +225,8 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> boundValues = new()
         {
-            (bounds.GetType().GetField("m_Center", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0, netAuthority)),
-            (bounds.GetType().GetField("m_Extents", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1, netAuthority))
+            (bounds.GetType().GetField("m_Center", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (bounds.GetType().GetField("m_Extents", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority))
         };
 
         return boundValues;
@@ -243,8 +243,8 @@ public static class ExtensionMethods
     {
         List<(FieldInfo, NetVariable)> planeValues = new()
         {
-            (plane.GetType().GetField("m_Normal", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(0, netAuthority)),
-            (plane.GetType().GetField("m_Distance", INSTANCE_NONPUBLIC_FLAGS), new NetVariable(1, netAuthority))
+            (plane.GetType().GetField("m_Normal", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(0, netAuthority)),
+            (plane.GetType().GetField("m_Distance", INSTANCE_NONPUBLIC_PUBLIC_FLAGS), new NetVariable(1, netAuthority))
         };
 
         return planeValues;

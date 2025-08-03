@@ -1,10 +1,9 @@
-using System.Collections;
 using UnityEngine;
 using Net;
 
-[NetTRS(NetTRS.SYNC.DEFAULT, NETAUTHORITY.CLIENT)]
-public class TowerTurns : MonoBehaviour, INetObj
+public class TowerTurns : MonoBehaviour
 {
+    [NetVariable(0, NETAUTHORITY.CLIENT)] public float targetYRotation = 0;
     [SerializeField] float duration;
     [SerializeField] Transform initialPositionShooting;
     [SerializeField] GameObject bulletPrefab;
@@ -12,7 +11,7 @@ public class TowerTurns : MonoBehaviour, INetObj
     public bool isRunning = false;
     NetObj netObj = new(-1, -1);
 
-    void Shoot()
+    public void Shoot()
     {
         IPrefabService prefabService = ServiceProvider.GetService<IPrefabService>();
         int prefabID = prefabService.GetIdByPrefab(bulletPrefab);
@@ -50,56 +49,24 @@ public class TowerTurns : MonoBehaviour, INetObj
         Debug.Log("Shoot bullet");
     }
 
-    public IEnumerator TurnTower(Transform cam)
+    private void Update()
     {
-        isRunning = true;
-        float timer = 0;
-
-        Quaternion initialRotation = transform.rotation;
-        Quaternion newRotation = cam.transform.rotation;
-        newRotation.x = 0;
-        newRotation.z = 0;
-
-        while (timer <= duration)
+        if (!isRunning && playerController != null && playerController.currentPlayer)
         {
-            float interpolationValue = timer / duration;
-
-            transform.rotation = Quaternion.Lerp(initialRotation, newRotation, interpolationValue);
-
-            timer += Time.deltaTime;
-            yield return new WaitForEndOfFrame();
+            targetYRotation = playerController.cameraOrbit.transform.eulerAngles.y;
         }
 
-        transform.rotation = newRotation;
-        yield return new WaitUntil(() => Quaternion.Angle(transform.rotation, newRotation) < 1f);
-#if SERVER
-        Shoot();
-#endif
-        isRunning = false;
-    }
-
-    public int GetID()
-    {
-        return netObj.ID;
-    }
-
-    public int GetOwnerID()
-    {
-        return netObj.OwnerId;
-    }
-
-    public NetObj GetNetObj()
-    {
-        return netObj;
-    }
-
-    public TRS GetTRS()
-    {
-        return transform.TranslateTRS();
-    }
-
-    public void SetTRS(TRS trs, NetTRS.SYNC sync)
-    {
-        transform?.FromTRS(trs, sync);
+        if (Mathf.Abs(transform.eulerAngles.y - targetYRotation) > 1f)
+        {
+            transform.rotation = Quaternion.Lerp(
+                transform.rotation,
+                Quaternion.Euler(0, targetYRotation, 0),
+                Time.deltaTime * 10f
+            );
+        }
+        else
+        {
+            transform.rotation = Quaternion.Euler(0, targetYRotation, 0);
+        }
     }
 }

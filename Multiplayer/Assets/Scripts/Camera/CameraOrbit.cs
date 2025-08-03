@@ -44,6 +44,11 @@ public class CameraOrbit : MonoBehaviour
         angle.y = angleY;
 
         HandleCameraZoom();
+
+        if (playerController.currentPlayer)
+        {
+            playerController.towerTurns.targetYRotation = transform.eulerAngles.y;
+        }
     }
 
     void LateUpdate()

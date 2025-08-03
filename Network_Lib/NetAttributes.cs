@@ -75,6 +75,7 @@ namespace Net
         public int VariableId
         {
             get { return variableId; }
+            set { variableId = value; }
         }
     }
 

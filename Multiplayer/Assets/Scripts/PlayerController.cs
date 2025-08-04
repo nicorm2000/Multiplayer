@@ -166,11 +166,11 @@ public class PlayerController : MonoBehaviour, INetObj
     }
 
     [NetVariable(0)] public float health = 3;
-    //[NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
-    /*[NetVariable(2, NETAUTHORITY.CLIENT)]*/ public float movementXSynced;
-    /*[NetVariable(3, NETAUTHORITY.CLIENT)]*/ public float movementYSynced;
-    /*[NetVariable(4, NETAUTHORITY.CLIENT)]*/ public bool shouldShoot = false;
-    /*[NetVariable(5, NETAUTHORITY.CLIENT)]*/ public float cameraHor = 0;
+    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
+    [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
+    [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
+    [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
+    [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
     //[NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
     //[NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
     //[NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
@@ -199,7 +199,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(31, NETAUTHORITY.CLIENT)] public Color MyColor = new(1f, 0.5f, 0f, 1f);
     //[NetVariable(32, NETAUTHORITY.CLIENT)] public Color32 MyColor32 = new(0, 0, 0, 255);
     //[NetVariable(33, NETAUTHORITY.CLIENT)] public Rect MyRect = new(0, 0, 1, 1);
-    [NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
+    //[NetVariable(34, NETAUTHORITY.CLIENT)] public Bounds MyBounds = new(Vector3.zero, Vector3.one); // Fix inherit auth
     //[NetVariable(35, NETAUTHORITY.CLIENT)] public Plane MyPlane = new(new Vector3(1,2,3), 0);
     //[NetVariable(36, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(37, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);

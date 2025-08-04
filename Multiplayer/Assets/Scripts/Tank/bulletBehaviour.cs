@@ -9,6 +9,7 @@ namespace Game
     {
         [SerializeField] float velocity;
         [SerializeField] float gravity = 9.8f;
+        [SerializeField] LayerMask layerToIgnore;
         private Vector3 velocityVector;
 
         int originPlayerID = -1;
@@ -106,6 +107,9 @@ netObj.OwnerId = originPlayerID;
         private void OnCollisionEnter(Collision collision)
         {
 #if SERVER
+            if (collision.gameObject.layer == layerToIgnore)
+                return;
+
             if (collision.transform.TryGetComponent(out PlayerController pc))
             {
                 GameManager.OnBulletHit.Invoke(pc.clientID, netObj.OwnerId);

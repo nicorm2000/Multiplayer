@@ -62,29 +62,29 @@ namespace Net
             {
                 foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, reflection.bindingFlags))
                 {
-                    NetVariable netVarAux = info.GetCustomAttribute<NetVariable>();
+                    NetVariable netVarAttribute = info.GetCustomAttribute<NetVariable>();
 
-                    if (netVarAux != null)
+                    if (netVarAttribute != null)
                     {
                         debug += "___info field: " + info + "\n";
                         debug += "___info route: " + idRoute[0].route + "\n";
                         //reflection.debugger?.Log(debug);
-                        if (netVarAux.syncAuthority == reflection.netAuthority)
+                        if (netVarAttribute.syncAuthority == reflection.netAuthority)
                         {
                             if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
                             {
-                                reflection.CheckAuthority(owner, netVarAux.syncAuthority, ReadValueEMAction, ReadValueEMAction);
+                                reflection.CheckAuthority(owner, netVarAttribute.syncAuthority, ReadValueEMAction, ReadValueEMAction);
                                 void ReadValueEMAction()
                                 {
                                     object actualObject = info.GetValue(obj);
 
-                                    object fields = methodInfo.Invoke(null, new object[] { actualObject, netVarAux.syncAuthority });
+                                    object fields = methodInfo.Invoke(null, new object[] { actualObject, netVarAttribute.syncAuthority });
                                     if (fields is List<(FieldInfo, NetVariable)> values)
                                     {
                                         foreach ((FieldInfo, NetVariable) field in values)
                                         {
                                             List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
-                                            newRoute.Add(RouteInfo.CreateForProperty(netVarAux.VariableId));
+                                            newRoute.Add(RouteInfo.CreateForProperty(netVarAttribute.VariableId));
                                             newRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
                                             object componentValue = field.Item1.GetValue(actualObject);
                                             //reflection.debugger?.Log($"EM Inspect: {info.FieldType} {info.GetValue(obj)}\n");
@@ -97,13 +97,13 @@ namespace Net
                             }
                             else
                             {
-                                reflection.CheckAuthority(owner, netVarAux.syncAuthority, ReadValueAction, ReadValueAction);
+                                reflection.CheckAuthority(owner, netVarAttribute.syncAuthority, ReadValueAction, ReadValueAction);
                                 void ReadValueAction()
                                 {
                                     List<RouteInfo> extendedRoute = new List<RouteInfo>(idRoute);
                                     //reflection.debugger?.Log($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
                                     //reflection.debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
-                                    reflection.reflectionReader.ReadValue(info, obj, netVarAux, extendedRoute, owner);
+                                    reflection.reflectionReader.ReadValue(info, obj, netVarAttribute, extendedRoute, owner);
                                 }
                             }
                         }
@@ -133,125 +133,95 @@ namespace Net
         /// <param name="idToRead">Current position in the route.</param>
         /// <param name="value">The value to write.</param>
         /// <returns>The modified object.</returns>
-        public object InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value, FieldInfo parentField = null, object parentObject = null)
+        public object InspectWrite(Type type, object obj, List<RouteInfo> idRoute, int idToRead, object value)
         {
-            string debug = $"[InspectWrite] Start - Type:{type.Name} RoutePos:{idToRead}/{idRoute.Count}\n";
+            string debug = $"InspectWrite - Start\n";
+            debug += $"Target Type: {type.Name}, Current Value: {obj}\n";
+            debug += $"New Value: {value.ToString()} (Type: {value?.GetType()?.Name ?? "null"})\n";
+            debug += $"Route Position: {idToRead}/{idRoute.Count}\n";
             debug += $"Full Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
-            debug += $"Current Value: {obj}\n";
-            debug += $"New Value: {value} (Type: {value?.GetType()?.Name ?? "null"})\n";
 
             try
             {
                 if (obj == null)
                 {
-                    debug += "Target object is null\n";
-                    reflection.debugger?.Log(debug);
+                    //debugger?.Log("Target object is null\n");
                     return null;
                 }
 
                 if (idRoute.Count <= idToRead)
                 {
-                    debug += "Route exhausted without finding target\n";
-                    reflection.debugger?.Log(debug);
+                    //debugger?.Log("Route exhausted without finding target\n");
                     return obj;
                 }
 
                 RouteInfo currentRoute = idRoute[idToRead];
-                debug += $"Current Route: {currentRoute.route}\n";
-
+                debug += $"Current Route Info: {currentRoute}\n";
+                // Regular fields check
                 foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, reflection.bindingFlags))
                 {
                     NetVariable attributes = info.GetCustomAttribute<NetVariable>();
-                    if (attributes != null && attributes.VariableId == currentRoute.route)
+                    if (attributes != null)
                     {
-                        debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
-
-                        if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
+                        if (attributes.VariableId == currentRoute.route)
                         {
-                            debug += $"Processing as extension method type\n";
-
-                            object structInstance = info.GetValue(obj);
-                            if (structInstance == null)
+                            if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
                             {
-                                structInstance = ReflectionHelperMethods.ConstructObject(info.FieldType, reflection.bindingFlags);
-                                info.SetValue(obj, structInstance);
-                            }
+                                object structInstance = info.GetValue(obj);
+                                object fields = methodInfo.Invoke(null, new object[] { structInstance, attributes.syncAuthority });
 
-                            // Get all nested fields through extension method
-                            object fields = methodInfo.Invoke(null, new object[] { structInstance, attributes.syncAuthority });
-
-                            if (fields is List<(FieldInfo, NetVariable)> nestedFields)
-                            {
-                                debug += $"Found {nestedFields.Count} nested fields\n";
-
-                                if (idRoute.Count <= idToRead + 1)
+                                if (fields is List<(FieldInfo, NetVariable)> values)
                                 {
-                                    debug += "No more route segments for nested fields\n";
-                                    reflection.debugger?.Log(debug);
-                                    return obj;
-                                }
-
-                                RouteInfo nextRoute = idRoute[idToRead + 1];
-                                debug += $"Next route segment: {nextRoute.route}\n";
-
-                                foreach ((FieldInfo nestedField, NetVariable nestedAttr) in nestedFields)
-                                {
-                                    if (nestedAttr.VariableId == nextRoute.route)
+                                    foreach ((FieldInfo, NetVariable) field in values)
                                     {
-                                        debug += $"Found matching nested field: {nestedField.Name}\n";
-
-                                        // Always route through WriteValue to handle recursive extension methods
-                                        object result = reflection.reflectionWriter.WriteValue(
-                                            nestedField,
-                                            structInstance,
-                                            nestedAttr,
-                                            idRoute,
-                                            idToRead + 1,
-                                            value,
-                                            info,
-                                            obj
-                                        );
-
-                                        // Propagate struct changes if needed
-                                        if (info.FieldType.IsValueType)
+                                        if (idRoute[idToRead + 1].route == field.Item2.VariableId)
                                         {
-                                            nestedField.SetValue(structInstance, result);
-                                            info.SetValue(obj, structInstance);
-                                        }
+                                            //debugger?.Log($"InspectWrite: Writing to {info.Name}.{field.Item1.Name}");
+                                            object currentStruct = info.GetValue(obj);
 
-                                        reflection.debugger?.Log(debug);
-                                        return obj;
+                                            object modifiedStruct;
+                                            if (reflection.extensionMethods.TryGetValue(field.Item1.FieldType, out MethodInfo _))
+                                            {
+                                                modifiedStruct = InspectExtensionMethod(field.Item1, currentStruct, field.Item2, idRoute, idToRead + 1, value);
+                                            }
+                                            else
+                                            {
+                                                modifiedStruct = reflection.reflectionWriter.WriteValue(field.Item1, currentStruct, field.Item2, idRoute, idToRead + 1, value, info, obj);
+                                            }
+
+                                            field.Item1.SetValue(currentStruct, modifiedStruct);
+
+                                            return currentStruct;
+                                        }
                                     }
                                 }
                             }
+                            else
+                            {
+                                object structInstance = info.GetValue(obj);
+                                if (structInstance == null)
+                                {
+                                    structInstance = ReflectionHelperMethods.ConstructObject(info.FieldType, reflection.bindingFlags);
+                                    info.SetValue(obj, structInstance);
+                                }
+                                //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
+                                //debug += $"Current field value: {info.GetValue(obj)}\n";
+                                //debugger?.Log(debug);
+                                return reflection.reflectionWriter.WriteValue(info, obj, attributes, idRoute, idToRead, value);
+                            }
                         }
-                        else
-                        {
-                            debug += $"Processing as regular field\n";
-                            reflection.debugger?.Log(debug);
-
-                            return reflection.reflectionWriter.WriteValue(
-                                info,
-                                obj,
-                                attributes,
-                                idRoute,
-                                idToRead,
-                                value,
-                                parentField,
-                                parentObject
-                            );
-                        }
+                        // Extension fields check
                     }
                 }
 
-                debug += "No matching field found\n";
+                debug += "No matching field found in this type\n";
             }
             catch (Exception ex)
             {
-                debug += $"ERROR: {ex.Message}\n{ex.StackTrace}\n";
+                debug += $"InspectWrite error: {ex.Message}\n{ex.StackTrace}";
             }
 
-            reflection.debugger?.Log(debug);
+            //debugger?.Log(debug);
             return obj;
         }
 
@@ -332,6 +302,52 @@ namespace Net
 
             debug += "No matching field found\n";
             //debugger?.Log(debug);
+            return obj;
+        }
+
+
+        /// <summary>
+        /// Recursively inspects and modifies fields of a struct using extension methods for network synchronization.
+        /// </summary>
+        /// <param name="info">The FieldInfo representing the field to inspect.</param>
+        /// <param name="obj">The parent object containing the field.</param>
+        /// <param name="nestedAttr">The NetVariable attribute associated with the field.</param>
+        /// <param name="idRoute">The route information specifying the path to the target field.</param>
+        /// <param name="idToRead">The current position in the route path.</param>
+        /// <param name="value">The new value to set for the target field.</param>
+        /// <returns>
+        /// The modified struct instance if successful, or the original object if no modifications were made.
+        /// </returns>
+        private object InspectExtensionMethod(FieldInfo info, object obj, NetVariable nestedAttr, List<RouteInfo> idRoute, int idToRead, object? value)
+        {
+            if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
+            {
+                object structInstance = info.GetValue(obj);
+                object fields = methodInfo.Invoke(null, new object[] { structInstance, nestedAttr.syncAuthority });
+
+                if (fields is List<(FieldInfo, NetVariable)> values)
+                {
+                    foreach ((FieldInfo, NetVariable) field in values)
+                    {
+                        if (idRoute[idToRead + 1].route == field.Item2.VariableId)
+                        {
+                            object modifiedSubStruct;
+
+                            if (reflection.extensionMethods.TryGetValue(field.Item1.FieldType, out MethodInfo _))
+                            {
+                                modifiedSubStruct = InspectExtensionMethod(field.Item1, structInstance, field.Item2, idRoute, idToRead + 1, value);
+                            }
+                            else
+                            {
+                                modifiedSubStruct = reflection.reflectionWriter.WriteValue(field.Item1, structInstance, field.Item2, idRoute, idToRead + 1, value, info, obj);
+                            }
+
+                            field.Item1.SetValue(structInstance, modifiedSubStruct);
+                            return structInstance;
+                        }
+                    }
+                }
+            }
             return obj;
         }
         #endregion

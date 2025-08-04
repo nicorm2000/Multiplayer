@@ -30,7 +30,7 @@ namespace Net
         {
             if (LastMessageBroadcastToClients.ContainsKey(id))
             {
-                var clientMessages = LastMessageBroadcastToClients[id];
+                Dictionary<MessageType, Queue<byte[]>> clientMessages = LastMessageBroadcastToClients[id];
 
                 if (clientMessages.ContainsKey(netConfirm.GetData()) && clientMessages[netConfirm.GetData()].Count > 0)
                 {

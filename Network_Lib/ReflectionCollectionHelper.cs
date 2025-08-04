@@ -66,7 +66,6 @@ namespace Net
 
             Type type = collection.GetType();
 
-            // 1. Public or non-public indexer
             PropertyInfo indexer = type.GetProperty("Item", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (indexer != null && indexer.CanWrite)
             {
@@ -82,7 +81,6 @@ namespace Net
                 }
             }
 
-            // 2. IList
             if (collection is IList list && index < list.Count)
             {
                 try
@@ -97,7 +95,6 @@ namespace Net
                 }
             }
 
-            // 3. Insert(int, T)
             MethodInfo? insertMethod = type.GetMethod("Insert", new[] { typeof(int), typeof(object) });
             if (insertMethod != null)
             {

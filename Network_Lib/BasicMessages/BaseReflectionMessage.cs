@@ -62,8 +62,6 @@ namespace Net
                 dimensions);
         }
 
-        public static RouteInfo CreateForJaggedArray(int routeId, int[] pathIndices, Type elementType) => new RouteInfo(routeId, pathIndices[0], -1, (byte)(IS_COLLECTION | IS_JAGGED_ARRAY), elementType, pathIndices);
-
         private static int LinearizeIndices(int[] indices, int[] dimensions)
         {
             int index = 0;

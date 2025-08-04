@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
+using System.IO;
+using System;
 using Net;
 
 namespace Match_Maker
@@ -48,9 +48,6 @@ namespace Match_Maker
 
         int minPlayerToStartGame = 2;
         int serverPort = 0;
-
-        //int serverNumber = 0;
-        //int playerCounterTotalServers = 0;
 
         /// <summary>
         /// Starts the server on the specified port.
@@ -205,7 +202,7 @@ namespace Match_Maker
 
                         serverNameSet.Clear();
 
-                        foreach (var name in updateMsg.GetData())
+                        foreach (string name in updateMsg.GetData())
                         {
                             serverNameSet.Add(name);
                         }
@@ -265,7 +262,7 @@ namespace Match_Maker
         /// <param name="data">The data to broadcast.</param>
         public void Broadcast(byte[] data)
         {
-            using (var iterator = clients.GetEnumerator())
+            using (Dictionary<int, Client>.Enumerator iterator = clients.GetEnumerator())
             {
                 while (iterator.MoveNext())
                 {

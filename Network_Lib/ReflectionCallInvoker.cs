@@ -42,7 +42,7 @@ namespace Net
 
             void SendMethodMessageAction()
             {
-                object invokeMethod = method.Invoke(iNetObj, parameters);
+                object invokeMethod = method.Invoke(iNetObj, parameters); // local invoke
 
                 if (method.ReturnParameter.GetType() != typeof(void))
                 {
@@ -132,7 +132,6 @@ namespace Net
             NetEvent netEvent = eventInfo.GetCustomAttribute<NetEvent>();
             if (netEvent == null) return;
 
-            // Then check authority for network sending
             reflection.CheckAuthority(iNetObj.GetOwnerID(), netEvent.syncAuthority, SendEventMessageAction, SendEventMessageAction);
 
             void SendEventMessageAction()
@@ -144,7 +143,7 @@ namespace Net
                     Delegate eventDelegate = field.GetValue(iNetObj) as Delegate;
                     eventDelegate?.DynamicInvoke(parameters);
                 }
-                // Serialize and send the network message
+
                 List<(string, string)> parametersList = new List<(string, string)>();
                 foreach (object param in parameters)
                 {

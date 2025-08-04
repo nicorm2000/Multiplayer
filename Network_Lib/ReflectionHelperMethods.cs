@@ -26,7 +26,7 @@ namespace Net
         public static IEnumerable<int[]> GetArrayIndices(Array array)
         {
             int[] indices = new int[array.Rank];
-            yield return indices; // Return first index (0,0,...)
+            yield return indices;
 
             while (IncrementIndices(array, indices))
             {

@@ -80,7 +80,7 @@ public class NetworkClient : NetworkEntity
         onInitPingPong += () => sortableMessage = new(this);
 
         ClientToServerNetHandShake handShakeMesage = new(MessagePriority.NonDisposable, (UdpConnection.IPToLong(ipAddress), port, userName));
-        SendToServer(handShakeMesage.Serialize());
+        SendMessage(handShakeMesage.Serialize()); // check
 #if CLIENT
         NetworkScreen.Instance.SwitchToChatScreen();
 #endif

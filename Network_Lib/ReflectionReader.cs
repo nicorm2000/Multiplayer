@@ -42,20 +42,15 @@ namespace Net
 
             if (value is IDictionary dict && dict.Count == 0)
             {
-                // Ensure we preserve dictionary type information
                 RouteInfo lastRoute = route.Last();
                 if (!lastRoute.IsDictionary && route.Count > 1)
                 {
-                    lastRoute = route[route.Count - 2];
+                    lastRoute = route[route.Count - 2]; // Nested structures, checks parent to update route
                 }
 
                 if (lastRoute.IsDictionary)
                 {
-                    // Create new route info with proper dictionary flags
-                    RouteInfo dictRoute = RouteInfo.CreateForDictionary(
-                        lastRoute.route,
-                        -1, // No specific key
-                        lastRoute.ElementType ?? typeof(object));
+                    RouteInfo dictRoute = RouteInfo.CreateForDictionary(lastRoute.route, -1, lastRoute.ElementType ?? typeof(object));
 
                     route[route.Count - 1] = dictRoute;
                 }
@@ -146,19 +141,18 @@ namespace Net
                 {
                     IDictionary dictionary = (IDictionary)fieldValue;
                     Type valueType = fieldType.GetGenericArguments()[1];
+                    // genericArgs[0] = typeof(string) (key type)
+                    // genericArgs[1] = typeof(int)   (value type)
 
-                    // Track changes
                     List<object> currentKeys = dictionary.Keys.Cast<object>().ToList();
                     debug += ($"Current Keys: {string.Join(",", currentKeys)}\n");
 
-                    // Check for removals FIRST
-                    if (reflection.previousDictionaryStates.TryGetValue(dictionary, out Dictionary<object, int>? previousKeys))
+                    if (reflection.previousDictionaryStates.TryGetValue(dictionary, out Dictionary<object, int>? previousKeys)) // Check for removals FIRST
                     {
                         List<object> removedKeys = previousKeys.Keys.Except(currentKeys).ToList();
                         debug += ($"Removed Keys: {(removedKeys.Any() ? string.Join(",", removedKeys) : "none")}\n");
 
-                        // Process removals FIRST and RETURN
-                        if (removedKeys.Any())
+                        if (removedKeys.Any()) // Process removals FIRST and RETURN
                         {
                             foreach (object? key in removedKeys)
                             {
@@ -170,11 +164,7 @@ namespace Net
                                     RouteInfo.CreateForDictionary(attribute.VariableId, keyHash, valueType)
                                 };
 
-                                // Create and send dedicated Remove message
-                                NetRemoveMessage removeMessage = new NetRemoveMessage(
-                                    attribute.MessagePriority,
-                                    keyHash,
-                                    removeRoute);
+                                NetRemoveMessage removeMessage = new NetRemoveMessage(attribute.MessagePriority, keyHash, removeRoute);
 
                                 byte[] serialized = removeMessage.Serialize();
                                 //debugger?.Log($"Sending Remove - Full Data: {BitConverter.ToString(serialized)}");
@@ -221,9 +211,8 @@ namespace Net
                     IEnumerable collection = (IEnumerable)fieldValue;
                     int count = 0;
                     int index = 0;
-
-                    // Get count via enumeration (works for any IEnumerable)
-                    IEnumerator enumerator = collection.GetEnumerator();
+ 
+                    IEnumerator enumerator = collection.GetEnumerator(); // Get count via enumeration (works for any IEnumerable)
                     while (enumerator.MoveNext())
                     {
                         count++;
@@ -261,10 +250,8 @@ namespace Net
                         }
                     }
 
-                    // Update count tracking
                     reflection.previousCollectionCounts[fieldValue] = count;
 
-                    // Process items
                     enumerator = collection.GetEnumerator(); // Reset enumerator
                     while (enumerator.MoveNext())
                     {
@@ -313,8 +300,8 @@ namespace Net
                             List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
                             newRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
                             object componentValue = field.Item1.GetValue(actualObject);
-                            reflection.debugger?.Log($"EM RV: {info.FieldType} {info.GetValue(obj)}\n");
-                            reflection.debugger?.Log($"EM Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
+                            //reflection.debugger?.Log($"EM RV: {info.FieldType} {info.GetValue(obj)}\n");
+                            //reflection.debugger?.Log($"EM Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
                             reflection.reflectionReader.ReadValue(field.Item1, actualObject, field.Item2, newRoute, owner, true);
                         }
                         return;

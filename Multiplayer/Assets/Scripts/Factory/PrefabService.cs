@@ -7,7 +7,7 @@ public interface IPrefabService
     int GetIdByPrefab(GameObject prefab);
 }
 
-public class PrefabService : IPrefabService //En un Futuro pasar en vez de diccionary a maps https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore.storage.doubletypemapping?view=efcore-8.0
+public class PrefabService : IPrefabService
 {
     private static Dictionary<int, GameObject> idToPrefab;
     private static Dictionary<GameObject, int> prefabToId;

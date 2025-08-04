@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Reflection;
 using System;
-using System.Diagnostics;
 
 namespace Net
 {
@@ -32,8 +31,7 @@ namespace Net
         /// <returns>The modified object.</returns>
         public object WriteValue(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value, FieldInfo parentField = null, object parentObject = null)
         {
-            reflection.debugger?.Log($"WriteValue - Field: {info.Name}, ValueType: {value?.GetType().Name}");
-            string debug = "";
+            //reflection.debugger?.Log($"WriteValue - Field: {info.Name}, ValueType: {value?.GetType().Name}, issimple{ReflectionHelperMethods.IsSimpleType(info.FieldType)}, value {value}");
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
             object currentValue = info.GetValue(obj);
@@ -48,39 +46,36 @@ namespace Net
             // Handle simple types
             if (ReflectionHelperMethods.IsSimpleType(fieldType))
             {
-                debug += $"IsSimpleType: true\n";
+                //reflection.debugger.Log($"IsSimpleType: {info.Name}, {fieldType}, {value}\n");
 
                 if (parentField != null && parentObject != null)
                 {
-                    debug += "Handling nested field assignment\n";
-
-                    // Get the parent struct instance
-                    object parentStruct = parentField.GetValue(parentObject);
-                    debug += $"Parent struct before: {parentStruct}\n";
-
-                    // Set the value on the nested field
-                    info.SetValue(parentStruct, Convert.ChangeType(value, fieldType));
-                    debug += $"Parent struct after: {parentStruct}\n";
-
-                    // Set the modified struct back to its parent
-                    parentField.SetValue(parentObject, parentStruct);
-
-                    // If we're multiple levels deep in structs, propagate up
-                    if (parentObject != obj)
+                    //reflection.debugger?.Log($"Parent field: {parentField.Name}, Parent object: {parentObject}");
+                    object parentStruct = parentObject;
+                    object innerStruct = parentField.GetValue(parentStruct);
+                    if (innerStruct == null)
                     {
-                        info.SetValue(obj, parentField.GetValue(parentObject));
+                        //reflection.debugger?.Log("Boxed struct is null, aborting WriteValue");
+                        return obj;
                     }
 
-                    debug += "Nested assignment complete\n";
+                    info.SetValue(innerStruct, value);
+                    //reflection.debugger?.Log($"After field set (before parent set): {innerStruct}");
+
+                    parentField.SetValue(parentStruct, innerStruct);
+
+                    object verifiedStruct = parentField.GetValue(parentObject);
+                    object verifiedValue = info.GetValue(verifiedStruct);
+                    //reflection.debugger?.Log($"Verification - Struct: {verifiedStruct}, Field: {verifiedValue}");
+
+                    return parentStruct;
                 }
                 else
                 {
-                    debug += "Direct field assignment\n";
-                    info.SetValue(obj, Convert.ChangeType(value, fieldType));
+                    //reflection.debugger?.Log($"Direct field assignment {info.Name}\n");
+                    info.SetValue(obj, value);
+                    return obj;
                 }
-
-                reflection.debugger?.Log(debug);
-                return obj;
             }
 
             if (value is Remove removeData)
@@ -130,9 +125,7 @@ namespace Net
                         Array newArray;
                         if (currentValue == null || ((Array)currentValue).Rank != fieldType.GetArrayRank())
                         {
-                            newArray = Array.CreateInstance(
-                                fieldType.GetElementType(),
-                                currentRoute.Dimensions);
+                            newArray = Array.CreateInstance(fieldType.GetElementType(), currentRoute.Dimensions);
                         }
                         else
                         {
@@ -163,10 +156,9 @@ namespace Net
                     {
                         newCollection = Array.CreateInstance(fieldType.GetElementType(), newSize);
 
-                        // Copy existing elements if available
                         if (currentValue != null)
                         {
-                            Array.Copy((Array)currentValue, (Array)newCollection, Math.Min(currentSize, newSize));
+                            Array.Copy((Array)currentValue, (Array)newCollection, Math.Min(currentSize, newSize)); // Copy existing elements if available
                         }
                     }
                 }
@@ -183,8 +175,7 @@ namespace Net
                         info.SetValue(obj, currentValue);
                     }
 
-                    // Always check if we need to prefill it
-                    if (currentRoute.IsCollection && (currentValue as ICollection)?.Count < currentRoute.collectionSize)
+                    if (currentRoute.IsCollection && (currentValue as ICollection)?.Count < currentRoute.collectionSize) // Always check if we need to prefill it
                     {
                         Type elementTypeToFill = ReflectionHelperMethods.GetElementType(fieldType) ?? typeof(object);
                         MethodInfo addMethod = fieldType.GetMethod("Add");
@@ -198,7 +189,6 @@ namespace Net
 
                             addMethod?.Invoke(currentValue, new object[] { defaultValue });
                         }
-
                         //debugger?.Log($"[WriteValue] Pre-filled {fieldType.Name} with {fillCount} additional default elements (now has {currentRoute.collectionSize})");
                     }
 
@@ -312,58 +302,6 @@ namespace Net
                 return obj;
             }
 
-            if (reflection.extensionMethods.TryGetValue(fieldType, out MethodInfo methodInfo))
-            {
-                reflection.debugger?.Log($"WriteValue: Handling extension method type: {fieldType.Name}");
-
-                if (idRoute.Count <= idToRead + 1)
-                {
-                    reflection.debugger?.Log("WriteValue: No more route segments, can't process extension method");
-                    return obj;
-                }
-
-                object fields = methodInfo.Invoke(null, new object[] { currentValue, attribute?.syncAuthority ?? NETAUTHORITY.SERVER });
-
-                if (fields is List<(FieldInfo, NetVariable)> nestedFields)
-                {
-                    RouteInfo nextRoute = idRoute[idToRead + 1];
-                    reflection.debugger?.Log($"WriteValue: Next route segment: {nextRoute.route}");
-
-                    foreach ((FieldInfo nestedField, NetVariable nestedAttr) in nestedFields)
-                    {
-                        if (nestedAttr.VariableId == nextRoute.route)
-                        {
-                            reflection.debugger?.Log($"WriteValue: Found matching nested field: {nestedField.Name}");
-
-                            // Get current nested value
-                            object nestedValue = nestedField.GetValue(currentValue);
-
-                            // Recursively process the nested field
-                            object result = WriteValue(
-                                nestedField,
-                                currentValue,
-                                nestedAttr,
-                                idRoute,
-                                idToRead + 1,
-                                value,
-                                info,
-                                obj
-                            );
-
-                            // Propagate struct changes if needed
-                            if (fieldType.IsValueType && info != null)
-                            {
-                                nestedField.SetValue(currentValue, result);
-                                info.SetValue(obj, currentValue);
-                            }
-
-                            reflection.debugger?.Log("WriteValue: Completed nested field processing");
-                            return obj;
-                        }
-                    }
-                }
-            }
-
             object objReference = info.GetValue(obj);
             if (objReference == null)
             {
@@ -437,9 +375,7 @@ namespace Net
                     NetVariable fieldAttr = field.GetCustomAttribute<NetVariable>();
                     if (fieldAttr != null)
                     {
-                        WriteValueNullException(field, currentValue, fieldAttr,
-                            new List<RouteInfo>(idRoute) { RouteInfo.CreateForProperty(fieldAttr.VariableId) },
-                            idToRead + 1, value);
+                        WriteValueNullException(field, currentValue, fieldAttr, new List<RouteInfo>(idRoute) { RouteInfo.CreateForProperty(fieldAttr.VariableId) }, idToRead + 1, value);
                     }
                 }
                 return obj;

@@ -38,7 +38,7 @@ public class ServerManager : MonoBehaviour
         string[] args = Environment.GetCommandLineArgs();
 
         int port = 52002;
-        foreach (var arg in args)
+        foreach (string arg in args)
         {
             if (int.TryParse(arg, out int parsedPort))
             {

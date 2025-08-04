@@ -10,6 +10,17 @@ using Net;
 public class PlayerController : MonoBehaviour, INetObj
 {
     [Serializable]
+    public class Pepe
+    {
+        System.Random rnd = new System.Random();
+        public Pepe()
+        {
+            basePublicTestStruct = new TestStruct(rnd);
+        }
+        [SerializeField, NetVariable(0, NETAUTHORITY.CLIENT)] public TestStruct basePublicTestStruct;
+    }
+
+    [Serializable]
     public class TestingClass
     {
         [NetVariable(0, NETAUTHORITY.CLIENT)] public TestingClass2 testInt = new();
@@ -165,12 +176,12 @@ public class PlayerController : MonoBehaviour, INetObj
         Special = 255
     }
 
-    [NetVariable(0)] public float health = 3;
-    [NetVariable(1, NETAUTHORITY.CLIENT)] public Vector3 movementSynced = new Vector3(1, 1, 1);
-    [NetVariable(2, NETAUTHORITY.CLIENT)] public float movementXSynced;
-    [NetVariable(3, NETAUTHORITY.CLIENT)] public float movementYSynced;
-    [NetVariable(4, NETAUTHORITY.CLIENT)] public bool shouldShoot = false;
-    [NetVariable(5, NETAUTHORITY.CLIENT)] public float cameraHor = 0;
+    /*[NetVariable(0)]*/ public float health = 3;
+    /*[NetVariable(1, NETAUTHORITY.CLIENT)]*/ public Vector3 movementSynced = new Vector3(1, 1, 1);
+    /*[NetVariable(2, NETAUTHORITY.CLIENT)]*/ public float movementXSynced;
+    /*[NetVariable(3, NETAUTHORITY.CLIENT)]*/ public float movementYSynced;
+    /*[NetVariable(4, NETAUTHORITY.CLIENT)]*/ public bool shouldShoot = false;
+    /*[NetVariable(5, NETAUTHORITY.CLIENT)]*/ public float cameraHor = 0;
     //[NetVariable(6, NETAUTHORITY.CLIENT)] public bool myBool = false;
     //[NetVariable(7, NETAUTHORITY.CLIENT)] public string myString = "pepe";
     //[NetVariable(8, NETAUTHORITY.CLIENT)] public char myChar = 'a';
@@ -185,10 +196,10 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(17, NETAUTHORITY.CLIENT)] public byte myByte = 1;
     //[NetVariable(18, NETAUTHORITY.CLIENT)] public sbyte mySByte = 1;
     //[NetVariable(19, NETAUTHORITY.CLIENT)] public TestEnum enumField;
-    //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<int> testList;
+    //[NetVariable(20, NETAUTHORITY.CLIENT)] public List<string> testList;
     //[NetVariable(21, NETAUTHORITY.CLIENT)] public TestingClass testing = new();
     //[NetVariable(22, NETAUTHORITY.CLIENT)] public TestingStruct testingStruct = new() { testInt = 0, testInt2 = 0, testInt3 = 0 };
-    //[NetVariable(23, NETAUTHORITY.CLIENT)] public int[] myArray = new int[2];
+    //[NetVariable(23, NETAUTHORITY.CLIENT)] public string[] myArray = new string[2];
     //[NetVariable(24, NETAUTHORITY.CLIENT)] public TestingClass4 testingClass4;
     //[NetVariable(25, NETAUTHORITY.CLIENT)] public List<TestingClass3> jajaxd = null;
     //[NetVariable(26, NETAUTHORITY.CLIENT)] public TestingClass3 testingclass3 = new();
@@ -204,12 +215,15 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(36, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(37, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
     //[NetVariable(38, NETAUTHORITY.CLIENT)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
-    //[NetVariable(39, NETAUTHORITY.CLIENT)] public DictionaryTestClass dictionaryTest = new DictionaryTestClass();
-    //[NetVariable(40, NETAUTHORITY.CLIENT)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
+    [NetVariable(39, NETAUTHORITY.CLIENT)] public DictionaryTestClass dictionaryTest = new DictionaryTestClass();
+    [NetVariable(40, NETAUTHORITY.CLIENT)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
     //[NetVariable(41, NETAUTHORITY.CLIENT)] public CustomCollection<int> _customCollection;
     //[NetVariable(42, NETAUTHORITY.CLIENT)] public CustomCollection2<string> _customCollection2;
     //[NetVariable(43, NETAUTHORITY.CLIENT)] public CustomCollection3<TestingClass3> _customCollection3;
-    [NetVariable(44, NETAUTHORITY.CLIENT), SerializeField] public TowerTurns towerTurns;
+    /*[NetVariable(44, NETAUTHORITY.CLIENT), SerializeField]*/ public TowerTurns towerTurns;
+    /*[NetVariable(45, NETAUTHORITY.CLIENT), SerializeField]*/ public LeanClassTrueTestingNoLag leanClass;
+    //[SerializeField, NetVariable(50, NETAUTHORITY.CLIENT)] public Pepe basePublicTestStruct;
+    //[NetVariable(46, NETAUTHORITY.CLIENT), SerializeField] public Pepe pepe;
     [SerializeField] TankMovement movement;
     [SerializeField] Transform cameraPivot;
     [SerializeField] public CameraOrbit cameraOrbit;
@@ -266,175 +280,175 @@ public class PlayerController : MonoBehaviour, INetObj
     //}
     #endregion
     #region DICTIONARY
-    //[ContextMenu("Initialize Dictionary")]
-    //private void InitializeDictionary()
-    //{
-    //    dictionaryTest = new DictionaryTestClass();
-    //    Debug.Log($"Client {clientID} Dictionary initialized with {dictionaryTest.testDictionary.Count} entries");
-    //}
-    //
-    //[ContextMenu("Add Dictionary Entry")]
-    //private void AddDictionaryEntry()
-    //{
-    //    try
-    //    {
-    //        if (dictionaryTest == null)
-    //        {
-    //            dictionaryTest = new DictionaryTestClass();
-    //        }
-    //
-    //        int newKey = dictionaryTest.testDictionary.Count > 0 ?
-    //                   dictionaryTest.testDictionary.Keys.Max() + 1 :
-    //                   1;
-    //
-    //        string newValue = $"Entry {newKey} (Client {clientID})";
-    //        dictionaryTest.testDictionary.Add(newKey, newValue);
-    //
-    //        Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        Debug.LogError($"Error adding dictionary entry: {ex}");
-    //
-    //        dictionaryTest.testDictionary.Add(1, $"Fallback Entry (Client {clientID})");
-    //    }
-    //}
-    //
-    //[ContextMenu("Remove Last Dictionary Entry")]
-    //private void RemoveDictionaryEntry()
-    //{
-    //    if (dictionaryTest?.testDictionary.Count > 0)
-    //    {
-    //        int lastKey = dictionaryTest.testDictionary.Keys.Max();
-    //        string removedValue = dictionaryTest.testDictionary[lastKey];
-    //        dictionaryTest.testDictionary.Remove(lastKey);
-    //        Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
-    //    }
-    //}
-    //
-    //[ContextMenu("Update Random Dictionary Value")]
-    //private void UpdateRandomDictionaryValue()
-    //{
-    //    if (dictionaryTest?.testDictionary.Count > 0)
-    //    {
-    //        int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
-    //        string oldValue = dictionaryTest.testDictionary[randomKey];
-    //        string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
-    //        dictionaryTest.testDictionary[randomKey] = newValue;
-    //        Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
-    //    }
-    //}
-    //
-    //[ContextMenu("Clear Dictionary")]
-    //private void ClearDictionary()
-    //{
-    //    if (dictionaryTest != null)
-    //    {
-    //        dictionaryTest.testDictionary.Clear();
-    //        Debug.Log($"Client {clientID} cleared dictionary (now has {dictionaryTest.testDictionary.Count} entries)");
-    //    }
-    //}
-    //
-    //[ContextMenu("Set Dictionary to Null")]
-    //private void NullDictionary()
-    //{
-    //    dictionaryTest = null;
-    //    Debug.Log($"Client {clientID} set dictionary to NULL");
-    //}
+    [ContextMenu("Initialize Dictionary")]
+    private void InitializeDictionary()
+    {
+        dictionaryTest = new DictionaryTestClass();
+        Debug.Log($"Client {clientID} Dictionary initialized with {dictionaryTest.testDictionary.Count} entries");
+    }
+    
+    [ContextMenu("Add Dictionary Entry")]
+    private void AddDictionaryEntry()
+    {
+        try
+        {
+            if (dictionaryTest == null)
+            {
+                dictionaryTest = new DictionaryTestClass();
+            }
+    
+            int newKey = dictionaryTest.testDictionary.Count > 0 ?
+                       dictionaryTest.testDictionary.Keys.Max() + 1 :
+                       1;
+    
+            string newValue = $"Entry {newKey} (Client {clientID})";
+            dictionaryTest.testDictionary.Add(newKey, newValue);
+    
+            Debug.Log($"Client {clientID} added dictionary entry: {newKey} = {newValue}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Error adding dictionary entry: {ex}");
+    
+            dictionaryTest.testDictionary.Add(1, $"Fallback Entry (Client {clientID})");
+        }
+    }
+    
+    [ContextMenu("Remove Last Dictionary Entry")]
+    private void RemoveDictionaryEntry()
+    {
+        if (dictionaryTest?.testDictionary.Count > 0)
+        {
+            int lastKey = dictionaryTest.testDictionary.Keys.Max();
+            string removedValue = dictionaryTest.testDictionary[lastKey];
+            dictionaryTest.testDictionary.Remove(lastKey);
+            Debug.Log($"Client {clientID} removed dictionary entry: {lastKey} = {removedValue}");
+        }
+    }
+    
+    [ContextMenu("Update Random Dictionary Value")]
+    private void UpdateRandomDictionaryValue()
+    {
+        if (dictionaryTest?.testDictionary.Count > 0)
+        {
+            int randomKey = dictionaryTest.testDictionary.Keys.ElementAt(UnityEngine.Random.Range(0, dictionaryTest.testDictionary.Count));
+            string oldValue = dictionaryTest.testDictionary[randomKey];
+            string newValue = $"Updated by Client {clientID} at {DateTime.Now:HH:mm:ss}";
+            dictionaryTest.testDictionary[randomKey] = newValue;
+            Debug.Log($"Client {clientID} updated {randomKey}: {oldValue} -> {newValue}");
+        }
+    }
+    
+    [ContextMenu("Clear Dictionary")]
+    private void ClearDictionary()
+    {
+        if (dictionaryTest != null)
+        {
+            dictionaryTest.testDictionary.Clear();
+            Debug.Log($"Client {clientID} cleared dictionary (now has {dictionaryTest.testDictionary.Count} entries)");
+        }
+    }
+    
+    [ContextMenu("Set Dictionary to Null")]
+    private void NullDictionary()
+    {
+        dictionaryTest = null;
+        Debug.Log($"Client {clientID} set dictionary to NULL");
+    }
     #endregion
     #region MULTIDIMENSIONALARRAYS
-    //[ContextMenu("Initialize Arrays")]
-    //private void InitializeArrays()
-    //{
-    //    arrayTest = new MultiDimArrayTestClass();
-    //    Debug.Log($"Client {clientID} Initialized both arrays (3x3 2D and 2x2x2x2x2 5D)");
-    //}
-    //
-    //[ContextMenu("Null Arrays")]
-    //private void NullArrays()
-    //{
-    //    arrayTest = null;
-    //    Debug.Log($"Client {clientID} Set arrays to NULL");
-    //}
-    //
-    //[ContextMenu("Update Random 2D Value")]
-    //private void UpdateRandom2DValue()
-    //{
-    //    if (arrayTest != null)
-    //    {
-    //        int x = UnityEngine.Random.Range(0, arrayTest.twoDArray.GetLength(0));
-    //        int y = UnityEngine.Random.Range(0, arrayTest.twoDArray.GetLength(1));
-    //
-    //        int oldValue = arrayTest.twoDArray[x, y];
-    //        arrayTest.twoDArray[x, y] = UnityEngine.Random.Range(100, 1000);
-    //
-    //        Debug.Log($"<color=yellow>Client {clientID} Updated 2D[{x},{y}] {oldValue}→{arrayTest.twoDArray[x, y]}</color>\n" +
-    //                 ArrayVisualizer.VisualizeArray(arrayTest.twoDArray, new int[] { x, y }));
-    //    }
-    //}
-    //
-    //[ContextMenu("Update Random 5D Value")]
-    //private void UpdateRandom5DValue()
-    //{
-    //    if (arrayTest != null)
-    //    {
-    //        int[] indices = new int[5];
-    //        for (int i = 0; i < 5; i++)
-    //            indices[i] = UnityEngine.Random.Range(0, arrayTest.fiveDArray.GetLength(i));
-    //
-    //        int oldValue = (int)arrayTest.fiveDArray.GetValue(indices);
-    //        int newValue = UnityEngine.Random.Range(10000, 20000);
-    //        arrayTest.fiveDArray.SetValue(newValue, indices);
-    //
-    //        Debug.Log($"<color=yellow>Client {clientID} Updated 5D[{string.Join(",", indices)}] {oldValue}→{newValue}</color>\n" +
-    //                 ArrayVisualizer.VisualizeMultiDimArray(arrayTest.fiveDArray, indices));
-    //    }
-    //}
-    //
-    //[ContextMenu("Reset 2D Array")]
-    //private void Reset2DArray()
-    //{
-    //    if (arrayTest != null)
-    //    {
-    //        int counter = 1;
-    //        for (int i = 0; i < 3; i++)
-    //        {
-    //            for (int j = 0; j < 3; j++)
-    //            {
-    //                arrayTest.twoDArray[i, j] = counter++;
-    //            }
-    //        }
-    //        Debug.Log($"Client {clientID} Reset 2D array to sequential values");
-    //    }
-    //}
-    //
-    //[ContextMenu("Reset 5D Array")]
-    //private void Reset5DArray()
-    //{
-    //    if (arrayTest != null)
-    //    {
-    //        for (int a = 0; a < 2; a++)
-    //            for (int b = 0; b < 2; b++)
-    //                for (int c = 0; c < 2; c++)
-    //                    for (int d = 0; d < 2; d++)
-    //                        for (int e = 0; e < 2; e++)
-    //                            arrayTest.fiveDArray[a, b, c, d, e] = (a * 10000) + (b * 1000) + (c * 100) + (d * 10) + e;
-    //        Debug.Log($"Client {clientID} Reset 5D array to pattern values");
-    //    }
-    //}
-    //
-    //[ContextMenu("Print Array Visualizations")]
-    //private void PrintArrayVisualizations()
-    //{
-    //    if (arrayTest != null)
-    //    {
-    //        Debug.Log($"<color=cyan><b>Client {clientID} 2D Array:</b></color>\n" +
-    //                 ArrayVisualizer.VisualizeMultiDimArray(arrayTest.twoDArray));
-    //
-    //        Debug.Log($"<color=cyan><b>Client {clientID} 5D Array:</b></color>\n" +
-    //                 ArrayVisualizer.VisualizeMultiDimArray(arrayTest.fiveDArray));
-    //    }
-    //}
+    [ContextMenu("Initialize Arrays")]
+    private void InitializeArrays()
+    {
+        arrayTest = new MultiDimArrayTestClass();
+        Debug.Log($"Client {clientID} Initialized both arrays (3x3 2D and 2x2x2x2x2 5D)");
+    }
+    
+    [ContextMenu("Null Arrays")]
+    private void NullArrays()
+    {
+        arrayTest = null;
+        Debug.Log($"Client {clientID} Set arrays to NULL");
+    }
+    
+    [ContextMenu("Update Random 2D Value")]
+    private void UpdateRandom2DValue()
+    {
+        if (arrayTest != null)
+        {
+            int x = UnityEngine.Random.Range(0, arrayTest.twoDArray.GetLength(0));
+            int y = UnityEngine.Random.Range(0, arrayTest.twoDArray.GetLength(1));
+    
+            int oldValue = arrayTest.twoDArray[x, y];
+            arrayTest.twoDArray[x, y] = UnityEngine.Random.Range(100, 1000);
+    
+            Debug.Log($"<color=yellow>Client {clientID} Updated 2D[{x},{y}] {oldValue}→{arrayTest.twoDArray[x, y]}</color>\n" +
+                     ArrayVisualizer.VisualizeArray(arrayTest.twoDArray, new int[] { x, y }));
+        }
+    }
+    
+    [ContextMenu("Update Random 5D Value")]
+    private void UpdateRandom5DValue()
+    {
+        if (arrayTest != null)
+        {
+            int[] indices = new int[5];
+            for (int i = 0; i < 5; i++)
+                indices[i] = UnityEngine.Random.Range(0, arrayTest.fiveDArray.GetLength(i));
+    
+            int oldValue = (int)arrayTest.fiveDArray.GetValue(indices);
+            int newValue = UnityEngine.Random.Range(10000, 20000);
+            arrayTest.fiveDArray.SetValue(newValue, indices);
+    
+            Debug.Log($"<color=yellow>Client {clientID} Updated 5D[{string.Join(",", indices)}] {oldValue}→{newValue}</color>\n" +
+                     ArrayVisualizer.VisualizeMultiDimArray(arrayTest.fiveDArray, indices));
+        }
+    }
+    
+    [ContextMenu("Reset 2D Array")]
+    private void Reset2DArray()
+    {
+        if (arrayTest != null)
+        {
+            int counter = 1;
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    arrayTest.twoDArray[i, j] = counter++;
+                }
+            }
+            Debug.Log($"Client {clientID} Reset 2D array to sequential values");
+        }
+    }
+    
+    [ContextMenu("Reset 5D Array")]
+    private void Reset5DArray()
+    {
+        if (arrayTest != null)
+        {
+            for (int a = 0; a < 2; a++)
+                for (int b = 0; b < 2; b++)
+                    for (int c = 0; c < 2; c++)
+                        for (int d = 0; d < 2; d++)
+                            for (int e = 0; e < 2; e++)
+                                arrayTest.fiveDArray[a, b, c, d, e] = (a * 10000) + (b * 1000) + (c * 100) + (d * 10) + e;
+            Debug.Log($"Client {clientID} Reset 5D array to pattern values");
+        }
+    }
+    
+    [ContextMenu("Print Array Visualizations")]
+    private void PrintArrayVisualizations()
+    {
+        if (arrayTest != null)
+        {
+            Debug.Log($"<color=cyan><b>Client {clientID} 2D Array:</b></color>\n" +
+                     ArrayVisualizer.VisualizeMultiDimArray(arrayTest.twoDArray));
+    
+            Debug.Log($"<color=cyan><b>Client {clientID} 5D Array:</b></color>\n" +
+                     ArrayVisualizer.VisualizeMultiDimArray(arrayTest.fiveDArray));
+        }
+    }
     #endregion
     #region CUSTOM COLLECTION
     //[ContextMenu("Initialize Collection")]
@@ -861,29 +875,29 @@ public class PlayerController : MonoBehaviour, INetObj
         //}
         #endregion
         #region DICTIONARY
-        //if (dictionaryTest != null)
-        //{
-        //    string dictContents = $"Client {clientID} Dictionary Contents:\n";
-        //    foreach (KeyValuePair<int, string> kvp in dictionaryTest.testDictionary)
-        //    {
-        //        dictContents += $"[{kvp.Key}] = {kvp.Value}\n";
-        //    }
-        //    Debug.Log(dictContents);
-        //}
-        //else
-        //{
-        //    Debug.Log($"Client {clientID} Dictionary is NULL");
-        //}
+        if (dictionaryTest != null)
+        {
+            string dictContents = $"Client {clientID} Dictionary Contents:\n";
+            foreach (KeyValuePair<int, string> kvp in dictionaryTest.testDictionary)
+            {
+                dictContents += $"[{kvp.Key}] = {kvp.Value}\n";
+            }
+            Debug.Log(dictContents);
+        }
+        else
+        {
+            Debug.Log($"Client {clientID} Dictionary is NULL");
+        }
         #endregion
         #region MULTIDIMENSIONALARRAYS
-        //if (arrayTest != null)
-        //{
-        //    Debug.Log($"Client {clientID} Arrays are NOT NULL");
-        //}
-        //else
-        //{
-        //    Debug.Log($"Client {clientID} Arrays are NULL");
-        //}
+        if (arrayTest != null)
+        {
+            Debug.Log($"Client {clientID} Arrays are NOT NULL");
+        }
+        else
+        {
+            Debug.Log($"Client {clientID} Arrays are NULL");
+        }
         #endregion
         #region CUSTOM COLLECTION
         //if (_customCollection != null)

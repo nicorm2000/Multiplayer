@@ -339,11 +339,13 @@ namespace Net
                             }
 
                             field.Item1.SetValue(structInstance, modifiedSubStruct);
+                            // falta setvalue
                             return structInstance;
                         }
                     }
                 }
             }
+            //info.SetValue(obj, value);
             return obj;
         }
         #endregion

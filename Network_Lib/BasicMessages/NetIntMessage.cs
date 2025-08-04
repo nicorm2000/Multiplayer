@@ -61,10 +61,18 @@ namespace Net
         /// <returns>True if the value is plausible; otherwise, false.</returns>
         private bool IsPlausibleInt(int value)
         {
-            const int MAX_EXPECTED_VALUE = 1000000;
-            const int MIN_EXPECTED_VALUE = -1000000;
-
-            return value >= MIN_EXPECTED_VALUE && value <= MAX_EXPECTED_VALUE;
+            if (value > int.MaxValue)
+            {
+                return false;
+            }
+            else if (value < int.MinValue)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         /// <summary>

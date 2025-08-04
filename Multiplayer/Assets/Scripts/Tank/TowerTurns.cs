@@ -3,7 +3,7 @@ using Net;
 
 public class TowerTurns : MonoBehaviour
 {
-    [NetVariable(0, NETAUTHORITY.CLIENT)] public float targetYRotation = 0;
+    /*[NetVariable(0, NETAUTHORITY.CLIENT)]*/ public float targetYRotation = 0;
     [SerializeField] float duration;
     [SerializeField] Transform initialPositionShooting;
     [SerializeField] GameObject bulletPrefab;

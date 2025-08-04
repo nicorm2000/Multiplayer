@@ -80,6 +80,7 @@
     <Compile Include="Assets\Scripts\ConsoleViewer.cs" />
     <Compile Include="Assets\Scripts\Server\ServerManager.cs" />
     <Compile Include="Assets\Scripts\Reflection\LeanClass.cs" />
+    <Compile Include="Assets\Scripts\Reflection\LeanClassTrueTestingNoLag.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

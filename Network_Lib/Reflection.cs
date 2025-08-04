@@ -29,7 +29,7 @@ namespace Net
         public IReflectionDebugger debugger;
         public Dictionary<Type, MethodInfo> extensionMethods = new Dictionary<Type, MethodInfo>();
         public Dictionary<object, Dictionary<object, int>> previousDictionaryStates = new Dictionary<object, Dictionary<object, int>>(); // Used to track and detect removed keys
-        public readonly Dictionary<object, int> previousCollectionCounts = new Dictionary<object, int>(); // Tracks removes from non dictionaries
+        public Dictionary<object, int> previousCollectionCounts = new Dictionary<object, int>(); // Tracks removes from non dictionaries
         #endregion
 
         #region Initialization
@@ -125,7 +125,6 @@ namespace Net
                 networkEntity.SendMessage(serialized);
                 return;
             }
-
             if (value is Enum enumValue)
             {
                 //debugger?.Log("Sending Enum package\n");

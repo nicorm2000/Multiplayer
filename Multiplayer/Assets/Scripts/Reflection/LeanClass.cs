@@ -2,14 +2,16 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using Random = System.Random;
+using Net;
 
+[Serializable]
 public class LeanClass : BaseTestClass
 {
 	#region C#Fields
-	public bool publicBool;
-	private bool privateBool;
-	protected bool protectedBool;
-	internal bool internalBool;
+	/*[NetVariable(1, NETAUTHORITY.CLIENT)] */public bool publicBool;
+	/*[NetVariable(2, NETAUTHORITY.CLIENT)] */private bool privateBool;
+	/*[NetVariable(3, NETAUTHORITY.CLIENT)] */protected bool protectedBool;
+	/*[NetVariable(4, NETAUTHORITY.CLIENT)] */internal bool internalBool;
 
 	public byte publicByte;
 	private byte privateByte;
@@ -916,15 +918,15 @@ public class LeanClass : BaseTestClass
 	protected UIntEnum protectedUIntEnum;
 	internal UIntEnum internalUIntEnum;
 
-	public LongEnum publicLongEnum;
-	private LongEnum privateLongEnum;
-	protected LongEnum protectedLongEnum;
-	internal LongEnum internalLongEnum;
-
-	public ULongEnum publicULongEnum;
-	private ULongEnum privateULongEnum;
-	protected ULongEnum protectedULongEnum;
-	internal ULongEnum internalULongEnum;
+	//public LongEnum publicLongEnum;
+	//private LongEnum privateLongEnum;
+	//protected LongEnum protectedLongEnum;
+	//internal LongEnum internalLongEnum;
+	//
+	//public ULongEnum publicULongEnum;
+	//private ULongEnum privateULongEnum;
+	//protected ULongEnum protectedULongEnum;
+	//internal ULongEnum internalULongEnum;
 	#endregion
 
 	#region EnumsCollections
@@ -1077,77 +1079,77 @@ public class LeanClass : BaseTestClass
 	#endregion
 
 	#region LongEnumCollections
-	public LongEnum[] publicLongEnumArray;
-	private LongEnum[] privateLongEnumArray;
-	protected LongEnum[] protectedLongEnumArray;
-	internal LongEnum[] internalLongEnumArray;
-
-	public LongEnum[,] publicLongEnumMatrix;
-	private LongEnum[,] privateLongEnumMatrix;
-	protected LongEnum[,] protectedLongEnumMatrix;
-	internal LongEnum[,] internalLongEnumMatrix;
-
-	public List<LongEnum> publicLongEnumList;
-	private List<LongEnum> privateLongEnumList;
-	protected List<LongEnum> protectedLongEnumList;
-	internal List<LongEnum> internalLongEnumList;
-
-	public Stack<LongEnum> publicLongEnumStack;
-	private Stack<LongEnum> privateLongEnumStack;
-	protected Stack<LongEnum> protectedLongEnumStack;
-	internal Stack<LongEnum> internalLongEnumStack;
-
-	public Queue<LongEnum> publicLongEnumQueue;
-	private Queue<LongEnum> privateLongEnumQueue;
-	protected Queue<LongEnum> protectedLongEnumQueue;
-	internal Queue<LongEnum> internalLongEnumQueue;
-
-	public Dictionary<string, LongEnum> publicLongEnumDict;
-	private Dictionary<string, LongEnum> privateLongEnumDict;
-	protected Dictionary<string, LongEnum> protectedLongEnumDict;
-	internal Dictionary<string, LongEnum> internalLongEnumDict;
-
-	public List<LongEnum>[] publicLongEnumListArray;
-	private List<LongEnum>[] privateLongEnumListArray;
-	protected List<LongEnum>[] protectedLongEnumListArray;
-	internal List<LongEnum>[] internalLongEnumListArray;
+	//public LongEnum[] publicLongEnumArray;
+	//private LongEnum[] privateLongEnumArray;
+	//protected LongEnum[] protectedLongEnumArray;
+	//internal LongEnum[] internalLongEnumArray;
+	//
+	//public LongEnum[,] publicLongEnumMatrix;
+	//private LongEnum[,] privateLongEnumMatrix;
+	//protected LongEnum[,] protectedLongEnumMatrix;
+	//internal LongEnum[,] internalLongEnumMatrix;
+	//
+	//public List<LongEnum> publicLongEnumList;
+	//private List<LongEnum> privateLongEnumList;
+	//protected List<LongEnum> protectedLongEnumList;
+	//internal List<LongEnum> internalLongEnumList;
+	//
+	//public Stack<LongEnum> publicLongEnumStack;
+	//private Stack<LongEnum> privateLongEnumStack;
+	//protected Stack<LongEnum> protectedLongEnumStack;
+	//internal Stack<LongEnum> internalLongEnumStack;
+	//
+	//public Queue<LongEnum> publicLongEnumQueue;
+	//private Queue<LongEnum> privateLongEnumQueue;
+	//protected Queue<LongEnum> protectedLongEnumQueue;
+	//internal Queue<LongEnum> internalLongEnumQueue;
+	//
+	//public Dictionary<string, LongEnum> publicLongEnumDict;
+	//private Dictionary<string, LongEnum> privateLongEnumDict;
+	//protected Dictionary<string, LongEnum> protectedLongEnumDict;
+	//internal Dictionary<string, LongEnum> internalLongEnumDict;
+	//
+	//public List<LongEnum>[] publicLongEnumListArray;
+	//private List<LongEnum>[] privateLongEnumListArray;
+	//protected List<LongEnum>[] protectedLongEnumListArray;
+	//internal List<LongEnum>[] internalLongEnumListArray;
 	#endregion
 
 	#region ULongEnumCollections
-	public ULongEnum[] publicULongEnumArray;
-	private ULongEnum[] privateULongEnumArray;
-	protected ULongEnum[] protectedULongEnumArray;
-	internal ULongEnum[] internalULongEnumArray;
-
-	public ULongEnum[,] publicULongEnumMatrix;
-	private ULongEnum[,] privateULongEnumMatrix;
-	protected ULongEnum[,] protectedULongEnumMatrix;
-	internal ULongEnum[,] internalULongEnumMatrix;
-
-	public List<ULongEnum> publicULongEnumList;
-	private List<ULongEnum> privateULongEnumList;
-	protected List<ULongEnum> protectedULongEnumList;
-	internal List<ULongEnum> internalULongEnumList;
-
-	public Stack<ULongEnum> publicULongEnumStack;
-	private Stack<ULongEnum> privateULongEnumStack;
-	protected Stack<ULongEnum> protectedULongEnumStack;
-	internal Stack<ULongEnum> internalULongEnumStack;
-
-	public Queue<ULongEnum> publicULongEnumQueue;
-	private Queue<ULongEnum> privateULongEnumQueue;
-	protected Queue<ULongEnum> protectedULongEnumQueue;
-	internal Queue<ULongEnum> internalULongEnumQueue;
-
-	public Dictionary<string, ULongEnum> publicULongEnumDict;
-	private Dictionary<string, ULongEnum> privateULongEnumDict;
-	protected Dictionary<string, ULongEnum> protectedULongEnumDict;
-	internal Dictionary<string, ULongEnum> internalULongEnumDict;
-
-	public List<ULongEnum>[] publicULongEnumListArray;
-	private List<ULongEnum>[] privateULongEnumListArray;
-	protected List<ULongEnum>[] protectedULongEnumListArray;
-	internal List<ULongEnum>[] internalULongEnumListArray;
+	//public ULongEnum[] publicULongEnumArray;
+	//private ULongEnum[] privateULongEnumArray;
+	//protected ULongEnum[] protectedULongEnumArray;
+	//internal ULongEnum[] internalULongEnumArray;
+	//
+	//public ULongEnum[,] publicULongEnumMatrix;
+	//private ULongEnum[,] privateULongEnumMatrix;
+	//protected ULongEnum[,] protectedULongEnumMatrix;
+	//internal ULongEnum[,] internalULongEnumMatrix;
+	//
+	//public List<ULongEnum> publicULongEnumList;
+	//private List<ULongEnum> privateULongEnumList;
+	//protected List<ULongEnum> protectedULongEnumList;
+	//internal List<ULongEnum> internalULongEnumList;
+	//
+	//public Stack<ULongEnum> publicULongEnumStack;
+	//private Stack<ULongEnum> privateULongEnumStack;
+	//protected Stack<ULongEnum> protectedULongEnumStack;
+	//internal Stack<ULongEnum> internalULongEnumStack;
+	//
+	//public Queue<ULongEnum> publicULongEnumQueue;
+	//private Queue<ULongEnum> privateULongEnumQueue;
+	//protected Queue<ULongEnum> protectedULongEnumQueue;
+	//internal Queue<ULongEnum> internalULongEnumQueue;
+	//
+	//public Dictionary<string, ULongEnum> publicULongEnumDict;
+	//private Dictionary<string, ULongEnum> privateULongEnumDict;
+	//protected Dictionary<string, ULongEnum> protectedULongEnumDict;
+	//internal Dictionary<string, ULongEnum> internalULongEnumDict;
+	//
+	//public List<ULongEnum>[] publicULongEnumListArray;
+	//private List<ULongEnum>[] privateULongEnumListArray;
+	//protected List<ULongEnum>[] protectedULongEnumListArray;
+	//internal List<ULongEnum>[] internalULongEnumListArray;
 	#endregion
 	#endregion
 
@@ -3761,7 +3763,7 @@ public class LeanClass : BaseTestClass
 		publicVector3IntDict = new Dictionary<string, Vector3Int>()
 		{
 			{ "key1", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
-			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
+			{ "key2", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
 			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) }
 		};
 
@@ -3796,7 +3798,7 @@ public class LeanClass : BaseTestClass
 		privateVector3IntDict = new Dictionary<string, Vector3Int>()
 		{
 			{ "key1", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
-			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
+			{ "key2", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
 			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) }
 		};
 
@@ -3831,7 +3833,7 @@ public class LeanClass : BaseTestClass
 		protectedVector3IntDict = new Dictionary<string, Vector3Int>()
 		{
 			{ "key1", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
-			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
+			{ "key2", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
 			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) }
 		};
 
@@ -3866,7 +3868,7 @@ public class LeanClass : BaseTestClass
 		internalVector3IntDict = new Dictionary<string, Vector3Int>()
 		{
 			{ "key1", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
-			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
+			{ "key2", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) },
 			{ "key3", new Vector3Int(rnd.Next(),rnd.Next(),rnd.Next()) }
 		};
 
@@ -4325,15 +4327,15 @@ public class LeanClass : BaseTestClass
 		protectedUIntEnum = GetRandomEnumValue<UIntEnum>(rnd);
 		internalUIntEnum = GetRandomEnumValue<UIntEnum>(rnd);
 
-		publicLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-		privateLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-		protectedLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-		internalLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-
-		publicULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
-		privateULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
-		protectedULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
-		internalULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//publicLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//privateLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//protectedLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//internalLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//
+		//publicULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//privateULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//protectedULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//internalULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
 		#endregion
 
 		#region EnumsCollections
@@ -4906,287 +4908,287 @@ public class LeanClass : BaseTestClass
 		#endregion
 
 		#region LongEnumCollections
-		publicLongEnumArray = new LongEnum[3] { GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd) };
-
-		publicLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd) } };
-
-		publicLongEnumList = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd) };
-
-		publicLongEnumStack = new Stack<LongEnum>();
-		publicLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		publicLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		publicLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-
-		publicLongEnumQueue = new Queue<LongEnum>();
-		publicLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		publicLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		publicLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-
-		publicLongEnumDict = new Dictionary<string, LongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<LongEnum>(rnd)},
-			{ "key2", GetRandomEnumValue<LongEnum>(rnd)},
-			{ "key3", GetRandomEnumValue<LongEnum>(rnd)}
-		};
-
-		publicLongEnumListArray = new List<LongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			publicLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd) };
-
-		privateLongEnumArray = new LongEnum[3] { GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd) };
-
-		privateLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd) } };
-
-		privateLongEnumList = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd) };
-
-		privateLongEnumStack = new Stack<LongEnum>();
-		privateLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		privateLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		privateLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-
-		privateLongEnumQueue = new Queue<LongEnum>();
-		privateLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		privateLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		privateLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-
-		privateLongEnumDict = new Dictionary<string, LongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<LongEnum>(rnd) },
-			{ "key2", GetRandomEnumValue<LongEnum>(rnd) },
-			{ "key3", GetRandomEnumValue<LongEnum>(rnd) }
-		};
-
-		privateLongEnumListArray = new List<LongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			privateLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd) };
-
-		protectedLongEnumArray = new LongEnum[3] { GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd) };
-
-		protectedLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd) } };
-
-		protectedLongEnumList = new List<LongEnum>() {GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd) };
-
-		protectedLongEnumStack = new Stack<LongEnum>();
-		protectedLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		protectedLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		protectedLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-
-		protectedLongEnumQueue = new Queue<LongEnum>();
-		protectedLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		protectedLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		protectedLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-
-		protectedLongEnumDict = new Dictionary<string, LongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<LongEnum>(rnd) },
-			{ "key2", GetRandomEnumValue<LongEnum>(rnd) },
-			{ "key3", GetRandomEnumValue<LongEnum>(rnd) }
-		};
-
-		protectedLongEnumListArray = new List<LongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			protectedLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd)};
-
-		internalLongEnumArray = new LongEnum[3] {GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd) };
-
-		internalLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd) } };
-
-		internalLongEnumList = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd),
-			GetRandomEnumValue<LongEnum>(rnd)};
-
-		internalLongEnumStack = new Stack<LongEnum>();
-		internalLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		internalLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-		internalLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
-
-		internalLongEnumQueue = new Queue<LongEnum>();
-		internalLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		internalLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-		internalLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
-
-		internalLongEnumDict = new Dictionary<string, LongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<LongEnum>(rnd)},
-			{ "key2", GetRandomEnumValue<LongEnum>(rnd)},
-			{ "key3", GetRandomEnumValue<LongEnum>(rnd)}
-		};
-
-		internalLongEnumListArray = new List<LongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			internalLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd),
-				GetRandomEnumValue<LongEnum>(rnd)};
+		//publicLongEnumArray = new LongEnum[3] { GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//publicLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd) } };
+		//
+		//publicLongEnumList = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//publicLongEnumStack = new Stack<LongEnum>();
+		//publicLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//publicLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//publicLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//publicLongEnumQueue = new Queue<LongEnum>();
+		//publicLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//publicLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//publicLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//publicLongEnumDict = new Dictionary<string, LongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<LongEnum>(rnd)},
+		//	{ "key2", GetRandomEnumValue<LongEnum>(rnd)},
+		//	{ "key3", GetRandomEnumValue<LongEnum>(rnd)}
+		//};
+		//
+		//publicLongEnumListArray = new List<LongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	publicLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//privateLongEnumArray = new LongEnum[3] { GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//privateLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd) } };
+		//
+		//privateLongEnumList = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//privateLongEnumStack = new Stack<LongEnum>();
+		//privateLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//privateLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//privateLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//privateLongEnumQueue = new Queue<LongEnum>();
+		//privateLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//privateLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//privateLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//privateLongEnumDict = new Dictionary<string, LongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<LongEnum>(rnd) },
+		//	{ "key2", GetRandomEnumValue<LongEnum>(rnd) },
+		//	{ "key3", GetRandomEnumValue<LongEnum>(rnd) }
+		//};
+		//
+		//privateLongEnumListArray = new List<LongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	privateLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//protectedLongEnumArray = new LongEnum[3] { GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//protectedLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd) } };
+		//
+		//protectedLongEnumList = new List<LongEnum>() {GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//protectedLongEnumStack = new Stack<LongEnum>();
+		//protectedLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//protectedLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//protectedLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//protectedLongEnumQueue = new Queue<LongEnum>();
+		//protectedLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//protectedLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//protectedLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//protectedLongEnumDict = new Dictionary<string, LongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<LongEnum>(rnd) },
+		//	{ "key2", GetRandomEnumValue<LongEnum>(rnd) },
+		//	{ "key3", GetRandomEnumValue<LongEnum>(rnd) }
+		//};
+		//
+		//protectedLongEnumListArray = new List<LongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	protectedLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd)};
+		//
+		//internalLongEnumArray = new LongEnum[3] {GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd) };
+		//
+		//internalLongEnumMatrix = new LongEnum[1, 3] { { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd) } };
+		//
+		//internalLongEnumList = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd),
+		//	GetRandomEnumValue<LongEnum>(rnd)};
+		//
+		//internalLongEnumStack = new Stack<LongEnum>();
+		//internalLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//internalLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//internalLongEnumStack.Push(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//internalLongEnumQueue = new Queue<LongEnum>();
+		//internalLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//internalLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//internalLongEnumQueue.Enqueue(GetRandomEnumValue<LongEnum>(rnd));
+		//
+		//internalLongEnumDict = new Dictionary<string, LongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<LongEnum>(rnd)},
+		//	{ "key2", GetRandomEnumValue<LongEnum>(rnd)},
+		//	{ "key3", GetRandomEnumValue<LongEnum>(rnd)}
+		//};
+		//
+		//internalLongEnumListArray = new List<LongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	internalLongEnumListArray[i] = new List<LongEnum>() { GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd),
+		//		GetRandomEnumValue<LongEnum>(rnd)};
 		#endregion
 
 		#region ULongEnumCollections
-		publicULongEnumArray = new ULongEnum[3] { GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd) };
-
-		publicULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd) } };
-
-		publicULongEnumList = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd) };
-
-		publicULongEnumStack = new Stack<ULongEnum>();
-		publicULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		publicULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		publicULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-
-		publicULongEnumQueue = new Queue<ULongEnum>();
-		publicULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		publicULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		publicULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-
-		publicULongEnumDict = new Dictionary<string, ULongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<ULongEnum>(rnd)},
-			{ "key2", GetRandomEnumValue<ULongEnum>(rnd)},
-			{ "key3", GetRandomEnumValue<ULongEnum>(rnd)}
-		};
-
-		publicULongEnumListArray = new List<ULongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			publicULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd) };
-
-		privateULongEnumArray = new ULongEnum[3] { GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd) };
-
-		privateULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd) } };
-
-		privateULongEnumList = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd) };
-
-		privateULongEnumStack = new Stack<ULongEnum>();
-		privateULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		privateULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		privateULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-
-		privateULongEnumQueue = new Queue<ULongEnum>();
-		privateULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		privateULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		privateULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-
-		privateULongEnumDict = new Dictionary<string, ULongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<ULongEnum>(rnd) },
-			{ "key2", GetRandomEnumValue<ULongEnum>(rnd) },
-			{ "key3", GetRandomEnumValue<ULongEnum>(rnd) }
-		};
-
-		privateULongEnumListArray = new List<ULongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			privateULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd) };
-
-		protectedULongEnumArray = new ULongEnum[3] { GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd) };
-
-		protectedULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd) } };
-
-		protectedULongEnumList = new List<ULongEnum>() {GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd) };
-
-		protectedULongEnumStack = new Stack<ULongEnum>();
-		protectedULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		protectedULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		protectedULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-
-		protectedULongEnumQueue = new Queue<ULongEnum>();
-		protectedULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		protectedULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		protectedULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-
-		protectedULongEnumDict = new Dictionary<string, ULongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<ULongEnum>(rnd) },
-			{ "key2", GetRandomEnumValue<ULongEnum>(rnd) },
-			{ "key3", GetRandomEnumValue<ULongEnum>(rnd) }
-		};
-
-		protectedULongEnumListArray = new List<ULongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			protectedULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd)};
-
-		internalULongEnumArray = new ULongEnum[3] {GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd) };
-
-		internalULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd) } };
-
-		internalULongEnumList = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd),
-			GetRandomEnumValue<ULongEnum>(rnd)};
-
-		internalULongEnumStack = new Stack<ULongEnum>();
-		internalULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		internalULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-		internalULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
-
-		internalULongEnumQueue = new Queue<ULongEnum>();
-		internalULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		internalULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-		internalULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
-
-		internalULongEnumDict = new Dictionary<string, ULongEnum>()
-		{
-			{ "key1", GetRandomEnumValue<ULongEnum>(rnd)},
-			{ "key2", GetRandomEnumValue<ULongEnum>(rnd)},
-			{ "key3", GetRandomEnumValue<ULongEnum>(rnd)}
-		};
-
-		internalULongEnumListArray = new List<ULongEnum>[3];
-		for (int i = 0; i < 3; i++)
-			internalULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd),
-				GetRandomEnumValue<ULongEnum>(rnd)};
+		//publicULongEnumArray = new ULongEnum[3] { GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//publicULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd) } };
+		//
+		//publicULongEnumList = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//publicULongEnumStack = new Stack<ULongEnum>();
+		//publicULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//publicULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//publicULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//publicULongEnumQueue = new Queue<ULongEnum>();
+		//publicULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//publicULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//publicULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//publicULongEnumDict = new Dictionary<string, ULongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<ULongEnum>(rnd)},
+		//	{ "key2", GetRandomEnumValue<ULongEnum>(rnd)},
+		//	{ "key3", GetRandomEnumValue<ULongEnum>(rnd)}
+		//};
+		//
+		//publicULongEnumListArray = new List<ULongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	publicULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//privateULongEnumArray = new ULongEnum[3] { GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//privateULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd) } };
+		//
+		//privateULongEnumList = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//privateULongEnumStack = new Stack<ULongEnum>();
+		//privateULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//privateULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//privateULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//privateULongEnumQueue = new Queue<ULongEnum>();
+		//privateULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//privateULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//privateULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//privateULongEnumDict = new Dictionary<string, ULongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<ULongEnum>(rnd) },
+		//	{ "key2", GetRandomEnumValue<ULongEnum>(rnd) },
+		//	{ "key3", GetRandomEnumValue<ULongEnum>(rnd) }
+		//};
+		//
+		//privateULongEnumListArray = new List<ULongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	privateULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//protectedULongEnumArray = new ULongEnum[3] { GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//protectedULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd) } };
+		//
+		//protectedULongEnumList = new List<ULongEnum>() {GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//protectedULongEnumStack = new Stack<ULongEnum>();
+		//protectedULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//protectedULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//protectedULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//protectedULongEnumQueue = new Queue<ULongEnum>();
+		//protectedULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//protectedULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//protectedULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//protectedULongEnumDict = new Dictionary<string, ULongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<ULongEnum>(rnd) },
+		//	{ "key2", GetRandomEnumValue<ULongEnum>(rnd) },
+		//	{ "key3", GetRandomEnumValue<ULongEnum>(rnd) }
+		//};
+		//
+		//protectedULongEnumListArray = new List<ULongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	protectedULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd)};
+		//
+		//internalULongEnumArray = new ULongEnum[3] {GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd) };
+		//
+		//internalULongEnumMatrix = new ULongEnum[1, 3] { { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd) } };
+		//
+		//internalULongEnumList = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd),
+		//	GetRandomEnumValue<ULongEnum>(rnd)};
+		//
+		//internalULongEnumStack = new Stack<ULongEnum>();
+		//internalULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//internalULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//internalULongEnumStack.Push(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//internalULongEnumQueue = new Queue<ULongEnum>();
+		//internalULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//internalULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//internalULongEnumQueue.Enqueue(GetRandomEnumValue<ULongEnum>(rnd));
+		//
+		//internalULongEnumDict = new Dictionary<string, ULongEnum>()
+		//{
+		//	{ "key1", GetRandomEnumValue<ULongEnum>(rnd)},
+		//	{ "key2", GetRandomEnumValue<ULongEnum>(rnd)},
+		//	{ "key3", GetRandomEnumValue<ULongEnum>(rnd)}
+		//};
+		//
+		//internalULongEnumListArray = new List<ULongEnum>[3];
+		//for (int i = 0; i < 3; i++)
+		//	internalULongEnumListArray[i] = new List<ULongEnum>() { GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd),
+		//		GetRandomEnumValue<ULongEnum>(rnd)};
 		#endregion
 		#endregion
 
@@ -5340,79 +5342,74 @@ public class LeanClass : BaseTestClass
 		#endregion
 	}
 }
-
+[Serializable]
 public abstract class BaseTestClass
 {
 	#region C#Fields
-	public bool basePublicBool;
-	private bool basePrivateBool;
-	protected bool baseProtectedBool;
-	internal bool baseInternalBool;
-
-	public byte basePublicByte;
-	private byte basePrivateByte;
-	protected byte baseProtectedByte;
-	internal byte baseInternalByte;
-
-	public sbyte basePublicSByte;
-	private sbyte basePrivateSByte;
-	protected sbyte baseProtectedSByte;
-	internal sbyte baseInternalSByte;
-
-	public short basePublicShort;
-	private short basePrivateShort;
-	protected short baseProtectedShort;
-	internal short baseInternalShort;
-
-	public ushort basePublicUShort;
-	private ushort basePrivateUShort;
-	protected ushort baseProtectedUShort;
-	internal ushort baseInternalUShort;
-
-	public int basePublicInt;
-	private int basePrivateInt;
-	protected int baseProtectedInt;
-	internal int baseInternalInt;
-
-	public uint basePublicUInt;
-	private uint basePrivateUInt;
-	protected uint baseProtectedUInt;
-	internal uint baseInternalUInt;
-
-	public long basePublicLong;
-	private long basePrivateLong;
-	protected long baseProtectedLong;
-	internal long baseInternalLong;
-
-	public ulong basePublicULong;
-	private ulong basePrivateULong;
-	protected ulong baseProtectedULong;
-	internal ulong baseInternalULong;
-
-	public float basePublicFloat;
-	private float basePrivateFloat;
-	protected float baseProtectedFloat;
-	internal float baseInternalFloat;
-
-	public double basePublicDouble;
-	private double basePrivateDouble;
-	protected double baseProtectedDouble;
-	internal double baseInternalDouble;
-
-	public decimal basePublicDecimal;
-	private decimal basePrivateDecimal;
-	protected decimal baseProtectedDecimal;
-	internal decimal baseInternalDecimal;
-
-	public char basePublicChar;
-	private char basePrivateChar;
-	protected char baseProtectedChar;
-	internal char baseInternalChar;
-
-	public string basePublicString;
-	private string basePrivateString;
-	protected string baseProtectedString;
-	internal string baseInternalString;
+	[SerializeField, NetVariable(1, NETAUTHORITY.CLIENT)] public bool basePublicBool;
+	/*[SerializeField, NetVariable(2, NETAUTHORITY.CLIENT)]*/ private bool basePrivateBool;
+	/*[SerializeField, NetVariable(3, NETAUTHORITY.CLIENT)]*/ protected bool baseProtectedBool;
+	/*[SerializeField, NetVariable(4, NETAUTHORITY.CLIENT)]*/ internal bool baseInternalBool;
+	/*[SerializeField, NetVariable(5, NETAUTHORITY.CLIENT)]*/ [HideInInspector] public byte basePublicByte;
+	[SerializeField, NetVariable(6, NETAUTHORITY.CLIENT)] private byte basePrivateByte;
+	/*[SerializeField, NetVariable(7, NETAUTHORITY.CLIENT)]*/ protected byte baseProtectedByte;
+	/*[SerializeField, NetVariable(8, NETAUTHORITY.CLIENT)]*/ internal byte baseInternalByte;
+	/*[SerializeField, NetVariable(9, NETAUTHORITY.CLIENT)]*/ [HideInInspector] public sbyte basePublicSByte;
+	/*[SerializeField, NetVariable(10, NETAUTHORITY.CLIENT)]*/ private sbyte basePrivateSByte;
+	[SerializeField, NetVariable(11, NETAUTHORITY.CLIENT)] protected sbyte baseProtectedSByte;
+	/*[SerializeField, NetVariable(12, NETAUTHORITY.CLIENT)]*/ internal sbyte baseInternalSByte;
+	/*[SerializeField, NetVariable(13, NETAUTHORITY.CLIENT)]*/ [HideInInspector] public short basePublicShort;
+	/*[SerializeField, NetVariable(14, NETAUTHORITY.CLIENT)]*/ private short basePrivateShort;
+	/*[SerializeField, NetVariable(15, NETAUTHORITY.CLIENT)]*/ protected short baseProtectedShort;
+	[SerializeField, NetVariable(16, NETAUTHORITY.CLIENT)] internal short baseInternalShort;
+	[SerializeField, NetVariable(17, NETAUTHORITY.CLIENT)] public ushort basePublicUShort;
+	/*[SerializeField, NetVariable(18, NETAUTHORITY.CLIENT)]*/ private ushort basePrivateUShort;
+	/*[SerializeField, NetVariable(19, NETAUTHORITY.CLIENT)]*/ protected ushort baseProtectedUShort;
+	/*[SerializeField, NetVariable(20, NETAUTHORITY.CLIENT)]*/ internal ushort baseInternalUShort;
+	/*[SerializeField, NetVariable(21, NETAUTHORITY.CLIENT)]*/ [HideInInspector] public int basePublicInt;
+	[SerializeField, NetVariable(22, NETAUTHORITY.CLIENT)] private int basePrivateInt;
+	/*[SerializeField, NetVariable(23, NETAUTHORITY.CLIENT)]*/ protected int baseProtectedInt;
+	/*[SerializeField, NetVariable(24, NETAUTHORITY.CLIENT)]*/ internal int baseInternalInt;
+	/*[SerializeField, NetVariable(25, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public uint basePublicUInt;
+	/*[SerializeField, NetVariable(26, NETAUTHORITY.CLIENT)]*/ private uint basePrivateUInt;
+	[SerializeField, NetVariable(27, NETAUTHORITY.CLIENT)] protected uint baseProtectedUInt;
+	/*[SerializeField, NetVariable(28, NETAUTHORITY.CLIENT)]*/ internal uint baseInternalUInt;
+	/*[SerializeField, NetVariable(29, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public long basePublicLong;
+	/*[SerializeField, NetVariable(30, NETAUTHORITY.CLIENT)]*/ private long basePrivateLong;
+	/*[SerializeField, NetVariable(31, NETAUTHORITY.CLIENT)]*/ protected long baseProtectedLong;
+	[SerializeField, NetVariable(32, NETAUTHORITY.CLIENT)] internal long baseInternalLong;
+	/*[SerializeField, NetVariable(33, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public ulong basePublicULong;
+	/*[SerializeField, NetVariable(34, NETAUTHORITY.CLIENT)]*/ private ulong basePrivateULong;
+	/*[SerializeField, NetVariable(35, NETAUTHORITY.CLIENT)]*/ protected ulong baseProtectedULong;
+	/*[SerializeField, NetVariable(36, NETAUTHORITY.CLIENT)]*/ internal ulong baseInternalULong;
+	/*[SerializeField, NetVariable(37, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public float basePublicFloat;
+	/*[SerializeField, NetVariable(38, NETAUTHORITY.CLIENT)]*/ private float basePrivateFloat;
+	/*[SerializeField, NetVariable(39, NETAUTHORITY.CLIENT)]*/ protected float baseProtectedFloat;
+	/*[SerializeField, NetVariable(40, NETAUTHORITY.CLIENT)]*/ internal float baseInternalFloat;
+	/*[SerializeField, NetVariable(41, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public double basePublicDouble;
+	/*[SerializeField, NetVariable(42, NETAUTHORITY.CLIENT)]*/ private double basePrivateDouble;
+	/*[SerializeField, NetVariable(43, NETAUTHORITY.CLIENT)]*/ protected double baseProtectedDouble;
+	/*[SerializeField, NetVariable(44, NETAUTHORITY.CLIENT)]*/ internal double baseInternalDouble;
+	/*[SerializeField, NetVariable(45, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public decimal basePublicDecimal;
+	/*[SerializeField, NetVariable(46, NETAUTHORITY.CLIENT)]*/ private decimal basePrivateDecimal;
+	/*[SerializeField, NetVariable(47, NETAUTHORITY.CLIENT)]*/ protected decimal baseProtectedDecimal;
+	/*[SerializeField, NetVariable(48, NETAUTHORITY.CLIENT)]*/ internal decimal baseInternalDecimal;
+	/*[SerializeField, NetVariable(49, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public char basePublicChar;
+	/*[SerializeField, NetVariable(50, NETAUTHORITY.CLIENT)]*/ private char basePrivateChar;
+	/*[SerializeField, NetVariable(51, NETAUTHORITY.CLIENT)]*/ protected char baseProtectedChar;
+	/*[SerializeField, NetVariable(52, NETAUTHORITY.CLIENT)]*/ internal char baseInternalChar;
+	/*[SerializeField, NetVariable(53, NETAUTHORITY.CLIENT)]*/
+	[HideInInspector] public string basePublicString;
+	/*[SerializeField, NetVariable(54, NETAUTHORITY.CLIENT)]*/ private string basePrivateString;
+	/*[SerializeField, NetVariable(55, NETAUTHORITY.CLIENT)]*/ protected string baseProtectedString;
+	/*[SerializeField, NetVariable(56, NETAUTHORITY.CLIENT)]*/ internal string baseInternalString;
 	#endregion
 
 	#region UnityFields
@@ -5473,15 +5470,15 @@ public abstract class BaseTestClass
 	protected UIntEnum baseProtectedUIntEnum;
 	internal UIntEnum baseInternalUIntEnum;
 
-	public LongEnum basePublicLongEnum;
-	private LongEnum basePrivateLongEnum;
-	protected LongEnum baseProtectedLongEnum;
-	internal LongEnum baseInternalLongEnum;
-
-	public ULongEnum basePublicULongEnum;
-	private ULongEnum basePrivateULongEnum;
-	protected ULongEnum baseProtectedULongEnum;
-	internal ULongEnum baseInternalULongEnum;
+	//public LongEnum basePublicLongEnum;
+	//private LongEnum basePrivateLongEnum;
+	//protected LongEnum baseProtectedLongEnum;
+	//internal LongEnum baseInternalLongEnum;
+	//
+	//public ULongEnum basePublicULongEnum;
+	//private ULongEnum basePrivateULongEnum;
+	//protected ULongEnum baseProtectedULongEnum;
+	//internal ULongEnum baseInternalULongEnum;
 	#endregion
 
 	#region CustomStruct
@@ -5667,15 +5664,15 @@ public abstract class BaseTestClass
 		baseProtectedUIntEnum = GetRandomEnumValue<UIntEnum>(rnd);
 		baseInternalUIntEnum = GetRandomEnumValue<UIntEnum>(rnd);
 
-		basePublicLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-		basePrivateLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-		baseProtectedLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-		baseInternalLongEnum = GetRandomEnumValue<LongEnum>(rnd);
-
-		basePublicULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
-		basePrivateULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
-		baseProtectedULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
-		baseInternalULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//basePublicLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//basePrivateLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//baseProtectedLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//baseInternalLongEnum = GetRandomEnumValue<LongEnum>(rnd);
+		//
+		//basePublicULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//basePrivateULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//baseProtectedULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
+		//baseInternalULongEnum = GetRandomEnumValue<ULongEnum>(rnd);
 		#endregion
 
 		#region CustomStruct
@@ -5722,22 +5719,23 @@ public enum UIntEnum : UInt32
 	a, b, c
 }
 
-public enum LongEnum : Int64
-{
-	a, b, c
-}
+//public enum LongEnum : long
+//{
+//	a, b, c
+//}
+//
+//public enum ULongEnum : ulong
+//{
+//	a, b, c
+//}
 
-public enum ULongEnum : UInt64
-{
-	a, b, c
-}
-
+[Serializable]
 public struct TestStruct
 {
-	public int a;
-	public bool b;
-	public TestStruct2 testStruct2;
-	public List<TestClass2> testClass2s;
+	[NetVariable(0, NETAUTHORITY.CLIENT)] public int a;
+	[NetVariable(1, NETAUTHORITY.CLIENT)] public bool b;
+	[NetVariable(2, NETAUTHORITY.CLIENT)] public TestStruct2 testStruct2;
+	[NetVariable(3, NETAUTHORITY.CLIENT)] public List<TestClass2> testClass2s;
 
 	public TestStruct(Random rnd)
 	{
@@ -5750,11 +5748,11 @@ public struct TestStruct
 		testClass2s.Add(new TestClass2(rnd));
 	}
 }
-
+[Serializable]
 public struct TestStruct2
 {
-	public int a;
-	public bool b;
+	[NetVariable(0, NETAUTHORITY.CLIENT)] public int a;
+	[NetVariable(1, NETAUTHORITY.CLIENT)] public bool b;
 
 	public TestStruct2(Random rnd)
 	{
@@ -5762,11 +5760,11 @@ public struct TestStruct2
 		this.b = rnd.Next(2) == 0;
 	}
 }
-
+[Serializable]
 public class TestClass2
 {
-	public int a;
-	private bool b;
+	[NetVariable(0, NETAUTHORITY.CLIENT)] public int a;
+	[NetVariable(1, NETAUTHORITY.CLIENT)] private bool b;
 
 	public TestClass2(Random rnd)
 	{

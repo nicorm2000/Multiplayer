@@ -50,9 +50,9 @@ namespace Net
         /// <param name="deltaTime">The time since last check.</param>
         protected override void CheckActivityCounter(float deltaTime)
         {
-            List<int> keys = new List<int>(lastMessageReceivedFromClients.Keys);
+            //List<int> keys = new List<int>(lastMessageReceivedFromClients.Keys);
 
-            foreach (int key in keys)
+            foreach (int key in lastMessageReceivedFromClients.Keys)
             {
                 lastMessageReceivedFromClients[key] += deltaTime;
             }

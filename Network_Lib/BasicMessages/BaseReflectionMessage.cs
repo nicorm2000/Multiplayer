@@ -62,8 +62,6 @@ namespace Net
                 dimensions);
         }
 
-        public static RouteInfo CreateForJaggedArray(int routeId, int[] pathIndices, Type elementType) => new RouteInfo(routeId, pathIndices[0], -1, (byte)(IS_COLLECTION | IS_JAGGED_ARRAY), elementType, pathIndices);
-
         private static int LinearizeIndices(int[] indices, int[] dimensions)
         {
             int index = 0;
@@ -209,13 +207,26 @@ namespace Net
     {
         protected List<RouteInfo> messageRoute = new List<RouteInfo>();
 
+        /// <summary>
+        /// Initializes a new instance of the BaseReflectionMessage class with the specified priority and message route.
+        /// </summary>
+        /// <param name="messagePriority">The priority of the message.</param>
+        /// <param name="messageRoute">The route information for the message.</param>
         public BaseReflectionMessage(MessagePriority messagePriority, List<RouteInfo> messageRoute) : base(messagePriority)
         {
             this.messageRoute = messageRoute ?? new List<RouteInfo>();
         }
 
+        /// <summary>
+        /// Gets the message route information.
+        /// </summary>
+        /// <returns>A list of RouteInfo objects describing the message route.</returns>
         public List<RouteInfo> GetMessageRoute() => new List<RouteInfo>(messageRoute);
 
+        /// <summary>
+        /// Serializes the message header, including route information.
+        /// </summary>
+        /// <param name="outData">The list to which the serialized data will be added.</param>
         public override void SerializeHeader(ref List<byte> outData)
         {
             base.SerializeHeader(ref outData);
@@ -227,6 +238,10 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Deserializes the message header, including route information.
+        /// </summary>
+        /// <param name="message">The message data to deserialize.</param>
         public override void DeserializeHeader(byte[] message)
         {
             base.DeserializeHeader(message);
@@ -250,6 +265,10 @@ namespace Net
             messageHeaderSize = offset;
         }
 
+        /// <summary>
+        /// Serializes the message route information.
+        /// </summary>
+        /// <param name="outData">The list to which the serialized data will be added.</param>
         protected void SerializeMessageRoute(ref List<byte> outData)
         {
             outData.AddRange(BitConverter.GetBytes(messageRoute.Count));
@@ -259,6 +278,10 @@ namespace Net
             }
         }
 
+        /// <summary>
+        /// Deserializes the message route information.
+        /// </summary>
+        /// <param name="message">The message data to deserialize.</param>
         protected void DeserializeMessageRoute(byte[] message)
         {
             int offset = messageHeaderSize;
@@ -278,6 +301,11 @@ namespace Net
             messageHeaderSize = offset;
         }
 
+        /// <summary>
+        /// Calculates route size.
+        /// </summary>
+        /// <param name="message">The message data to calculate size.</param>
+        /// <param name="offset">The routet offsett.</param>
         private int CalculateRouteSize(byte[] message, int offset)
         {
             const int baseSize = 13; // route + key + size + flags
@@ -292,6 +320,10 @@ namespace Net
             return baseSize + dimsSize + typeSize;
         }
 
+        /// <summary>
+        /// Gets a description of the message route.
+        /// </summary>
+        /// <returns>A string describing the message route.</returns>
         public string GetRouteDescription()
         {
             StringBuilder sb = new StringBuilder("Message Route:\n");

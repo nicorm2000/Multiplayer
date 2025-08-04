@@ -1,5 +1,8 @@
 namespace Net
 {
+    /// <summary>
+    /// Represents a Transform with position, rotation, scale, and active state.
+    /// </summary>
     public class TRS
     {
         public (float, float, float) position;
@@ -8,6 +11,9 @@ namespace Net
         public bool isActive;
     }
 
+    /// <summary>
+    /// Represents an INetObj that will be used to operate different net actions.
+    /// </summary>
     public interface INetObj
     {
         int GetID();

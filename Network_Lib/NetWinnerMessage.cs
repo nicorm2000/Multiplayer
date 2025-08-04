@@ -13,7 +13,7 @@ namespace Net
             currentMessageType = MessageType.Winner;
             this.winnerInfo = winnerId;
         }
-
+        
         public NetWinnerMessage(byte[] data) : base(MessagePriority.Default)
         {
             currentMessageType = MessageType.Winner;

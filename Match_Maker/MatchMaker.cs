@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
+using System.IO;
+using System;
 using Net;
 
 namespace Match_Maker
@@ -48,9 +48,6 @@ namespace Match_Maker
 
         int minPlayerToStartGame = 2;
         int serverPort = 0;
-
-        //int serverNumber = 0;
-        //int playerCounterTotalServers = 0;
 
         /// <summary>
         /// Starts the server on the specified port.
@@ -136,7 +133,7 @@ namespace Match_Maker
         /// </summary>
         /// <param name="data">The data received.</param>
         /// <param name="ip">The IP address of the sender.</param>
-        public override void OnReceiveData(byte[] data, IPEndPoint ip) 
+        public override void OnReceiveData(byte[] data, IPEndPoint ip)
         {
             OnReceivedMessage?.Invoke(data, ip);
 
@@ -205,7 +202,7 @@ namespace Match_Maker
 
                         serverNameSet.Clear();
 
-                        foreach (var name in updateMsg.GetData())
+                        foreach (string name in updateMsg.GetData())
                         {
                             serverNameSet.Add(name);
                         }
@@ -224,6 +221,11 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Processes received data based on its priority.
+        /// </summary>
+        /// <param name="data">The received data.</param>
+        /// <param name="ip">The IP endpoint of the sender.</param>
         void OnReceivedMessagePriority(byte[] data, IPEndPoint ip)
         {
             if (ipToId.ContainsKey(ip))
@@ -260,7 +262,7 @@ namespace Match_Maker
         /// <param name="data">The data to broadcast.</param>
         public void Broadcast(byte[] data)
         {
-            using (var iterator = clients.GetEnumerator())
+            using (Dictionary<int, Client>.Enumerator iterator = clients.GetEnumerator())
             {
                 while (iterator.MoveNext())
                 {
@@ -347,11 +349,21 @@ namespace Match_Maker
             return true;
         }
 
+        /// <summary>
+        /// Checks if a username is in uppercase.
+        /// </summary>
+        /// <param name="userName">The username to check.</param>
+        /// <returns>True if the username is in uppercase; otherwise, false.</returns>
         bool IsToUpper(string userName)
         {
             return userName.All(c => !char.IsLetter(c) || char.IsUpper(c));
         }
 
+        /// <summary>
+        /// Checks if a username is in lowercase.
+        /// </summary>
+        /// <param name="userName">The username to check.</param>
+        /// <returns>True if the username is in lowercase; otherwise, false.</returns>
         bool IsToLower(string userName)
         {
             return userName.All(c => !char.IsLetter(c) || char.IsLower(c));
@@ -402,6 +414,9 @@ namespace Match_Maker
             connection.Close();
         }
 
+        /// <summary>
+        /// Updates the MatchMaker state, including resending non-disposable messages.
+        /// </summary>
         public override void Update()
         {
             base.Update();
@@ -412,11 +427,20 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Sends a message to all connected clients.
+        /// </summary>
+        /// <param name="data">The message data.</param>
         public override void SendMessage(byte[] data)
         {
             Broadcast(data);
         }
 
+        /// <summary>
+        /// Sends a message to a specific client by ID.
+        /// </summary>
+        /// <param name="data">The message data.</param>
+        /// <param name="id">The client ID.</param>
         public override void SendMessage(byte[] data, int id)
         {
             if (clients.ContainsKey(id))
@@ -425,6 +449,9 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Checks the lobby for players and starts a game if conditions are met.
+        /// </summary>
         void CheckPlayerInLobby()
         {
             Console.WriteLine("Clients count: " + clients.Count);
@@ -478,6 +505,10 @@ namespace Match_Maker
             }
         }
 
+        /// <summary>
+        /// Creates a new game server instance.
+        /// </summary>
+        /// <returns>The port number of the new server.</returns>
         int CreateNewServer()
         {
             do
@@ -491,7 +522,7 @@ namespace Match_Maker
             serversApplicationRunnnig.Add(proc);
 
             // Give the server some time to initialize before sending the handshake
-            System.Threading.Thread.Sleep(200);
+            System.Threading.Thread.Sleep(2000);
 
             // Register server's IP and port
             IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
@@ -506,12 +537,19 @@ namespace Match_Maker
             return serverPort;
         }
 
+        /// <summary>
+        /// Creates a new server process on the specified port.
+        /// </summary>
+        /// <param name="numberPort">The port number for the new server.</param>
+        /// <returns>The created server process.</returns>
         Process CreateServerProcess(int numberPort)
         {
             Process currentServer;
             ProcessStartInfo startInfo = new ProcessStartInfo();
 
-            string serverPath = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName + "\\NetworkServer\\bin\\Debug\\net5.0\\net5.0\\NetworkServer.exe";
+            //string serverPath = Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.Parent.FullName + "\\Build\\Multiplayer.exe";
+            string serverPath = "..\\Build\\Multiplayer.exe";
+            Console.WriteLine(serverPath);
 
             startInfo.FileName = serverPath;
             startInfo.Arguments = numberPort.ToString();

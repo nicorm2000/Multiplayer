@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
 
 namespace Net
 {
@@ -23,8 +23,8 @@ namespace Net
         public int parentInstanceID;
 
         public InstanceRequestPayload(int instanceId, float positionX, float positionY, float positionZ,
-                                                       float rotationX, float rotationY, float rotationZ, float rotationW,
-                                                       float scaleX, float scaleY, float scaleZ, int parentInstanceID)
+                                                      float rotationX, float rotationY, float rotationZ, float rotationW,
+                                                      float scaleX, float scaleY, float scaleZ, int parentInstanceID)
         {
             this.objectId = instanceId;
 

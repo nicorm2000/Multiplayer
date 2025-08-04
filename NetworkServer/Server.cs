@@ -1,8 +1,7 @@
-using Net;
+﻿using Net;
 using System;
 using System.Collections.Generic;
 using System.Net;
-using static Server;
 
 public class Server : NetworkEntity
 {
@@ -37,7 +36,7 @@ public class Server : NetworkEntity
 
     DateTime appStartTime;
 
-    private int maxPlayersPerServer = 4;
+    private int maxPlayersPerServer = 2;
     public bool matchOnGoing = false;
 
     ServerPingPong pingPong;
@@ -455,7 +454,7 @@ public class Server : NetworkEntity
     /// </summary>
     public override void OnApplicationQuit()
     {
-        Console.WriteLine("[Server] Application quitting � notifying MatchMaker");
+        Console.WriteLine("[Server] Application quitting — notifying MatchMaker");
 
         BroadcastPlayerListToMatchMaker(); // Will be empty if all clients disconnected properly
 

@@ -52,13 +52,13 @@ namespace Game
             OnEventC += (text, weight) => Debug.Log($"C# Event: OnEventC(\"{text}\", {weight}) triggered!");
 
             Debug.Log("Shoot Game");
-            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMR));
-            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRB), false);
-            ReflectionSystem.Instance.reflection.SendMethodMessage(this, nameof(TestMRI), 3);
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendMethodMessage(this, nameof(TestMR));
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendMethodMessage(this, nameof(TestMRB), false);
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendMethodMessage(this, nameof(TestMRI), 3);
 
-            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventA));
-            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventB), 99);
-            ReflectionSystem.Instance.reflection.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventA));
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventB), 99);
+            ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventC), "test", 4.2f);
             
             originPlayerID = netObj.OwnerId;
         }

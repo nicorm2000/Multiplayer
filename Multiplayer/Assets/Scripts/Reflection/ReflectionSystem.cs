@@ -4,6 +4,8 @@ using Net;
 public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
 {
     public Reflection reflection;
+    public NETAUTHORITY netAuthority = NETAUTHORITY.CLIENT;
+    private UnityReflectionDebugger debugger;
 
     private void Start()
     {
@@ -12,9 +14,7 @@ public class ReflectionSystem : MonoBehaviourSingleton<ReflectionSystem>
 
     void StartReflection()
     {
-        reflection = new(NetworkManager.Instance.networkEntity);
-        Reflection.consoleDebugger += WriteConsoleDebugger;
-        Reflection.consoleDebuggerPause+= PauseConsoleDebugger;
+        reflection = new(NetworkManager.Instance.networkEntity, netAuthority, debugger);
     }
 
     private void LateUpdate()

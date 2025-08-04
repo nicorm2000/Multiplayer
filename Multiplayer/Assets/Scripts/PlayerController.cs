@@ -165,7 +165,7 @@ public class PlayerController : MonoBehaviour, INetObj
         Special = 255
     }
 
-    [NetVariable(0)] public float health = 3;
+    [NetVariable(0, NETAUTHORITY.CLIENT)] public float health = 3;
     //[NetVariable(1)] public bool myBool = false;
     //[NetVariable(2)] public string myString = "pepe";
     //[NetVariable(3)] public char myChar = 'a';

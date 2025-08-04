@@ -68,7 +68,6 @@
     <Compile Include="Assets\Scripts\Factory\ServiceInitializer.cs" />
     <Compile Include="Assets\Scripts\Factory\PrefabService.cs" />
     <Compile Include="Assets\Scripts\Network\interfaces\IRecieveData.cs" />
-    <Compile Include="Assets\Scripts\Server\ServerManager.cs" />
     <Compile Include="Assets\Scripts\Tank\bulletBehaviour.cs" />
     <Compile Include="Assets\Scripts\Tank\TankMovement.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraOrbit.cs" />
@@ -79,6 +78,8 @@
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Network\NetworkManager.cs" />
     <Compile Include="Assets\Scripts\ConsoleViewer.cs" />
+    <Compile Include="Assets\Scripts\Server\ServerManager.cs" />
+    <Compile Include="Assets\Scripts\Reflection\LeanClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -448,20 +449,12 @@
       <HintPath>Library\PackageCache\com.unity.analytics@3.6.12\Unity.Analytics.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="NetworkServer">
-      <HintPath>Assets\Plugins\NetworkServer.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Unity.Analytics.Tracker">
       <HintPath>Library\PackageCache\com.unity.analytics@3.6.12\Unity.Analytics.Tracker.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Unity.Android.Types">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.23f1\Editor\Data\PlaybackEngines\AndroidPlayer\Unity.Android.Types.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Unity.Android.Gradle">
-      <HintPath>C:\Program Files\Unity\Hub\Editor\2021.3.23f1\Editor\Data\PlaybackEngines\AndroidPlayer\Unity.Android.Gradle.dll</HintPath>
+    <Reference Include="NetworkServer">
+      <HintPath>Assets\Plugins\NetworkServer.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="mscorlib">

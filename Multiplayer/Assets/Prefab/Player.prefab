@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4818776201000899365}
   - component: {fileID: 4762208405517617262}
   - component: {fileID: 8825400993815376352}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: Canyon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -336,9 +336,6 @@ MonoBehaviour:
   movementYSynced: 0
   shouldShoot: 0
   cameraHor: 0
-  MyBounds:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0.5, y: 0.5, z: 0.5}
   towerTurns: {fileID: 888843024134725453}
   movement: {fileID: 4467788783669252480}
   cameraPivot: {fileID: 7165238016506140578}

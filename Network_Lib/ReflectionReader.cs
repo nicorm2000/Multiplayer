@@ -32,10 +32,9 @@ namespace Net
             debug += $"Value: {value ?? "null"}, Type: {value?.GetType()?.Name ?? "null"}, ";
             debug += $"Route: {string.Join("->", route.Select(r => r.route))}\n";
 
-            if (value == null)
+            if (value == null || value is Null)
             {
-                debug += "Sending NULL package\n";
-                //debugger?.Log(debug);
+                //reflection.debugger?.Log("Sending NULL package\n");
                 reflection.SendPackage(PossibleStates.Null, attribute, route);
                 return;
             }
@@ -86,14 +85,15 @@ namespace Net
         {
             string debug = "ReadValue Start - ";
             debug += $"Field: {info.Name}, Type: {info.FieldType}, Current Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
-            //debugger?.Log(debug);
+            //reflection.debugger?.Log(debug);
 
             object fieldValue = info.GetValue(obj);
             Type fieldType = info.FieldType;
 
             // Handle null case
-            if (fieldValue == null)
+            if (fieldValue == null || fieldValue is Null)
             {
+                //reflection.debugger?.Log("Entered null case");
                 idRoute.Add(RouteInfo.CreateForProperty(attribute.VariableId));
                 reflection.SendPackage(PossibleStates.Null, attribute, idRoute);
                 return;

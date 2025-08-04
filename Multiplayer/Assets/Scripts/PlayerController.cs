@@ -204,7 +204,7 @@ public class PlayerController : MonoBehaviour, INetObj
     //[NetVariable(36, NETAUTHORITY.CLIENT)] public Vector2Int MyVector2Int = new (0,0);
     //[NetVariable(37, NETAUTHORITY.CLIENT)] public Vector3Int MyVector3Int = new (0,0,0);
     //[NetVariable(38, NETAUTHORITY.CLIENT)] public Matrix4x4 MyMatrix4x4 = new(new Vector4(0,0,0,0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0));
-    //[NetVariable(39, NETAUTHORITY.CLIENT)] public DictionaryTestClass dictionaryTest;
+    //[NetVariable(39, NETAUTHORITY.CLIENT)] public DictionaryTestClass dictionaryTest = new DictionaryTestClass();
     //[NetVariable(40, NETAUTHORITY.CLIENT)] public MultiDimArrayTestClass arrayTest = new MultiDimArrayTestClass();
     //[NetVariable(41, NETAUTHORITY.CLIENT)] public CustomCollection<int> _customCollection;
     //[NetVariable(42, NETAUTHORITY.CLIENT)] public CustomCollection2<string> _customCollection2;
@@ -222,13 +222,6 @@ public class PlayerController : MonoBehaviour, INetObj
     Coroutine turnTowerCoroutine;
     NetworkManager nm;
     private Camera cam;
-    private Action onEventA;
-    [NetEvent(0, NETAUTHORITY.SERVER)]
-    public event Action OnEventA
-    {
-        add => onEventA += value;
-        remove => onEventA -= value;
-    }
 
     #region ENUM
     //[ContextMenu("Test Enum - Set Default")]
@@ -719,17 +712,11 @@ public class PlayerController : MonoBehaviour, INetObj
     private void Awake()
     {
         cam = cameraOrbit.gameObject.GetComponent<Camera>();
+        cameraOrbit.gameObject.GetComponent<AudioListener>().enabled = false;
 #if SERVER
         cam.enabled = false;
         cam.gameObject.GetComponent<AudioListener>().enabled = false;
 #endif
-        OnEventA += () => { Debug.Log("TestEvent"); };
-    }
-
-    [ContextMenu("Test")]
-    private void TriggerEvent()
-    {
-        ReflectionSystem.Instance.reflection.reflectionCallInvoker.SendCSharpEventMessage(this, nameof(OnEventA));
     }
 
     private void Start()

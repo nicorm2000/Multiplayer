@@ -326,12 +326,18 @@ namespace Net
         /// <param name="idToRead">Current position in the route.</param>
         /// <param name="value">The null/empty value to write.</param>
         /// <returns>The modified object.</returns>
-        public object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value)
+        public object WriteValueNullException(FieldInfo info, object obj, NetVariable attribute, List<RouteInfo> idRoute, int idToRead, object value) 
         {
-            //debugger?.Log($"WriteValueNullException - Field: {info.Name}, Type: {info.FieldType}, Value: {value}");
+            //reflection.debugger?.Log($"WriteValueNullException - Field: {info.Name}, Type: {info.FieldType}, Value: {value}");
 
             RouteInfo currentRoute = idRoute[idToRead];
             Type fieldType = info.FieldType;
+
+            if (value == null || value is Null)
+            {
+                info.SetValue(obj, null);
+                return obj;
+            }
 
             // Handle simple types
             if (ReflectionHelperMethods.IsSimpleType(fieldType))

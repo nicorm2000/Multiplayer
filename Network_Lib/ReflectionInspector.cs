@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Linq;
 using System;
+using System.Data.SqlTypes;
 
 namespace Net
 {
@@ -58,70 +59,70 @@ namespace Net
         {
             string debug = "";
 
-            if (obj != null)
+            if (obj == null)
             {
-                foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, reflection.bindingFlags))
+                //reflection.debugger?.Log("Inspect - Parent object is null");
+                return;
+            }
+
+            foreach (FieldInfo info in ReflectionHelperMethods.GetAllFields(type, reflection.bindingFlags))
+            {
+                NetVariable netVarAttribute = info.GetCustomAttribute<NetVariable>();
+
+
+                if (netVarAttribute != null)
                 {
-                    NetVariable netVarAttribute = info.GetCustomAttribute<NetVariable>();
-
-                    if (netVarAttribute != null)
+                    debug += $"[Inspect] Field: {info.Name} | Type: {info.FieldType.Name}";
+                    debug += "___info field: " + info + "\n";
+                    debug += "___info route: " + idRoute[0].route + "\n";
+                    //reflection.debugger?.Log(debug);
+                    if (netVarAttribute.syncAuthority == reflection.netAuthority)
                     {
-                        debug += "___info field: " + info + "\n";
-                        debug += "___info route: " + idRoute[0].route + "\n";
-                        //reflection.debugger?.Log(debug);
-                        if (netVarAttribute.syncAuthority == reflection.netAuthority)
+                        if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
                         {
-                            if (reflection.extensionMethods.TryGetValue(info.FieldType, out MethodInfo methodInfo))
+                            reflection.CheckAuthority(owner, netVarAttribute.syncAuthority, ReadValueEMAction, ReadValueEMAction);
+                            void ReadValueEMAction()
                             {
-                                reflection.CheckAuthority(owner, netVarAttribute.syncAuthority, ReadValueEMAction, ReadValueEMAction);
-                                void ReadValueEMAction()
-                                {
-                                    object actualObject = info.GetValue(obj);
+                                object actualObject = info.GetValue(obj);
 
-                                    object fields = methodInfo.Invoke(null, new object[] { actualObject, netVarAttribute.syncAuthority });
-                                    if (fields is List<(FieldInfo, NetVariable)> values)
+                                object fields = methodInfo.Invoke(null, new object[] { actualObject, netVarAttribute.syncAuthority });
+                                if (fields is List<(FieldInfo, NetVariable)> values)
+                                {
+                                    foreach ((FieldInfo, NetVariable) field in values)
                                     {
-                                        foreach ((FieldInfo, NetVariable) field in values)
-                                        {
-                                            List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
-                                            newRoute.Add(RouteInfo.CreateForProperty(netVarAttribute.VariableId));
-                                            newRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
-                                            object componentValue = field.Item1.GetValue(actualObject);
-                                            //reflection.debugger?.Log($"EM Inspect: {info.FieldType} {info.GetValue(obj)}\n");
-                                            //reflection.debugger?.Log($"EM Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
-                                            reflection.reflectionReader.ReadValue(field.Item1, actualObject, field.Item2, newRoute, owner);
-                                            info.SetValue(obj, actualObject);
-                                        }
+                                        List<RouteInfo> newRoute = new List<RouteInfo>(idRoute);
+                                        newRoute.Add(RouteInfo.CreateForProperty(netVarAttribute.VariableId));
+                                        newRoute.Add(RouteInfo.CreateForProperty(field.Item2.VariableId));
+                                        object componentValue = field.Item1.GetValue(actualObject);
+                                        //reflection.debugger?.Log($"EM Inspect: {info.FieldType} {info.GetValue(obj)}\n");
+                                        //reflection.debugger?.Log($"EM Full Route: {string.Join("->", newRoute.Select(r => r.route))}\n");
+                                        reflection.reflectionReader.ReadValue(field.Item1, actualObject, field.Item2, newRoute, owner);
+                                        info.SetValue(obj, actualObject);
                                     }
                                 }
                             }
-                            else
+                        }
+                        else
+                        {
+                            reflection.CheckAuthority(owner, netVarAttribute.syncAuthority, ReadValueAction, ReadValueAction);
+                            void ReadValueAction()
                             {
-                                reflection.CheckAuthority(owner, netVarAttribute.syncAuthority, ReadValueAction, ReadValueAction);
-                                void ReadValueAction()
-                                {
-                                    List<RouteInfo> extendedRoute = new List<RouteInfo>(idRoute);
-                                    //reflection.debugger?.Log($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
-                                    //reflection.debugger?.Log($"Inspect: {info.FieldType} {info.GetValue(obj)}\n");
-                                    reflection.reflectionReader.ReadValue(info, obj, netVarAttribute, extendedRoute, owner);
-                                }
+                                List<RouteInfo> extendedRoute = new List<RouteInfo>(idRoute);
+                                //reflection.debugger?.Log($"Full Route: {string.Join("->", extendedRoute.Select(r => r.route))}\n");
+                                //reflection.debugger?.Log($"[Inspect] -> Calling ReadValue on {info.Name} with route: {string.Join("->", idRoute.Select(r => r.route))}\n");
+                                reflection.reflectionReader.ReadValue(info, obj, netVarAttribute, extendedRoute, owner);
                             }
                         }
+                    }
 
-                        if (type.BaseType != null)
-                        {
-                            Inspect(type.BaseType, obj, new List<RouteInfo>(idRoute), owner);
-                        }
+                    if (type.BaseType != null)
+                    {
+                        Inspect(type.BaseType, obj, new List<RouteInfo>(idRoute), owner);
                     }
                 }
-                debug += "Exit foreach: " + obj + "\n";
-                //reflection.debugger?.Log(debug);
             }
-            else
-            {
-                debug += "Object is NULL";
-                //reflection.debugger?.Log(debug);
-            }
+            debug += "Exit foreach: " + obj + "\n";
+            //reflection.debugger?.Log(debug);
         }
 
         /// <summary>
@@ -199,11 +200,6 @@ namespace Net
                             else
                             {
                                 object structInstance = info.GetValue(obj);
-                                if (structInstance == null)
-                                {
-                                    structInstance = ReflectionHelperMethods.ConstructObject(info.FieldType, reflection.bindingFlags);
-                                    info.SetValue(obj, structInstance);
-                                }
                                 //debug += $"Found matching field: {info.Name} (Type: {info.FieldType.Name})\n";
                                 //debug += $"Current field value: {info.GetValue(obj)}\n";
                                 //debugger?.Log(debug);
@@ -239,7 +235,7 @@ namespace Net
             string debug = "InspectWriteNullException - ";
             debug += $"Type: {type.Name}, Current Route Index: {idToRead}, Value: {value}\n";
             debug += $"Full Route: {string.Join("->", idRoute.Select(r => r.route))}\n";
-
+            //reflection.debugger.Log($"InspectWriteNullException - Type: {type.Name}, Current Route Index: {idToRead}, Value: {value}\n");
             if (obj == null || idRoute.Count <= idToRead)
             {
                 //debugger?.Log($"Exit condition - obj null: {obj == null}, route count: {idRoute.Count}, idToRead: {idToRead}\n");

@@ -106,20 +106,22 @@ netObj.OwnerId = originPlayerID;
 
         private void OnCollisionEnter(Collision collision)
         {
-#if SERVER
             if (collision.gameObject.layer == layerToIgnore)
                 return;
-
+            Debug.Log("Bullet collisioned with " + collision.gameObject.transform.name);
+#if SERVER
             if (collision.transform.TryGetComponent(out PlayerController pc))
             {
                 GameManager.OnBulletHit.Invoke(pc.clientID, netObj.OwnerId);
             }
+            Debug.Log("Bullet collisioned with server" + collision.gameObject.transform.name);
             DestroyBehaviour();
 #endif
         }
 
         private void DestroyBehaviour()
         {
+            Debug.LogWarning("Server destroy bullet");
             NetDestroyGO netDestroyGO = new NetDestroyGO(MessagePriority.Default, (GetID(), originPlayerID));
             nm.networkEntity.SendMessage(netDestroyGO.Serialize());
             NetObjFactory.RemoveINetObject(GetID());
